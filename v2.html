@@ -445,7 +445,28 @@ function hobbyEffect(n,autonomous=false){
  if(h==='Rumor spreading'){let other=npcs.find(o=>o!==n&&o.alive!==false&&Math.hypot(o.x-n.x,o.y-n.y)<5);if(other)gossip(n,other)}
  return group;
 }
-function updateHobbies(dt){for(let n of npcs){if(n.alive===false||n.arrested)continue;n.hobbyTimer=(n.hobbyTimer??45)-dt;if(n.hobbyTimer>0)continue;n.hobbyTimer=45+rand(120);if(n.hobby==='Serial killer'){let targets=npcs.filter(b=>b!==n&&b.alive!==false&&!b.arrested&&Math.hypot(b.x-n.x,b.y-n.y)<4);if(targets.length&&rng()<.18)criminalAction(n,targets[rand(targets.length)]);continue}if(n.visitor||!onShift(n)){n.activity='Enjoying hobby';n.reason='Spending free time on '+(n.hobby||'a hobby');n.timer=10;hobbyEffect(n,true);memory(n,'Enjoyed '+n.hobby,null,25)}if(n.hobbyPrivacy<50&&rng()<.25){let b=npcs.find(b=>b!==n&&b.alive!==false&&Math.hypot(b.x-n.x,b.y-n.y)<5);if(b){note(n.name+' talked to '+b.name+' about '+n.hobby.toLowerCase()+'.');memory(b,'Heard about '+n.name+' hobby',n,25)}}}}
+const SINISTER_ROUTINES={"Serial killer":{"activity":"Stalking a potential victim","type":"killer"},"Stalking strangers":{"activity":"Following an unfamiliar shopper","type":"stalk"},"Collecting human teeth":{"activity":"Displaying a disturbing tooth collection","type":"scare"},"Funeral crashing":{"activity":"Practicing an unwelcome funeral speech","type":"scare"},"Graveyard lurking":{"activity":"Talking obsessively about graveyards","type":"fear"},"Writing threatening letters":{"activity":"Leaving a threatening anonymous note","type":"threat"},"Creating creepy dolls":{"activity":"Showing a strange lookalike doll","type":"scare"},"Obsessive surveillance":{"activity":"Secretly observing and documenting movements","type":"stalk"},"Taxidermy of roadkill":{"activity":"Showing off unsettling taxidermy","type":"scare"},"Cataloging unsolved murders":{"activity":"Questioning strangers about unsolved crimes","type":"fear"},"Practicing villain monologues":{"activity":"Performing a melodramatic villain speech","type":"scare"},"Collecting cursed artifacts":{"activity":"Showing off an allegedly cursed relic","type":"curse"},"Conspiracy cult meetings":{"activity":"Inviting people into a secret society","type":"recruit"},"Secret basement rituals":{"activity":"Performing a mysterious ritual in a secluded aisle","type":"ritual"}};
+function updateSinisterHobby(n){
+const spec=SINISTER_ROUTINES[n.hobby];if(!spec)return false;
+const people=npcs.filter(b=>b!==n&&b.alive!==false&&!b.arrested&&Math.hypot(b.x-n.x,b.y-n.y)<8);
+const other=people.length?people[rand(people.length)]:null;
+n.activity=spec.activity;n.reason='Autonomous hobby: '+n.hobby;n.timer=14;
+n.needs.fun=clamp(n.needs.fun+8);n.needs.stress=clamp(n.needs.stress-4);
+setVisualAction(n,spec.type==='stalk'?'walk':spec.type==='recruit'?'talk':spec.type==='ritual'?'work':'inspect',other,16);
+memory(n,spec.activity,other,42,'hobby');
+if(spec.type==='killer'&&other){target(n,closestOpen(other.x,other.y));if(rng()<.18)criminalAction(n,other);}
+if(spec.type==='stalk'&&other){target(n,closestOpen(other.x+1,other.y));other.needs.stress=clamp(other.needs.stress+12);other.personality.suspicion=clamp(other.personality.suspicion+3);}
+if(spec.type==='scare'&&other)frighten(other,12+rand(20),spec.activity);
+if(spec.type==='fear'&&other){frighten(other,10,spec.activity);other.personality.suspicion=clamp(other.personality.suspicion+4);}
+if(spec.type==='threat'&&other){frighten(other,25,'Threatening letter');changeRel(other,n,{trust:-18,fear:17});if(rng()<.55){let scene=registerScene('Threatening note',n.x,n.y,n.id,other.id,[other]);reportScene(scene,other);}}
+if(spec.type==='curse'&&other){frighten(other,18,'Cursed artifact');memory(other,'Saw a supposedly cursed artifact',n,45,'hobby');}
+if(spec.type==='recruit'&&other){meet(n,other,'secret society invitation');changeRel(other,n,other.personality.suspicion>55?{trust:-12}:{affection:5});}
+if(spec.type==='ritual'){adjustSanity(n,-2,'Unsettling ritual');for(let b of people.slice(0,3))frighten(b,18,'Strange ritual');}
+if(other)memory(other,'Witnessed '+spec.activity.toLowerCase(),n,40,'hobby');
+if(other||spec.type==='ritual')note(n.name+' was '+spec.activity.toLowerCase()+'.');
+return true;
+}
+function updateHobbies(dt){for(let n of npcs){if(n.alive===false||n.arrested)continue;n.hobbyTimer=(n.hobbyTimer??45)-dt;if(n.hobbyTimer>0)continue;n.hobbyTimer=45+rand(120);if(SINISTER_ROUTINES[n.hobby]){if(n.visitor||!onShift(n)||rng()<.3)updateSinisterHobby(n);continue}if(n.visitor||!onShift(n)){n.activity='Enjoying hobby';n.reason='Spending free time on '+(n.hobby||'a hobby');n.timer=10;hobbyEffect(n,true);memory(n,'Enjoyed '+n.hobby,null,25)}if(n.hobbyPrivacy<50&&rng()<.25){let b=npcs.find(b=>b!==n&&b.alive!==false&&Math.hypot(b.x-n.x,b.y-n.y)<5);if(b){note(n.name+' talked to '+b.name+' about '+n.hobby.toLowerCase()+'.');memory(b,'Heard about '+n.name+' hobby',n,25)}}}}
 function discoverBodies(){for(let body of npcs){if(body.alive!==false||body.bodyFound)continue;let witness=npcs.find(n=>n.alive!==false&&!n.arrested&&Math.hypot(n.x-body.x,n.y-body.y)<6);if(!witness)continue;body.bodyFound=true;frighten(witness,45,'Discovered a body');note(witness.name+' discovered '+body.name+' and called emergency services.');emergencyCall('EMS',witness,body);let scene=crimeScenes.find(c=>c.victimId===body.id)||registerScene('Suspicious death',body.x,body.y,body.killer||null,body.id,[]);scene.evidence.push('Body discovered');reportScene(scene,witness);memory(witness,'Discovered '+body.name,body,100)}}
 let challengeOutcome=null,challengeTotal=0;
 let chaosPoints=0,unlockedItems=[];
