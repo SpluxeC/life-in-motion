@@ -440,6 +440,23 @@ function drawWorldFinishes(s){
  for(let x=23;x<30;x++){let p=project(x,7);ctx.fillStyle=x%2?'#e0c86b':'#f6e7a6';ctx.fillRect(p.x-7*s,p.y-2*s,14*s,3*s)}
  ctx.restore();
 }
+function drawSceneDressing(s){ctx.save();
+ // All props are visual only and do not change walking or vehicle paths.
+ function crate(x,y,w=13,h=11){let p=project(x,y);ctx.fillStyle='#211e1a65';ctx.fillRect(p.x-7*s,p.y-1*s,w*s,3*s);ctx.fillStyle='#927550';ctx.fillRect(p.x-w*s/2,p.y-h*s,w*s,h*s);ctx.fillStyle='#b49a76';ctx.fillRect(p.x-w*s/2,p.y-h*s,w*s,2*s);ctx.strokeStyle='#5c4936';ctx.lineWidth=s;ctx.strokeRect(p.x-w*s/2,p.y-h*s,w*s,h*s);ctx.beginPath();ctx.moveTo(p.x-w*s/2,p.y-h*s);ctx.lineTo(p.x+w*s/2,p.y);ctx.stroke()}
+ for(let [x,y] of [[28,35],[29,35],[36,33],[34,29],[42,33],[41,31],[5,13],[10,19],[17,26]])crate(x,y);
+ // Pallet jack and dock barrels.
+ for(let [x,y] of [[33,34],[36,34]]){let p=project(x,y);ctx.fillStyle='#596462';ctx.fillRect(p.x-11*s,p.y-7*s,22*s,5*s);ctx.strokeStyle='#b9a65f';ctx.lineWidth=2*s;ctx.beginPath();ctx.moveTo(p.x+7*s,p.y-5*s);ctx.lineTo(p.x+13*s,p.y-17*s);ctx.stroke()}
+ for(let [x,y] of [[29,35],[36,35],[40,29]]){let p=project(x,y);ctx.fillStyle='#7b6d59';ctx.fillRect(p.x-6*s,p.y-16*s,12*s,15*s);ctx.fillStyle='#a5a18b';ctx.fillRect(p.x-6*s,p.y-16*s,12*s,3*s);ctx.strokeStyle='#464e4b';ctx.lineWidth=s;ctx.strokeRect(p.x-6*s,p.y-16*s,12*s,15*s)}
+ // A weathered skip, service boxes and exterior bollards.
+ for(let [x,y] of [[2,8],[37,9]]){let p=project(x,y);ctx.fillStyle='#535a4e';ctx.fillRect(p.x-15*s,p.y-19*s,30*s,16*s);ctx.fillStyle='#8b7c51';ctx.fillRect(p.x-17*s,p.y-21*s,34*s,4*s);ctx.strokeStyle='#252e2e';ctx.lineWidth=s;ctx.strokeRect(p.x-15*s,p.y-19*s,30*s,16*s)}
+ for(let [x,y] of [[22,8],[30,8],[37,22]]){let p=project(x,y);ctx.fillStyle='#d2aa55';ctx.fillRect(p.x-3*s,p.y-21*s,6*s,19*s);ctx.fillStyle='#272b27';ctx.fillRect(p.x-3*s,p.y-11*s,6*s,3*s)}
+ // Caution triangles, portable cleanup gear and extinguishers.
+ for(let [x,y] of [[8,12],[22,26],[37,28]]){let p=project(x,y);ctx.fillStyle='#d8a648';ctx.beginPath();ctx.moveTo(p.x,p.y-20*s);ctx.lineTo(p.x-8*s,p.y-2*s);ctx.lineTo(p.x+8*s,p.y-2*s);ctx.closePath();ctx.fill();ctx.fillStyle='#342e21';ctx.fillRect(p.x-1*s,p.y-14*s,2*s,7*s)}
+ // Garden planters, hoses, fence pots.
+ for(let x=39;x<=46;x+=2){let p=project(x,30+(x%2));ctx.fillStyle='#6c5d45';ctx.fillRect(p.x-7*s,p.y-7*s,14*s,7*s);ctx.fillStyle=['#48684e','#547751','#6b8555'][x%3];for(let i=0;i<3;i++){ctx.beginPath();ctx.ellipse(p.x+(i-1)*5*s,p.y-(11+i%2*5)*s,5*s,6*s,0,0,Math.PI*2);ctx.fill()}}
+ // Store aisle cart handles and ceiling utility fixtures.
+ for(let [x,y] of [[6,22],[15,29],[30,20],[20,13]]){let p=project(x,y);ctx.strokeStyle='#687574';ctx.lineWidth=2*s;ctx.beginPath();ctx.moveTo(p.x-8*s,p.y-2*s);ctx.lineTo(p.x-8*s,p.y-13*s);ctx.lineTo(p.x+9*s,p.y-13*s);ctx.lineTo(p.x+9*s,p.y-2*s);ctx.stroke();ctx.fillStyle='#7d8681';ctx.fillRect(p.x-7*s,p.y-12*s,14*s,4*s)}
+ ctx.restore()}
 function drawRetailDetail(s){
  ctx.save();ctx.textAlign='center';
  // Store-specific hardware props float above the fixtures but do not affect their positions.
@@ -501,7 +518,7 @@ drawWorldFinishes(s);
 roadAccessVisible(s);function prism(x,y,w,h,top,front,side){let p=project(x,y),z=s;ctx.fillStyle='#0b1419a0';ctx.beginPath();ctx.ellipse(p.x+3*z,p.y+3*z,w*z*.8,8*z,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=side;ctx.fillRect(p.x+w*z*.22,p.y-h*z*.72,w*z*.28,h*z*.72);ctx.fillStyle=front;ctx.fillRect(p.x-w*z*.5,p.y-h*z*.72,w*z*.72,h*z*.72);ctx.fillStyle='#0c151929';ctx.fillRect(p.x-w*z*.5,p.y-h*z*.72,w*z*.09,h*z*.72);ctx.fillStyle=top;ctx.beginPath();ctx.moveTo(p.x-w*z*.5,p.y-h*z*.72);ctx.lineTo(p.x-w*z*.2,p.y-h*z);ctx.lineTo(p.x+w*z*.5,p.y-h*z);ctx.lineTo(p.x+w*z*.22,p.y-h*z*.72);ctx.closePath();ctx.fill()}
 for(let o of objects)drawFixture(o,s,prism);
 drawRetailDetail(s);drawHazards(s);drawStoreProps(s);drawArchitecturalDetails(s);for(let x=2;x<46;x+=7){let p=project(x,5);ctx.fillStyle='#c8d5d8';ctx.strokeStyle='#34464e';ctx.lineWidth=1.5*s;ctx.beginPath();ctx.moveTo(p.x-15*s,p.y-4*s);ctx.lineTo(p.x-12*s,p.y-18*s);ctx.lineTo(p.x+12*s,p.y-18*s);ctx.lineTo(p.x+15*s,p.y-4*s);ctx.closePath();ctx.fill();ctx.stroke()}for(let x=1;x<48;x+=6){let p=project(x,7);ctx.fillStyle='#e9d9b5';ctx.fillRect(p.x-10*s,p.y-1*s,20*s,2*s)}
-drawStoreShell(s);drawStructuralDressing(s);for(let c of cars)drawIsometricVehicle(c,s);
+drawStoreShell(s);drawStructuralDressing(s);drawSceneDressing(s);for(let c of cars)drawIsometricVehicle(c,s);
 for(let scene of crimeScenes){let p=project(scene.x,scene.y);ctx.save();ctx.strokeStyle=scene.state==='closed'?'#798887':'#f8c96d';ctx.lineWidth=2*s;ctx.setLineDash([4*s,3*s]);ctx.beginPath();ctx.ellipse(p.x,p.y,17*s,8*s,0,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=scene.state==='closed'?'#8a969b':'#f7d275';ctx.fillRect(p.x-5*s,p.y-24*s,10*s,12*s);ctx.fillStyle='#25343b';ctx.font=Math.max(8,9*s)+'px sans-serif';ctx.textAlign='center';ctx.fillText('!',p.x,p.y-15*s);ctx.restore()}for(let r of responders)drawResponder(r,s);for(let a of animals){let p=project(a.x,a.y),z=s;ctx.fillStyle='#1a252a66';ctx.beginPath();ctx.ellipse(p.x,p.y+2*z,9*z,3*z,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=['Dog','Puppy','Rabbit','Hamster','Guinea Pig','Ferret'].includes(a.type)?'#b99067':['Cat','Kitten','Lizard','Turtle'].includes(a.type)?'#8c9b80':'#b6b5a4';ctx.beginPath();ctx.ellipse(p.x,p.y-5*z,7*z,4*z,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(p.x+5*z,p.y-9*z,3.5*z,0,Math.PI*2);ctx.fill();ctx.fillStyle='#202020';ctx.fillRect(p.x+6*z,p.y-10*z,1.2*z,1.2*z);ctx.strokeStyle='#705f4e';ctx.lineWidth=2*z;ctx.beginPath();ctx.moveTo(p.x-4*z,p.y-3*z);ctx.lineTo(p.x-4*z,p.y+2*z);ctx.moveTo(p.x+3*z,p.y-3*z);ctx.lineTo(p.x+3*z,p.y+2*z);ctx.stroke()}
 drawGodOverlay(s);for(let n of npcs.slice().sort((a,b)=>(a.ry??a.y)+(a.rx??a.x)-(b.ry??b.y)-(b.rx??b.x))){let p=project(n.rx??n.x,n.ry??n.y);if(n.alive===false){drawFallenNPC(n,p,s);if(n===selected){ctx.font=Math.max(11,12*s)+'px system-ui';ctx.textAlign='center';ctx.fillStyle='#fff';ctx.fillText(n.name+' (Deceased)',p.x,p.y-14*s)}continue}
 let pose=visualPose(n),moving=Math.hypot(n.x-(n.rx??n.x),n.y-(n.ry??n.y))>.035,phase=(n.visualPhase||performance.now()/165+n.id.length*2),wave=Math.sin(phase),stride=moving?wave*4.7*s:0,gesture=Math.sin(phase*1.1)*3.5*s;
