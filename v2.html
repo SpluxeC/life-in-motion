@@ -58,6 +58,41 @@ input[type=range]{accent-color:#cfb873}
 .pill{background:#46564b!important;color:#f1e4c5}
 #vehicleInspector{border-left:3px solid #cbad70!important}
 @media(max-width:760px){#navTabs{overflow-x:auto;scrollbar-width:thin}#navTabs button{min-width:58px;flex:1 0 auto;font-size:11px}#npcPanel{box-shadow:0 -6px 25px #050b0ab0}#hint{font-size:10px;max-width:80%}.godModalCard{border-radius:8px 8px 0 0!important}}
+
+/* Phase 5: grounded survival-sim controls. Preserve existing controls and mobile layout. */
+:root{color-scheme:dark;--lim-panel:#252b2a;--lim-panel2:#313a36;--lim-edge:#56635a;--lim-ink:#e5e2d5;--lim-amber:#cab17a;--lim-muted:#b3bbb0}
+body{background:#171d1d;color:var(--lim-ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+header,#worldEvents,aside,#npcPanel{background:#222b2a;color:var(--lim-ink)}
+header{border-bottom:2px solid #4f5b52;box-shadow:0 4px 16px #0005}
+#stage{background:#1a2925}
+.card,.godCard,#settingsPanel{background:#2b3735;border-color:#505d54;box-shadow:0 2px 12px #111b1930}
+.menuPanel{background:#283432f5;border-color:#8d8f79}
+#mainMenu{background:radial-gradient(ellipse at 48% 35%,#424e46,#17211f 73%)}
+button{background:linear-gradient(180deg,#414c47,#303a36);border:1px solid #677265;color:#e9e8de;border-radius:5px;box-shadow:inset 0 1px #a7b5a11e;transition:background .12s,border-color .12s}
+button:hover:not(:disabled){background:#4a5c52;border-color:#acaa84}
+button.active,#navTabs button.active,#tabs button.active{background:#6b735b;border-color:#c6b080;color:#fff8e2}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #e6c478;outline-offset:1px}
+input,select,textarea{background:#202c2a;color:#e9e9de;border-color:#627167}
+input[type=range]{accent-color:#c2aa70}
+h1,h2,h3,h4{color:#e4d8b7;letter-spacing:.015em}
+.muted,.small{color:#b4bdb4}
+.entry,#feed p{border-bottom-color:#4b5a51}
+.pill{background:#47574d;color:#e9e1ca;border-radius:4px}
+.meter{background:#1b2929}.meter>span{background:#adba8a}
+#navTabs,#tabs{background:#24302e}
+#worldEvents{border-top-color:#616d60}
+.actionCategory,.godGroup{background:#293835;border-color:#576a60}
+.actionCategory summary,.godGroup>summary{color:#e9e4d6}
+.godTargetBox,#vehicleInspector{background:#303f3b;border-color:#aa9770}
+.godModalCard{background:#283633;color:#f2eada;border-color:#b7a478;box-shadow:0 18px 65px #000b}
+.godPowerModal{background:#0d1715e9}
+.godBadge{background:#4d5848;color:#efcf8a}
+.godMeter{background:#17241f}.godMeter>span{background:#c7a66d}
+#godMapHint{background:#2f443b;border-color:#c0a679}
+#hint{background:#192a27ed;border:1px solid #76816d;color:#ede3c6}
+#npcPanel{border-top:1px solid #526359}
+#carStoragePanel,#vehicleInspector{color:#e6e1d6}
+@media(max-width:760px){#navTabs button{min-height:43px}aside,#npcPanel{background:#222c29}.godModalCard{background:#2c3a35}button{min-height:42px}}
 </style></head><body><div id="mainMenu"><div class="menuPanel">
 <div class="menuEyebrow">THE LIVING NPC EXPERIMENT</div>
 <div class="menuMark" aria-hidden="true"><svg viewBox="0 0 64 64" width="62" height="62"><path d="M8 28 32 8l24 20v29H8Z" fill="#407b7d" stroke="#d7ece9" stroke-width="3"/><path d="M24 57V36h16v21" fill="#173843" stroke="#d7ece9" stroke-width="2"/><path d="M14 36h7v10h-7zm29 0h7v10h-7z" fill="#ebcf84"/><path d="M18 26h28" stroke="#d9e7dd" stroke-width="2"/></svg></div>
