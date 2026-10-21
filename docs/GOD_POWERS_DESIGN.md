@@ -51,7 +51,7 @@ Every God action gets a unique `originId` and an event `causeId`. Children (witn
 ## 4. Rules for the two game modes
 
 - **Endless Sandbox:** default unlimited use (optional toggles for cooldown/energy), experimentation first. Every power still validates legal targets and maintains simulation safety.
-- **One-Day Challenge (implemented):** 70 starting energy, 100 maximum, recharge +12 per in-game hour. Costs: Create Life 35, Alter Trait 22, Confusion 14, Mass Confusion 42 (+3 per radius tile above 6, up to 54), Plant Rumor 18, Malfunction 22, Hazard 18, World Event 32. Per-power cooldowns: respectively 35, 30, 16, 55, 24, 28, 25, 43 in-game minutes. Every custom NPC spawned during Challenge counts toward the survivor victory population. Chaos Points remain a separate reward, not an unlimited God Energy source.
+- **One-Day Challenge (implemented):** 70 starting energy, 100 maximum, recharge +12 per in-game hour. Costs: Create Life 35, Alter Trait 5, Confusion 14, Mass Confusion 42 (+3 per radius tile above 6, up to 54), Plant Rumor 18, Malfunction 22, Hazard 18, World Event 32. Per-power cooldowns: respectively 35, 8, 16, 55, 24, 28, 25, 43 in-game minutes. Every custom NPC spawned during Challenge counts toward the survivor victory population. Chaos Points remain a separate reward, not an unlimited God Energy source.
 - **Targeted direct actions** (including Kill and Go Insane) retain existing sanity, emotion and cooldown requirements; God Powers must not silently bypass them.
 - Difficulty balancing: afford meaningful player agency, protect reactive world model, avoid spam loops and runaway populations.
 
@@ -120,3 +120,13 @@ The existing specification describes some *future polish and aspirations* beyond
 - Scripted regression on both game modes, including high-population runs (48 starting NPCs), save/restore version 10 and older version 9 saves. No JavaScript exceptions during these tests.
 - In-game God Energy costs appear directly on buttons for mobile. Sandbox powers remain unlimited; effects are rules-based NPC simulation, not per-NPC language-model calls.
 - Unverified: real iOS/Android device visuals, tap sizing with actual browser input, sustained device frame rates, and all possible emergent event chains.
+
+## Interface and interaction refinement — October 21, 2026
+
+- **Trait editing:** Character tab now shows read-only trait values. Only the God Power **Alter Trait** can change traits through the player interface. It costs **5 God Energy** in One-Day Challenge (down from 22), with an 8-minute in-game cooldown; Sandbox remains free. NPCs can still develop skills independently through approved gameplay.
+- **Power popup:** Tapping any God Power opens a modal containing **only that power's options**. For targeted powers, choose *Pick a target on the map*, tap a person, fixture, or tile, and the modal reopens for confirmation. Cancel and success states close it. Power results remain visible in the God tab.
+- **Vehicle inspection:** Tap civilian cars, police cruisers, ambulances, or fire engines to inspect status, owner, assigned crew and actual vehicle inventory. New emergency vehicles carry police/EMS/fire equipment; old saves with empty emergency vehicle inventories receive sensible defaults during migration. Cars continue using existing lane-routing mechanics.
+- **First responder interaction:** Emergency responders can be tapped as characters and inspected through standard Character/Social/Actions interfaces, receive player actions and items, and be targeted by individual God Powers. Response jobs remain active and responders depart after completing calls; they do not enter the ordinary civilian population count.
+- **Dark workplace comedy:** NPC conversations and naturally generated rumors now use dry, darkly comic hardware-store/workplace dialogue, with gentler variants for compassionate personalities and different dialogue under high stress. Mechanics for belief, truth, reputation and relationships are unchanged.
+- **Regression checks:** Confirmed all 21 original actions still work on selected responders; selection and inventory inspection on civilian and emergency vehicles; two-mode Alter Trait energy behavior; selected-power popup and touch-map targeting; simulations, old save rules, corpses and version-10 save/restore. Real-device mobile UI verification remains pending.
+
