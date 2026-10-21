@@ -130,3 +130,16 @@ The existing specification describes some *future polish and aspirations* beyond
 - **Dark workplace comedy:** NPC conversations and naturally generated rumors now use dry, darkly comic hardware-store/workplace dialogue, with gentler variants for compassionate personalities and different dialogue under high stress. Mechanics for belief, truth, reputation and relationships are unchanged.
 - **Regression checks:** Confirmed all 21 original actions still work on selected responders; selection and inventory inspection on civilian and emergency vehicles; two-mode Alter Trait energy behavior; selected-power popup and touch-map targeting; simulations, old save rules, corpses and version-10 save/restore. Real-device mobile UI verification remains pending.
 
+
+## Visual world overhaul — October 21, 2026
+
+**Design direction:** Original, performance-conscious, isometric/2.5D survival-simulation environment inspired by the broad visual qualities of grounded isometric games. No third-party proprietary artwork copied. **Stick-figure NPCs and their mechanics are deliberately preserved.**
+
+Implementation completed in order:
+1. **World art foundation** (commit `65bb690`): muted weathered asphalt/concrete/garden tile variations, deterministic cracks and grain, dark industrial shelf/machine finishes, deep prop shadows. Procedural geometry; no map/collision changes.
+2. **Structure/exterior** (commit `f78af8c`): concrete-block wall courses, faded-cutaway building shell, roof support, entrance canopy, loading dock, garden fencing and curb details. Existing cutaway zoom behavior retained.
+3. **Vehicles** (commit `b531be4`): recognizable layered silhouettes with wheels, bodywork, roof, windshield/windows, front and rear lights; civilian sedan/SUV/pickup/van variations; distinct police/ambulance/fire engine styling and emergency lighting. Uses existing vehicle route waypoint headings without changing routes or inventory hit testing.
+4. **World dressing** (commit `55cff73`): visual-only boxes, pallets, loading equipment, barrels, utility boxes, bollards, caution signs, garden planters and store carts. No new collision or pathfinding obstacles.
+5. **Interface styling** (commit `1ebebce`): dark industrial panels, muted foreground palette, amber focus/energy highlights, stronger section delineation, mobile-aware sizing; all original interface workflows remain.
+
+**Verification:** Both Challenge and Sandbox ran 420 simulated ticks with repeated canvas draws, all three responder vehicle categories, save/restore and version-9 migration. Verified all 21 direct action buttons, God Alter Trait energy in both modes, vehicle inventory inspection, and existing stick-figure renderer availability. No JavaScript exceptions in those tests. **Outstanding:** actual graphical inspection across screen sizes and physical iOS/Android frame-rate QA; procedural visuals will benefit from visual design tuning after feedback.
