@@ -1,6 +1,6 @@
 # Life in Motion — God Powers Design Specification
 
-Status: **HYBRID DIRECTION LOCKED** on 2026-10-21. Planning only; **no gameplay code changes authorized or made by this decision**.
+Status: **HYBRID DIRECTION LOCKED; FOUNDATION IMPLEMENTED** on 2026-10-21. The playable `v2.html` now includes a dedicated God Powers tab and a Challenge-mode power economy. Further balancing and live mobile QA remain open.
 Repository: `SpluxeC/life-in-motion`, game: `v2.html`.
 
 ## 1. Non-negotiable design contract (LOCKED)
@@ -94,3 +94,20 @@ Technical shape: define power metadata centrally; use validated target resolver;
 4. Whether **God powers have separate achievement or chaos-scoring attribution** beyond current scoring.
 
 Do not reopen Hybrid mode choice. Do not implement proposed rules as if approved unless instructed to choose sensible defaults at build time.
+
+## Implementation record — October 21, 2026
+
+This section supersedes any earlier "proposed only" wording for features listed below. All existing direct NPC action systems remain in place.
+
+- **Implemented God Powers:** Create Life, Alter Trait, Cause Confusion, Mass Confusion, Plant Rumor, Cause Malfunction, Create Hazard, World Event.
+- **UI:** Always-accessible God tab, categorized powers, custom name/role/gender/age/hair/hobby/ten-trait creator, all nine starting needs, map target/area preview, confirmation/cancel, and linked event timeline.
+- **Challenge economy (implemented default):** Max energy 100; start 70; regain 12 energy per in-game hour when the simulation advances. Costs: Create Life 35, Alter Trait 22, Confusion 14, Mass Confusion 42 at radius 6 (+3 per tile above 6), Plant Rumor 18, Malfunction 22, Hazard 18, World Event 32. Each has its own cooldown measured in in-game minutes: 35, 30, 16, 55, 24, 28, 25 and 43, respectively. Powers cannot be used once the challenge ends.
+- **Sandbox:** All eight powers are unlimited and have no cooldown, though world capacity/target validation still applies.
+- **Custom population:** At most 72 ordinary NPCs; spawned characters are autonomous and use the normal NPC systems. In Challenge, every God-created NPC increases the survivor count and the victory denominator by one, preventing a spawn from making the objective easier. In Sandbox, there is no challenge denominator.
+- **NPC resistance:** Confusion severity and response depend on courage, sanity, disposition and other traits. Rumors are probabilistically believed, doubted or passed along; some NPCs refuse to repeat them. Special dispositions: Troublemaker tends toward verbal provocation, Natural Leader encourages nearby characters, Unshakable resists confusion, Manipulator improves rumor spreading/persuasion.
+- **World effects:** Malfunctions feed existing fixture tampering; hazard powers feed the existing active hazards and injury system; World Event uses existing store-wide events.
+- **Causality:** New bounded, saved timeline tracks God-originated actions, reactions and identifiable resulting rumors, hazards and malfunctions. It deliberately does not claim every unrelated event is caused by God.
+- **Save migration:** New save format version 10; older saves without a `godState` load with the default energy pool and empty God timeline. New worlds reset the pool and history.
+- **Testing:** Automated game-script, mode, power, energy/cooldown, custom character, save/load and canvas smoke tests performed. Real-device visual and interaction testing remains outstanding.
+
+The existing specification describes some *future polish and aspirations* beyond this shipped foundation; those remain candidates for future releases, not proof that every earlier aspiration has been fully implemented.
