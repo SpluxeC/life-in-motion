@@ -1,6 +1,6 @@
 # Life in Motion — God Powers Design Specification
 
-Status: **HYBRID DIRECTION LOCKED; FOUNDATION IMPLEMENTED** on 2026-10-21. The playable `v2.html` now includes a dedicated God Powers tab and a Challenge-mode power economy. Further balancing and live mobile QA remain open.
+Status: **HYBRID DIRECTION LOCKED; GOD POWERS INITIAL RELEASE IMPLEMENTED** on 2026-10-21. `v2.html` now supports all eight planned God Powers, Challenge energy and cooldowns, custom traits and starting needs, and a causal timeline. Physical mobile visual QA and future balancing remain open.
 Repository: `SpluxeC/life-in-motion`, game: `v2.html`.
 
 ## 1. Non-negotiable design contract (LOCKED)
@@ -23,7 +23,7 @@ Add a dedicated **God Powers** tab or button to existing navigation (ideally adj
 
 Interactions: select power -> select person/fixture/ground tile -> preview target, radius, expected risk, cost/cooldown (when applicable) -> confirm -> immediate visible and logged feedback. Allow cancel before applying. No dependence on hover; avoid covering the map on mobile. Show tooltips and locked reasons accessibly. Keep all existing actions and Quick controls.
 
-## 3. Core power definitions (PROPOSED — not individually approved)
+## 3. God Powers in the initial implementation (rules-based simulation)
 
 ### Create Life
 Create an NPC with custom name, hairstyle/color, age (adult, following existing age bounds), role (customer, employee, visitor/outsider), existing 10 personality traits each 0–100, hobby, starting needs, and optional special disposition. Generate valid ID, relationships, memories, acquaintances, inventory, stats, initial goals, schedule, and entry position. Validate safe spawn on navigable tile. Cap crowd count based on performance and mode. Employees integrate shifts/roles; emergency personnel continue through the emergency dispatch system, not an unmanaged pseudo-responder.
@@ -51,7 +51,7 @@ Every God action gets a unique `originId` and an event `causeId`. Children (witn
 ## 4. Rules for the two game modes
 
 - **Endless Sandbox:** default unlimited use (optional toggles for cooldown/energy), experimentation first. Every power still validates legal targets and maintains simulation safety.
-- **One-Day Challenge:** recommended limited God Energy with recharge/costs/cooldowns to protect pacing and prevent immediate win; **exact costs, recharge and spawn/victory semantics remain open for approval**. Chaos Points remain the reward for consequences, not an unlimited source of powers unless explicitly approved.
+- **One-Day Challenge (implemented):** 70 starting energy, 100 maximum, recharge +12 per in-game hour. Costs: Create Life 35, Alter Trait 22, Confusion 14, Mass Confusion 42 (+3 per radius tile above 6, up to 54), Plant Rumor 18, Malfunction 22, Hazard 18, World Event 32. Per-power cooldowns: respectively 35, 30, 16, 55, 24, 28, 25, 43 in-game minutes. Every custom NPC spawned during Challenge counts toward the survivor victory population. Chaos Points remain a separate reward, not an unlimited God Energy source.
 - **Targeted direct actions** (including Kill and Go Insane) retain existing sanity, emotion and cooldown requirements; God Powers must not silently bypass them.
 - Difficulty balancing: afford meaningful player agency, protect reactive world model, avoid spam loops and runaway populations.
 
@@ -86,11 +86,11 @@ Technical shape: define power metadata centrally; use validated target resolver;
 - Challenge has a tested nontrivial balance policy before release; Sandbox remains freely experimental by default.
 - Performance reasonable on mobile with high NPC count, without runaway autonomous cascades.
 
-## 8. Genuinely unresolved design decisions
+## 8. Future polish and non-blocking design choices
 
-1. Challenge-mode **God Power economy**: proposed finite God Energy with cooldowns; decide costs, recharge and whether some powers are unavailable in Challenge.
-2. **Challenge population semantics** for God-created NPCs: whether new NPCs enter the survivor victory denominator, and how to prevent exploiting victory.
-3. Whether users can **alter existing NPC traits** freely or only use custom traits when creating them.
+1. Challenge-mode God Energy is now implemented; future playtesting may adjust energy costs, recharging, and cooldowns.
+2. Challenge population semantics are implemented: God-created NPCs enter the survivor victory denominator. Monitor balance during playtesting.
+3. Alter Trait is implemented as a God Power, costing Challenge energy with cooldown; custom starting needs are supported on created characters.
 4. Whether **God powers have separate achievement or chaos-scoring attribution** beyond current scoring.
 
 Do not reopen Hybrid mode choice. Do not implement proposed rules as if approved unless instructed to choose sensible defaults at build time.
@@ -111,3 +111,12 @@ This section supersedes any earlier "proposed only" wording for features listed 
 - **Testing:** Automated game-script, mode, power, energy/cooldown, custom character, save/load and canvas smoke tests performed. Real-device visual and interaction testing remains outstanding.
 
 The existing specification describes some *future polish and aspirations* beyond this shipped foundation; those remain candidates for future releases, not proof that every earlier aspiration has been fully implemented.
+
+## Verification after reconnect — October 21, 2026
+
+- Connected GitHub and inspected live `v2.html` after interruption; existing God UI, effects, energy hooks, timeline and saved state were present.
+- Verified all eight God Powers in Endless Sandbox, and Challenge energy prevents use when insufficient. Checked mode-specific cooldowns, 21 preexisting direct-action buttons and conditional extreme-action locks.
+- Verified Create Life including custom starting sanity/stress/energy and personality traits, direct-control coexistence, selected-NPC/map target interaction, and event timeline.
+- Scripted regression on both game modes, including high-population runs (48 starting NPCs), save/restore version 10 and older version 9 saves. No JavaScript exceptions during these tests.
+- In-game God Energy costs appear directly on buttons for mobile. Sandbox powers remain unlimited; effects are rules-based NPC simulation, not per-NPC language-model calls.
+- Unverified: real iOS/Android device visuals, tap sizing with actual browser input, sustained device frame rates, and all possible emergent event chains.
