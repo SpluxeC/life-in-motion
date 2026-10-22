@@ -3,29 +3,29 @@ export const WIDTH=76,HEIGHT=50;
 export const key=(x,y)=>x+','+y;
 export function createHardwareStore(){
  const walls=new Map(),doors=[],fixtures=[],props=[],ground=[],blocked=new Set();
- const wall=(x,y,section='exterior')=>walls.set(key(x,y),{x,y,section});
- const door=(x,y,type='hinged',label='Door')=>doors.push({id:'door-'+x+'-'+y,x,y,type,label,open:0,target:0,auto:type==='sliding',locked:false});
+ const wall=(x,y,section='exterior',axis='x')=>walls.set(key(x,y),{x,y,section,axis});
+ const door=(x,y,type='hinged',label='Door',axis='x')=>doors.push({id:'door-'+x+'-'+y,x,y,type,label,axis,open:0,target:0,auto:type==='sliding',locked:false,forceUntil:0});
  const fixture=(type,x,y,w=1,h=1,extra={})=>fixtures.push({id:type+'-'+x+'-'+y,type,x,y,w,h,...extra});
  for(let y=0;y<HEIGHT;y++)for(let x=0;x<WIDTH;x++){
   let area=x>=65&&y<43?'road':y<10&&x<65?'parking':x>=38&&x<=46&&y>=10&&y<28?'employee':x>=38&&x<=48&&y>=28&&y<=39?'garden':y>=10&&y<=39&&x>=2&&x<=36?'store':x>=49&&x<=63&&y>=10&&y<44?'landscape':'grass';
   ground.push({x,y,area});
  }
  for(let x=2;x<=36;x++){wall(x,10);wall(x,39)}
- for(let y=10;y<=39;y++){wall(2,y);wall(36,y)}
+ for(let y=10;y<=39;y++){wall(2,y,'exterior','y');wall(36,y,'exterior','y')}
  // Actual openings are the exact tiles occupied by animated doors.
  for(let x=18;x<=21;x++)walls.delete(key(x,10));
  for(let x=27;x<=30;x++)walls.delete(key(x,39));
  for(let y of [17,30])walls.delete(key(36,y));
  door(19,10,'sliding','Main entrance');door(20,10,'sliding','Main entrance');
  door(28,39,'rollup','Receiving door');door(29,39,'rollup','Receiving door');
- door(36,17,'hinged','Employee access');door(36,30,'hinged','Garden exit');
+ door(36,17,'hinged','Employee access','y');door(36,30,'hinged','Garden exit','y');
  // Staff wing has a complete exterior and rear wall, with functional room doors.
  for(let x=38;x<=46;x++){wall(x,10,'staff');wall(x,27,'staff')}
- for(let y=10;y<=27;y++){wall(38,y,'staff');wall(46,y,'staff')}
+ for(let y=10;y<=27;y++){wall(38,y,'staff','y');wall(46,y,'staff','y')}
  for(let x=39;x<=45;x++)for(let y of [16,21])wall(x,y,'staff');
  for(let y of [12,19,24])walls.delete(key(38,y));
  for(let x of [42])for(let y of [16,21])walls.delete(key(x,y));
- door(38,12,'hinged','Staff office door');door(38,19,'hinged','Break room door');door(38,24,'hinged','Restroom door');
+ door(38,12,'hinged','Staff office door','y');door(38,19,'hinged','Break room door','y');door(38,24,'hinged','Restroom door','y');
  door(42,16,'hinged','Inner staff door');door(42,21,'hinged','Inner staff door');
  for(let x of [5,11,17,23,29])for(let band=0;band<2;band++){
   const start=band===0?18:27;
@@ -37,8 +37,18 @@ export function createHardwareStore(){
  fixture('saw',6,35,1,1);fixture('pallet',11,35,2,1);fixture('workbench',17,35,2,1);
  // Keep 25..32, 35..39 clear for unobstructed receiving circulation.
  fixture('lockers',43,13,2,1);fixture('office',40,13,1,1);
- fixture('vending',44,19,1,1);fixture('table',41,19,2,1);fixture('sink',44,24,1,1);fixture('restroom',41,24,1,1);
+ fixture('vending',45,18,1,1);fixture('table',41,19,2,1);fixture('sink',44,24,1,1);fixture('restroom',41,24,1,1);
  fixture('plants',41,33,2,2);fixture('plants',45,35,1,2);fixture('gardenDesk',42,29,2,1);
+ // Additional stocked departments and service details. Each solid asset reserves its true footprint.
+ fixture('endcap',9,23,1,1,{department:'TOOLS',stock:6});fixture('endcap',21,23,1,1,{department:'ELECTRICAL',stock:6});
+ fixture('endcap',32,25,1,1,{department:'HARDWARE',stock:6});
+ fixture('bucketStack',9,33,1,1,{department:'PAINT',stock:6});
+ fixture('lumberRack',14,35,2,1,{department:'LUMBER',stock:8});
+ fixture('toolCabinet',21,35,2,1,{department:'TOOLS',stock:8});
+ fixture('bagPallet',32,35,2,1,{department:'GARDEN',stock:9});
+ fixture('drinkCooler',43,19,1,1,{department:'REFRESHMENTS',stock:8});
+ fixture('safetyStation',34,17,1,1);fixture('utilityCart',4,16,1,1,{stock:4});
+ fixture('hardwareBins',34,26,1,2,{department:'FASTENERS',stock:8});
  for(let x of [7,15,23,31,40,48,56]){props.push({type:'car',id:'car-'+x,x,y:4,w:2,h:3,color:['#8faab5','#b8a28b','#697f89','#b5b6ae','#879994','#ae9691','#668b8c'][[7,15,23,31,40,48,56].indexOf(x)],heading:0});for(let xx=x;xx<x+2;xx++)for(let yy=4;yy<7;yy++)blocked.add(key(xx,yy))}
  // Road access stays unobstructed between the main lot and the east service road.
  for(let x of [4,12,20,28,36,44,52,60])props.push({id:'shrub-'+x,type:'shrub',x,y:1});
