@@ -1,7 +1,7 @@
 import {createHardwareStore,doorAt,fixtureAt,nearestOpen,walkable,key} from './world.js?v=builtin-art-20261022-1';
-import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v=builtin-art-20261022-1';
+import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v=spill-cleanup-20261022-1';
 import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js';
-import {createArtwork} from './artwork.js?v=hardware-art-20261022-2';
+import {createArtwork} from './artwork.js?v=spill-cleanup-20261022-1';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d');
 let game=null,scene=createHardwareStore(),zoom=.72,offset={x:0,y:0},last=performance.now(),acc=0,lastHud=0,lastSave=0,lastViewport={w:0,h:0},drag=null,selected=null,resultShown=false;
@@ -26,11 +26,40 @@ function unproject(sx,sy){let v=view(),px=(sx-v.w*.5)/zoom+offset.x,py=(sy-v.h*.
 function resize(){let dpr=Math.min(2,window.devicePixelRatio||1),v=view();if(lastViewport.w!==v.w||lastViewport.h!==v.h||canvas.width!==Math.round(v.w*dpr)){canvas.width=Math.round(v.w*dpr);canvas.height=Math.round(v.h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);lastViewport={...v}}}
 function drawHair(n,z,h){const hash=Number(String(n.id).replace(/[^0-9]/g,''))||0,style=n.role==='firefighter'?5:n.role==='police'?4:hash%6;const head=-h*z*.82;ctx.fillStyle='#11171b';ctx.strokeStyle='#101517';ctx.lineWidth=2*z;if(style===4||style===5){ctx.fillStyle=style===5?'#d4ba64':'#25394c';ctx.fillRect(-8*z,head-9*z,16*z,5*z);ctx.fillRect(-12*z,head-4*z,17*z,3*z)}else if(style===0){ctx.beginPath();ctx.arc(0,head-2*z,7*z,Math.PI,Math.PI*2);ctx.fill()}else if(style===1){ctx.beginPath();ctx.arc(0,head-3*z,7.5*z,Math.PI,Math.PI*2);ctx.fill();ctx.fillRect(6*z,head,4*z,9*z)}else if(style===2){ctx.fillRect(-7*z,head-9*z,14*z,4*z);ctx.fillRect(5*z,head-6*z,4*z,11*z)}else if(style===3){ctx.beginPath();ctx.arc(0,head-5*z,7*z,Math.PI,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(7*z,head-10*z,5*z,0,7);ctx.fill()}else{ctx.beginPath();ctx.arc(0,head-6*z,6*z,Math.PI,Math.PI*2);ctx.fill()}}
 function stick(n,t){let p=project(n.rx,n.ry),z=zoom*(n.role==='customer'||n.role==='employee'?1:1.07),moving=n.path.length>0,step=moving?Math.sin(t*10+n.id.length):0,h=n.unconscious>0?5:35;ctx.save();ctx.translate(p.x,p.y);ctx.strokeStyle='#121a1c';ctx.lineWidth=2.6*z;ctx.lineCap='round';ctx.fillStyle='#121b2380';ctx.beginPath();ctx.ellipse(0,2*z,10*z,4*z,0,0,7);ctx.fill();if(!n.alive){ctx.rotate(Math.PI/2);ctx.translate(0,9*z)}if(n.unconscious>0){ctx.rotate(1.4);ctx.translate(0,9*z)}
- const leg=h*.45*z;ctx.beginPath();ctx.moveTo(0,-h*z*.56);ctx.lineTo(0,-10*z);ctx.moveTo(0,-10*z);ctx.lineTo((-7+step*4)*z,0);ctx.moveTo(0,-10*z);ctx.lineTo((7-step*4)*z,0);ctx.moveTo(0,-h*z*.45);ctx.lineTo((-10-step*3)*z,-19*z);ctx.moveTo(0,-h*z*.45);ctx.lineTo((9+step*3)*z,-19*z);ctx.stroke();ctx.fillStyle='#f8faf7';ctx.strokeStyle='#0c1416';ctx.lineWidth=2*z;ctx.beginPath();ctx.arc(0,-h*z*.82,7*z,0,Math.PI*2);ctx.fill();ctx.stroke();if(n.role==='employee'){ctx.fillStyle='#d53436';ctx.fillRect(-6*z,-h*z*.53,12*z,13*z);ctx.strokeStyle='#101517';ctx.lineWidth=1.3*z;ctx.strokeRect(-6*z,-h*z*.53,12*z,13*z)}drawHair(n,z,h);ctx.restore();
- if(n.alive&&n.unconscious<=0&&n.inventory?.length){artwork.drawItem(n.inventory[0],n.rx+.28,n.ry+.12,15,.66)}
+ const leg=h*.45*z;ctx.beginPath();ctx.moveTo(0,-h*z*.56);ctx.lineTo(0,-10*z);ctx.moveTo(0,-10*z);ctx.lineTo((-7+step*4)*z,0);ctx.moveTo(0,-10*z);ctx.lineTo((7-step*4)*z,0);ctx.moveTo(0,-h*z*.45);ctx.lineTo((-10-step*3)*z,-19*z);ctx.moveTo(0,-h*z*.45);ctx.lineTo((9+step*3)*z,-19*z);ctx.stroke();ctx.fillStyle='#f8faf7';ctx.strokeStyle='#0c1416';ctx.lineWidth=2*z;ctx.beginPath();ctx.arc(0,-h*z*.82,7*z,0,Math.PI*2);ctx.fill();ctx.stroke();if(n.role==='employee'){
+  // Two tailored red vest panels, shoulder seams, a V-neck and an open black center.
+  ctx.lineWidth=1.15*z;ctx.strokeStyle='#171a1c';ctx.fillStyle='#c92f38';
+  ctx.beginPath();
+  ctx.moveTo(-6.7*z,-h*z*.55);ctx.lineTo(-2.2*z,-h*z*.50);
+  ctx.lineTo(-.9*z,-h*z*.32);ctx.lineTo(-1.3*z,-h*z*.18);
+  ctx.lineTo(-5.5*z,-h*z*.18);ctx.lineTo(-7.0*z,-h*z*.37);ctx.closePath();
+  ctx.fill();ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(6.7*z,-h*z*.55);ctx.lineTo(2.2*z,-h*z*.50);
+  ctx.lineTo(.9*z,-h*z*.32);ctx.lineTo(1.3*z,-h*z*.18);
+  ctx.lineTo(5.5*z,-h*z*.18);ctx.lineTo(7.0*z,-h*z*.37);ctx.closePath();
+  ctx.fill();ctx.stroke();
+  ctx.strokeStyle='#f17e78';ctx.lineWidth=.9*z;
+  ctx.beginPath();ctx.moveTo(-5.5*z,-h*z*.21);ctx.lineTo(-5*z,-h*z*.29);
+  ctx.moveTo(5.5*z,-h*z*.21);ctx.lineTo(5*z,-h*z*.29);ctx.stroke();
+  ctx.fillStyle='#f0e9df';ctx.fillRect(2.3*z,-h*z*.42,3.3*z,2*z);
+}drawHair(n,z,h);ctx.restore();
+ if(n.alive&&n.unconscious<=0&&n.cleaning){artwork.drawCleaningSet(n.rx,n.ry,n.cleaningPhase||0)}
+ else if(n.alive&&n.unconscious<=0&&n.inventory?.length){artwork.drawItem(n.inventory[0],n.rx+.28,n.ry+.12,15,.66)}
  if(selected?.id===n.id){ctx.strokeStyle='#f5de79';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,14*z,7*z,0,0,7);ctx.stroke()}
 }
 function drawHazard(h,t){let p=project(h.x,h.y),z=zoom;ctx.save();if(h.kind==='fire'){for(let i=0;i<3;i++){ctx.fillStyle=i===0?'#ed743f':i===1?'#ffc15e':'#fae2a5';ctx.beginPath();ctx.ellipse(p.x+(i-1)*6*z,p.y-11*z-Math.sin(t*8+i)*3*z,7*z,15*z,0,0,Math.PI*2);ctx.fill()}}else if(h.kind==='spill'){ctx.fillStyle='#75bdbaad';ctx.beginPath();ctx.ellipse(p.x,p.y,19*z,6*z,0,0,7);ctx.fill()}else{ctx.strokeStyle=h.kind==='electric'?'#f4da78':'#e8b0a1';ctx.lineWidth=3*z;ctx.beginPath();ctx.moveTo(p.x-9*z,p.y);ctx.lineTo(p.x,p.y-17*z);ctx.lineTo(p.x+3*z,p.y-5*z);ctx.lineTo(p.x+14*z,p.y-20*z);ctx.stroke()}ctx.restore()}
+const departmentSigns=[
+ {x:5.5,y:16.5,name:'PAINT',accent:'#b75e4f'},
+ {x:11.5,y:16.5,name:'TOOLS',accent:'#b88e56'},
+ {x:17.5,y:16.5,name:'ELECTRICAL',accent:'#c9a946'},
+ {x:23.5,y:16.5,name:'PLUMBING',accent:'#5e90b0'},
+ {x:29.5,y:16.5,name:'HARDWARE',accent:'#688779'},
+ {x:10,y:12.3,name:'CHECKOUT',accent:'#b75e4f'},
+ {x:31.5,y:12.3,name:'SERVICE',accent:'#558c9a'},
+ {x:14,y:34,name:'LUMBER',accent:'#b58a5b'},
+ {x:42.7,y:29,name:'GARDEN',accent:'#63905b'}
+];
 function render(t){
  resize();
  const viewport=view(),world=game?.world||scene;
@@ -40,8 +69,10 @@ function render(t){
   ...world.fixtures.map(o=>({depth:o.x+o.y,fn:()=>artwork.drawFixture(o)})),
   ...world.doors.map(o=>({depth:o.x+o.y,fn:()=>artwork.drawDoor(o,t)})),
   ...[...world.walls.values()].map(o=>({depth:o.x+o.y,fn:()=>artwork.drawWall(o,world)})),
-  ...world.props.map(o=>({depth:o.x+o.y,fn:()=>artwork.drawVehicle(o,t)})),
+  ...world.props.map(o=>({depth:o.x+o.y,fn:()=>o.type==='wetFloorSign'?artwork.drawWetFloorSign(o.x,o.y):artwork.drawVehicle(o,t)})),
   ...(world.drops||[]).map(o=>({depth:o.x+o.y,fn:()=>artwork.drawDrop(o)})),
+  ...departmentSigns.map(o=>({depth:o.x+o.y+.1,fn:()=>artwork.drawDepartmentSign(o.x,o.y,o.name,o.accent)})),
+  ...world.hazards.filter(h=>h.kind==='spill'&&h.beingCleaned&&h.life>0).map(h=>({depth:h.x+h.y+.2,fn:()=>artwork.drawWetFloorSign(h.x,h.y)})),
   ...(game?game.npcs.map(o=>({depth:o.rx+o.ry,fn:()=>stick(o,t)})):[]),
   ...world.hazards.map(o=>({depth:o.x+o.y,fn:()=>drawHazard(o,t)}))
  ];
