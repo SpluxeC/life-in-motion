@@ -1,0 +1,118 @@
+import {nearestOpen,pathTo,doorAt,fixtureAt,walkable,key} from './world.js';
+const clamp=(n,a=0,b=100)=>Math.max(a,Math.min(b,n));
+export const POWER_LIST=[
+ {id:'anger',name:'Increase Anger',cost:5,targets:['npc']},{id:'fear',name:'Increase Fear',cost:5,targets:['npc']},
+ {id:'suspicion',name:'Plant Suspicion',cost:10,targets:['npc']},{id:'trust',name:'Alter Trust',cost:8,targets:['npc']},
+ {id:'rumor',name:'Spread Rumor',cost:12,targets:['npc']},{id:'item',name:'Influence Item Interest',cost:6,targets:['npc','fixture']},
+ {id:'sabotage',name:'Sabotage Equipment',cost:18,targets:['fixture']},{id:'hazard',name:'Trigger Environmental Hazard',cost:20,targets:['tile','fixture']},
+ {id:'lightning',name:'Divine Lightning',cost:95,targets:['npc'],cooldown:65}
+];
+export const ITEMS=[
+ {id:'hammer',name:'Hammer',kind:'tool',damage:15},{id:'wrench',name:'Wrench',kind:'tool',damage:12},{id:'broom',name:'Broom',kind:'tool',damage:7},
+ {id:'flashlight',name:'Flashlight',kind:'tool',damage:5},{id:'paint',name:'Paint Can',kind:'material',damage:4},
+ {id:'bandage',name:'Bandage',kind:'medical',heal:16},{id:'water',name:'Water Bottle',kind:'consumable',heal:4},
+ {id:'phone',name:'Phone',kind:'communication'},{id:'gloves',name:'Work Gloves',kind:'clothing'}
+];
+const FIRST=['Mason','Jordan','Taylor','Casey','Avery','Jamie','Robin','Morgan','Alex','Riley','Sam','Quinn','Ellis','Drew','Harper','Cameron'];
+const LAST=['Reed','Parker','Jones','Moore','Cruz','Bennett','West','Stone','Gray','Price','Hall','Brooks'];
+export function rngFor(seed){let state=seed>>>0;const random=()=>{state=(state+0x6D2B79F5)|0;let t=Math.imul(state^(state>>>15),1|state);t^=t+Math.imul(t^(t>>>7),61|t);return((t^(t>>>14))>>>0)/4294967296};random.state=()=>state>>>0;random.restore=s=>{state=s|0};return random}
+export function makeGame(world,options={}){
+ const seed=options.seed||Math.floor(Math.random()*2147483647),random=rngFor(seed);
+ const game={world,seed,random,elapsed:0,speed:1,paused:false,energy:35,energyEarned:0,npcs:[],respondersRemaining:{police:3,fire:3,medic:3},pending:[],dispatchCooldown:0,log:[],stats:{deaths:0,injuries:0,incidents:0,powers:0,chains:0},winner:false,freeplay:false,completed:false,nextId:0,cooldowns:{},selected:null};
+ const countStaff=clamp(+(options.staff??4),1,12),countCustomers=clamp(+(options.customers??8),1,20);
+ for(let i=0;i<countStaff+countCustomers;i++)spawnNPC(game,i<countStaff?'employee':'customer');
+ for(let n of game.npcs){n.relationships={};for(let o of game.npcs)if(o!==n)n.relationships[o.id]=Math.round(random()*120-40)}
+ log(game,'Hardware Store opened. '+game.npcs.length+' NPCs are active.');
+ return game;
+}
+export function log(g,text){g.log.unshift({time:Math.floor(g.elapsed),text});g.log.length=Math.min(g.log.length,100)}
+export function spawnNPC(g,role='customer'){
+ const r=g.random,i=g.nextId++,pos=nearestOpen(g.world,role==='employee'?9+Math.floor(r()*23):5+Math.floor(r()*28),role==='employee'?12+Math.floor(r()*22):12+Math.floor(r()*24));
+ const traits={aggression:Math.round(r()*100),bravery:Math.round(r()*100),compassion:Math.round(r()*100),suspicion:Math.round(r()*100),loyalty:Math.round(r()*100)};
+ const n={id:'npc-'+i,name:FIRST[Math.floor(r()*FIRST.length)]+' '+LAST[Math.floor(r()*LAST.length)],role,x:pos.x,y:pos.y,rx:pos.x,ry:pos.y,health:100,bleeding:0,pain:0,unconscious:0,alive:true,arrested:false,detention:0,emotion:{anger:r()*20,fear:r()*15,stress:r()*15},traits,relationships:{},memory:[],inventory:r()<.6?[ITEMS[Math.floor(r()*ITEMS.length)].id]:[],path:[],target:null,activity:role==='employee'?'Working':'Browsing',think:1+r()*3,callCooldown:0,recovery:0,panic:0};
+ g.npcs.push(n);return n;
+}
+function memory(n,type,subject,text,strength=1){n.memory.unshift({type,subject,text,strength,age:0});n.memory.length=Math.min(n.memory.length,22)}
+function reward(g,amount,reason){if(g.completed)return;g.energy=clamp(g.energy+amount,0,250);g.energyEarned+=amount;if(reason)log(g,'+'+amount+' God Energy · '+reason)}
+function nearest(g,n,filter=()=>true){let candidates=g.npcs.filter(o=>o!==n&&o.alive&&filter(o)).sort((a,b)=>Math.hypot(a.x-n.x,a.y-n.y)-Math.hypot(b.x-n.x,b.y-n.y));return candidates[0]}
+function goto(g,n,dest){let target=nearestOpen(g.world,dest.x,dest.y);n.path=pathTo(g.world,n,target);n.target=target}
+function choose(g,n){
+ const r=g.random,w=g.world;
+ if(!n.alive||n.unconscious>0||n.arrested)return;
+ const danger=w.hazards.filter(h=>h.life>0&&Math.hypot(n.x-h.x,n.y-h.y)<5).sort((a,b)=>Math.hypot(n.x-a.x,n.y-a.y)-Math.hypot(n.x-b.x,n.y-b.y))[0];
+ if(danger&&n.traits.bravery<55+n.emotion.fear*.25){n.emotion.fear=clamp(n.emotion.fear+24);n.panic=10;let flee=nearestOpen(w,n.x+(n.x-danger.x>0?7:-7),n.y+(n.y-danger.y>0?7:-7));goto(g,n,flee);n.activity='Fleeing '+danger.kind;return}
+ if(n.health<45&&n.inventory.includes('bandage')){n.health=clamp(n.health+16);n.bleeding=Math.max(0,n.bleeding-1);n.inventory.splice(n.inventory.indexOf('bandage'),1);n.activity='Treating injury';return}
+ if(n.emotion.anger>64&&n.traits.aggression>35){let victim=nearest(g,n,o=>!o.arrested);if(victim&&Math.hypot(victim.x-n.x,victim.y-n.y)<5){goto(g,n,victim);n.activity='Confronting '+victim.name;return}}
+ if(n.role==='police'){let suspect=g.npcs.find(o=>o.alive&&!o.arrested&&o!==n&&o.emotion.anger>72);if(suspect){goto(g,n,suspect);n.activity='Responding to suspect';return}}
+ if(n.role==='firefighter'){let fire=w.hazards.find(h=>h.kind==='fire'&&h.life>0);if(fire){goto(g,n,nearestOpen(w,fire.x+2,fire.y));n.activity='Responding to fire';return}}
+ if(n.role==='paramedic'){let patient=g.npcs.find(o=>o.alive&&o.health<62&&o!==n);if(patient){goto(g,n,patient);n.activity='Responding to injury';return}}
+ if(n.emotion.fear>60){goto(g,n,nearestOpen(w,7+Math.floor(r()*27),5+Math.floor(r()*4)));n.activity='Seeking safety';return}
+ if(r()<.22){let friend=nearest(g,n);if(friend){goto(g,n,friend);n.activity='Socializing';return}}
+ if(r()<.2){let o=w.fixtures[Math.floor(r()*w.fixtures.length)];goto(g,n,{x:o.x+2,y:o.y+1});n.activity=r()<.15?'Looking for something to steal':'Using '+o.type;return}
+ goto(g,n,{x:4+Math.floor(r()*31),y:12+Math.floor(r()*24)});n.activity=n.role==='employee'?'Working':'Browsing';
+}
+function injury(g,n,amount,kind,attacker=null){if(!n||!n.alive)return;n.health=clamp(n.health-amount);n.pain=clamp(n.pain+amount*.6);n.bleeding=clamp(n.bleeding+(kind==='fire'?amount*.05:amount*.1),0,15);n.emotion.fear=clamp(n.emotion.fear+amount);memory(n,'injury',attacker?.id||kind,'Injured by '+kind,2);g.stats.injuries++;reward(g,Math.min(6,Math.ceil(amount/8)),'injury');if(n.health<=0)kill(g,n,kind);else if(n.health<24)n.unconscious=20+g.random()*28}
+function kill(g,n,cause){if(!n.alive)return;n.alive=false;n.health=0;n.unconscious=0;n.path=[];n.activity='Deceased';g.stats.deaths++;reward(g,18,'death');log(g,n.name+' died ('+cause+').');for(let o of g.npcs)if(o.alive&&o!==n&&Math.hypot(o.x-n.x,o.y-n.y)<9){o.emotion.fear=clamp(o.emotion.fear+15);memory(o,'death',n.id,'Witnessed death of '+n.name,3)}}
+function incident(g,kind,source){if(g.completed)return;g.stats.incidents++;if(g.dispatchCooldown>0)return;
+ const service=kind==='fire'?'fire':kind==='injury'?'medic':'police';if(g.respondersRemaining[service]>0&&!g.pending.some(p=>p.service===service)){g.pending.push({service,time:8+g.random()*7});g.dispatchCooldown=12;log(g,'Emergency call placed: '+service+' response requested.')}
+}
+function dispatch(g,service){if(g.respondersRemaining[service]<=0)return;g.respondersRemaining[service]--;const role={fire:'firefighter',medic:'paramedic',police:'police'}[service];let n=spawnNPC(g,role);n.x=n.rx=4;n.y=n.ry=5;n.inventory=service==='medic'?['bandage']:service==='police'?['flashlight']:['water'];n.relationships={};log(g,role+' '+n.name+' arrived. '+g.respondersRemaining[service]+' reserve teams remain.')}
+export function addHazard(g,x,y,kind='fire',source='god'){const w=g.world;if(!walkable(w,x,y))return false;if(w.hazards.some(h=>h.x===x&&h.y===y&&h.life>0))return false;w.hazards.push({id:'haz-'+(w.hazards.length+1),x,y,kind,life:kind==='fire'?48:kind==='spill'?65:30,tick:0,source,spread:0});log(g,'A '+kind+' hazard appeared.');incident(g,kind==='fire'?'fire':'injury');return true}
+export function applyPower(g,id,target,secondary=null){const p=POWER_LIST.find(o=>o.id===id);if(!p)return{ok:false,message:'Unknown power'};
+ if(g.paused)return{ok:false,message:'Resume time to activate powers'};
+ if(g.completed&&!g.freeplay)return{ok:false,message:'Round completed'};
+ if(g.energy<p.cost)return{ok:false,message:'Not enough God Energy'};
+ if(g.cooldowns[id]>g.elapsed)return{ok:false,message:'Power is cooling down'};
+ let n=g.npcs.find(n=>n.id===target?.id),f=g.world.fixtures.find(f=>f.id===target?.id),x=target?.x,y=target?.y;
+ let type=n?'npc':f?'fixture':'tile';if(!p.targets.includes(type))return{ok:false,message:'Invalid target'};
+ // Target validation always happens before paying energy.
+ if(id==='hazard'&&!walkable(g.world,x,y))return{ok:false,message:'Choose open ground'};
+ g.energy-=p.cost;g.stats.powers++;if(p.cooldown)g.cooldowns[id]=g.elapsed+p.cooldown;
+ if(n){const roll=g.random()*100,resistance=n.traits.suspicion*.3+n.traits.bravery*.25+(100-n.emotion.stress)*.1;
+ if(roll<resistance*.42){log(g,n.name+' resisted '+p.name+'.');return{ok:true,message:n.name+' resisted the influence.'}}
+ if(id==='anger')n.emotion.anger=clamp(n.emotion.anger+44);
+ if(id==='fear'){n.emotion.fear=clamp(n.emotion.fear+50);n.panic=12}
+ if(id==='suspicion'){n.traits.suspicion=clamp(n.traits.suspicion+28);memory(n,'rumor',secondary?.id||null,'Someone may be untrustworthy',2)}
+ if(id==='trust'){let other=secondary?.id||nearest(g,n)?.id;if(other)n.relationships[other]=clamp((n.relationships[other]||0)-45,-100,100)}
+ if(id==='rumor'){n.emotion.anger=clamp(n.emotion.anger+24);memory(n,'rumor',secondary?.id||null,'Heard a dangerous rumor',2)}
+ if(id==='item'){n.activity='Searching for a useful item';n.inventory.push(ITEMS[Math.floor(g.random()*ITEMS.length)].id);n.inventory=n.inventory.slice(-4)}
+ if(id==='lightning')injury(g,n,120,'divine lightning');
+ if(id!=='lightning')reward(g,2,'successful manipulation');
+ }
+ if(id==='sabotage'&&f){const point=nearestOpen(g.world,f.x+1,f.y+1);addHazard(g,point.x,point.y,g.random()<.5?'electric':'fire');f.damaged=true}
+ if(id==='hazard')addHazard(g,x,y,['fire','spill','electric','falling'][Math.floor(g.random()*4)]);
+ if(id==='item'&&f){let d=nearestOpen(g.world,f.x+1,f.y);g.world.drops.push({id:'drop-'+g.elapsed,item:ITEMS[Math.floor(g.random()*ITEMS.length)].id,x:d.x,y:d.y})}
+ log(g,'God Power: '+p.name);return{ok:true,message:p.name+' activated'};
+}
+function interact(g,n,other){if(!other||!other.alive)return;
+ if(n.role==='police'&&other.emotion.anger>65&&!other.arrested){other.arrested=true;other.detention=60;other.path=[];other.activity='Detained by police';memory(other,'arrest',n.id,'Arrested',3);log(g,other.name+' was detained.');return}
+ if(n.role==='paramedic'&&other.health<90){other.health=clamp(other.health+20);other.bleeding=Math.max(0,other.bleeding-3);other.unconscious=Math.max(0,other.unconscious-20);other.activity='Receiving medical care';log(g,other.name+' received treatment.');return}
+ if(n.emotion.anger>55&&n.traits.aggression>35&&!other.arrested){let item=ITEMS.find(i=>i.id===n.inventory[0]);let damage=5+(item?.damage||0)+n.traits.aggression*.12;injury(g,other,damage,'fight',n);other.emotion.anger=clamp(other.emotion.anger+30);memory(other,'attack',n.id,'Attacked by '+n.name,3);n.emotion.anger=clamp(n.emotion.anger-8);reward(g,5,'fight');incident(g,'crime');return}
+ let delta=n.traits.compassion>40?3:-2;n.relationships[other.id]=clamp((n.relationships[other.id]||0)+delta,-100,100);n.emotion.anger=clamp(n.emotion.anger-2);if(g.random()<.07){memory(other,'conversation',n.id,'Talked to '+n.name);log(g,n.name+' spoke with '+other.name+'.')}
+}
+export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
+ g.elapsed+=dt;g.dispatchCooldown=Math.max(0,g.dispatchCooldown-dt);
+ for(let k of Object.keys(g.cooldowns))if(g.cooldowns[k]<g.elapsed)delete g.cooldowns[k];
+ for(let d of g.world.doors){let near=g.npcs.some(n=>n.alive&&Math.hypot(n.rx-d.x,n.ry-d.y)<2.2);d.target=near||d.forceUntil>g.elapsed?1:0;d.open=clamp(d.open+(d.target-d.open)*Math.min(1,dt*4),0,1)}
+ for(let p of [...g.pending]){p.time-=dt;if(p.time<=0){dispatch(g,p.service);g.pending.splice(g.pending.indexOf(p),1)}}
+ for(let h of [...g.world.hazards]){h.life-=dt;h.tick+=dt;if(h.life<=0)continue;
+ if(h.tick>1){h.tick=0;for(let n of g.npcs)if(n.alive&&Math.hypot(n.x-h.x,n.y-h.y)<(h.kind==='fire'?2.3:1.5))injury(g,n,h.kind==='fire'?9:h.kind==='electric'?14:5,h.kind);
+ if(h.kind==='fire'&&g.random()<.14&&h.spread<2){let choice=[[1,0],[-1,0],[0,1],[0,-1]][Math.floor(g.random()*4)];if(addHazard(g,h.x+choice[0],h.y+choice[1],'fire','chain')){h.spread++;g.stats.chains++;reward(g,5,'chain reaction')}}
+ }}
+ g.world.hazards=g.world.hazards.filter(h=>h.life>0);
+ for(let n of g.npcs){if(!n.alive)continue;n.callCooldown=Math.max(0,n.callCooldown-dt);
+ n.emotion.fear=clamp(n.emotion.fear-dt*.55);n.emotion.anger=clamp(n.emotion.anger-dt*.3);n.emotion.stress=clamp(n.emotion.stress-dt*.2);
+ if(n.bleeding>0){n.health-=n.bleeding*dt*.09;if(n.health<=0){kill(g,n,'untreated injury');continue}}n.pain=clamp(n.pain-dt*.13);if(n.unconscious>0){n.unconscious-=dt;continue}
+ if(n.arrested){n.detention-=dt;if(n.detention<=0){n.arrested=false;n.activity='Released from detention'}continue}
+ n.think-=dt;if(n.think<=0){n.think=1.5+g.random()*2;choose(g,n)}
+ if(n.path.length){let p=n.path[0],dx=p.x-n.rx,dy=p.y-n.ry,dist=Math.hypot(dx,dy),speed=(n.panic?3.6:1.65)*(n.health<50?.7:1);if(dist<=dt*speed){n.rx=p.x;n.ry=p.y;n.x=p.x;n.y=p.y;n.path.shift()}else{n.rx+=dx/dist*dt*speed;n.ry+=dy/dist*dt*speed}
+ let d=doorAt(g.world,Math.round(n.rx),Math.round(n.ry));if(d)d.forceUntil=g.elapsed+2;
+ }else{const other=nearest(g,n,o=>Math.hypot(o.x-n.x,o.y-n.y)<2);if(other&&g.random()<dt*.6)interact(g,n,other)}
+ if(n.panic>0)n.panic=Math.max(0,n.panic-dt);
+ if(n.role==='firefighter'){let fire=g.world.hazards.find(h=>h.kind==='fire'&&h.life>0&&Math.hypot(n.x-h.x,n.y-h.y)<3);if(fire){fire.life-=dt*12;if(fire.life<=0)log(g,n.name+' extinguished a fire.')}}
+ if(n.role==='paramedic'){let patient=nearest(g,n,o=>o.health<85&&Math.hypot(o.x-n.x,o.y-n.y)<3);if(patient&&g.random()<dt*.65)interact(g,n,patient)}
+ if(n.role==='police'){let suspect=nearest(g,n,o=>o.emotion.anger>65&&Math.hypot(o.x-n.x,o.y-n.y)<2);if(suspect&&g.random()<dt*.5)interact(g,n,suspect)}
+ for(let m of n.memory){m.age+=dt;if(m.age>120&&m.strength<2)m.strength=0}n.memory=n.memory.filter(m=>m.strength>0);
+ }
+ if(!g.completed&&g.npcs.length&&!g.npcs.some(n=>n.alive)){g.winner=true;g.completed=true;log(g,'TOTAL ELIMINATION — victory!')}
+}
