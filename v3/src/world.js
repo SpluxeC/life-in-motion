@@ -1,5 +1,5 @@
 // Life in Motion v3: authoritative, grid-based hardware store geometry.
-export const WIDTH=48,HEIGHT=43;
+export const WIDTH=76,HEIGHT=50;
 export const key=(x,y)=>x+','+y;
 export function createHardwareStore(){
  const walls=new Map(),doors=[],fixtures=[],props=[],ground=[],blocked=new Set();
@@ -7,7 +7,7 @@ export function createHardwareStore(){
  const door=(x,y,type='hinged',label='Door')=>doors.push({id:'door-'+x+'-'+y,x,y,type,label,open:0,target:0,auto:type==='sliding',locked:false});
  const fixture=(type,x,y,w=1,h=1,extra={})=>fixtures.push({id:type+'-'+x+'-'+y,type,x,y,w,h,...extra});
  for(let y=0;y<HEIGHT;y++)for(let x=0;x<WIDTH;x++){
-  let area=y<10?'parking':x>=38&&y<28?'employee':x>=38?'garden':y>=10&&y<=39?'store':'grass';
+  let area=x>=65&&y<43?'road':y<10&&x<65?'parking':x>=38&&x<=46&&y>=10&&y<28?'employee':x>=38&&x<=48&&y>=28&&y<=39?'garden':y>=10&&y<=39&&x>=2&&x<=36?'store':x>=49&&x<=63&&y>=10&&y<44?'landscape':'grass';
   ground.push({x,y,area});
  }
  for(let x=2;x<=36;x++){wall(x,10);wall(x,39)}
@@ -39,7 +39,11 @@ export function createHardwareStore(){
  fixture('lockers',43,13,2,1);fixture('office',40,13,1,1);
  fixture('vending',44,19,1,1);fixture('table',41,19,2,1);fixture('sink',44,24,1,1);fixture('restroom',41,24,1,1);
  fixture('plants',41,33,2,2);fixture('plants',45,35,1,2);fixture('gardenDesk',42,29,2,1);
- for(let x of [7,15,23,31]){props.push({type:'car',id:'car-'+x,x,y:4,w:2,h:3,color:['#8faab5','#b8a28b','#697f89','#b5b6ae'][(x-7)/8],heading:0});for(let xx=x;xx<x+2;xx++)for(let yy=4;yy<7;yy++)blocked.add(key(xx,yy))}
+ for(let x of [7,15,23,31,40,48,56]){props.push({type:'car',id:'car-'+x,x,y:4,w:2,h:3,color:['#8faab5','#b8a28b','#697f89','#b5b6ae','#879994','#ae9691','#668b8c'][[7,15,23,31,40,48,56].indexOf(x)],heading:0});for(let xx=x;xx<x+2;xx++)for(let yy=4;yy<7;yy++)blocked.add(key(xx,yy))}
+ // Road access stays unobstructed between the main lot and the east service road.
+ for(let x of [4,12,20,28,36,44,52,60])props.push({id:'shrub-'+x,type:'shrub',x,y:1});
+ for(let y of [12,20,28,37,45])props.push({id:'tree-'+y,type:'tree',x:60,y});
+ for(let x of [51,57])for(let y of [13,25,38])props.push({id:'shrub-'+x+'-'+y,type:'shrub',x,y});
  return {id:'hardware-store',title:'Hardware Store',width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
 }
 export const inside=(x,y)=>x>=0&&y>=0&&x<WIDTH&&y<HEIGHT;
