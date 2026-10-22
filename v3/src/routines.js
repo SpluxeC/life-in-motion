@@ -13,7 +13,6 @@ export const ROUTINE_STOPS=[
  {x:41,y:18,label:'employee break room'},
  {x:27,y:8,label:'parking lot'}
 ];
-const distance=(a,b)=>Math.hypot(a.rx-a.x+a.x-b.x,a.ry-b.y);
 const near=(n,p,r=1)=>Math.hypot(n.rx-p.x,n.ry-p.y)<=r;
 const isShopper=n=>n.alive&&n.role==='customer'&&!n.arrested&&n.unconscious<=0;
 const isAvailable=n=>n.alive&&!n.arrested&&n.unconscious<=0;
@@ -122,9 +121,15 @@ function shopperDuty(g,n){
 export function chooseRoutine(g,n){
  if(!isAvailable(n)||!['employee','customer'].includes(n.role)||n.panic>0)return false;
  if(n.task){
-  if(n.task.kind==='helped'&&(!g.npcs.some(x=>x.id===n.helpedBy&&isAvailable(x)))){
+  if(n.task.kind==='helped'&&!g.npcs.some(x=>x.id===n.helpedBy&&isAvailable(x))){
    n.helpedBy=null;n.task=null;
-  }else return true;
+  }else{
+   // Floor workers notice nearby browsers even while patrolling.
+   if(n.duty==='floor'&&n.task.kind==='patrol'){
+    const c=canHelp(g,n);if(c&&assignHelp(g,n,c))return true;
+   }
+   return true;
+  }
  }
  return n.role==='employee'?staffDuty(g,n):shopperDuty(g,n);
 }
@@ -138,7 +143,8 @@ export function updateRoutine(g,n,dt){
  };
  if(task.phase==='walking'){
   n.action='walk';
-  if(n.path.length||!near(n,task.position,.85))return;
+  if(n.path.length)return;
+  if(!near(n,task.position,.85)){n.task=null;n.think=.15;return;}
   task.phase='working';task.until=g.elapsed+task.duration;n.actionPhase=0;
  }
  n.action=animate[task.kind]||'idle';n.actionPhase=(n.actionPhase||0)+dt;
