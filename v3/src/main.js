@@ -36,7 +36,7 @@ function drawFixture(o){const sp=project(o.x+o.w*.5,o.y+o.h*.5);ctx.fillStyle='#
  let [top,front]=palette[o.type]||palette.shelf;
  if(o.type==='shelf'){prism(o.x-.12,o.y-.1,1.24,o.h+.2,34,'#bdc5c0','#697d7a');
  // Individual merchandise shelves follow the same y-axis as the true collision footprint.
- for(let i=0;i<o.h;i++){let p=project(o.x+.3,o.y+i+.55,34);for(let shelf=0;shelf<3;shelf++){let z=34-shelf*10,q=project(o.x+.15,o.y+i+.42,z);ctx.fillStyle=['#d8b77a','#8da9b2','#bf8063','#d7c7a7'][(i+shelf)%4];ctx.fillRect(q.x-4*zoom,q.y-7*zoom,8*zoom,9*zoom);ctx.strokeStyle='#394a4b';ctx.lineWidth=1*zoom;ctx.strokeRect(q.x-4*zoom,q.y-7*zoom,8*zoom,9*zoom)}}}
+ for(let i=0;i<o.h;i++){let p=project(o.x+.3,o.y+i+.55,34);for(let shelf=0;shelf<3;shelf++){let z=34-shelf*10,q=project(o.x+.15,o.y+i+.42,z);ctx.fillStyle=['#d8b77a','#8da9b2','#bf8063','#d7c7a7'][(i+shelf)%4];ctx.fillRect(q.x-4*zoom,q.y-7*zoom,8*zoom,9*zoom);ctx.strokeStyle='#394a4b';ctx.lineWidth=1*zoom;ctx.strokeRect(q.x-4*zoom,q.y-7*zoom,8*zoom,9*zoom)}}
  }else{prism(o.x,o.y,o.w,o.h,o.type==='plants'?22:22,top,front);if(o.type==='plants'){for(let i=0;i<4;i++){let p=project(o.x+(i%2)*.6,o.y+Math.floor(i/2)*.6,25);ctx.fillStyle=i%2?'#9ab977':'#427d52';ctx.beginPath();ctx.arc(p.x,p.y,7*zoom,0,7);ctx.fill()}}}
  if(o.damaged){let p=project(o.x,o.y,33);ctx.fillStyle='#e8b866';ctx.beginPath();ctx.arc(p.x,p.y,5*zoom,0,7);ctx.fill()}
 }
