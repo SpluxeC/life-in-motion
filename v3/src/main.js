@@ -26,7 +26,21 @@ function unproject(sx,sy){let v=view(),px=(sx-v.w*.5)/zoom+offset.x,py=(sy-v.h*.
 function resize(){let dpr=Math.min(2,window.devicePixelRatio||1),v=view();if(lastViewport.w!==v.w||lastViewport.h!==v.h||canvas.width!==Math.round(v.w*dpr)){canvas.width=Math.round(v.w*dpr);canvas.height=Math.round(v.h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);lastViewport={...v}}}
 function drawHair(n,z,h){const hash=Number(String(n.id).replace(/[^0-9]/g,''))||0,style=n.role==='firefighter'?5:n.role==='police'?4:hash%6;const head=-h*z*.82;ctx.fillStyle='#11171b';ctx.strokeStyle='#101517';ctx.lineWidth=2*z;if(style===4||style===5){ctx.fillStyle=style===5?'#d4ba64':'#25394c';ctx.fillRect(-8*z,head-9*z,16*z,5*z);ctx.fillRect(-12*z,head-4*z,17*z,3*z)}else if(style===0){ctx.beginPath();ctx.arc(0,head-2*z,7*z,Math.PI,Math.PI*2);ctx.fill()}else if(style===1){ctx.beginPath();ctx.arc(0,head-3*z,7.5*z,Math.PI,Math.PI*2);ctx.fill();ctx.fillRect(6*z,head,4*z,9*z)}else if(style===2){ctx.fillRect(-7*z,head-9*z,14*z,4*z);ctx.fillRect(5*z,head-6*z,4*z,11*z)}else if(style===3){ctx.beginPath();ctx.arc(0,head-5*z,7*z,Math.PI,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(7*z,head-10*z,5*z,0,7);ctx.fill()}else{ctx.beginPath();ctx.arc(0,head-6*z,6*z,Math.PI,Math.PI*2);ctx.fill()}}
 function stick(n,t){let p=project(n.rx,n.ry),z=zoom*(n.role==='customer'||n.role==='employee'?1:1.07),moving=n.path.length>0,step=moving?Math.sin(t*10+n.id.length):0,h=n.unconscious>0?5:35;ctx.save();ctx.translate(p.x,p.y);ctx.strokeStyle='#121a1c';ctx.lineWidth=2.6*z;ctx.lineCap='round';ctx.fillStyle='#121b2380';ctx.beginPath();ctx.ellipse(0,2*z,10*z,4*z,0,0,7);ctx.fill();if(!n.alive){ctx.rotate(Math.PI/2);ctx.translate(0,9*z)}if(n.unconscious>0){ctx.rotate(1.4);ctx.translate(0,9*z)}
- const leg=h*.45*z;ctx.beginPath();ctx.moveTo(0,-h*z*.56);ctx.lineTo(0,-10*z);ctx.moveTo(0,-10*z);ctx.lineTo((-7+step*4)*z,0);ctx.moveTo(0,-10*z);ctx.lineTo((7-step*4)*z,0);ctx.moveTo(0,-h*z*.45);ctx.lineTo((-10-step*3)*z,-19*z);ctx.moveTo(0,-h*z*.45);ctx.lineTo((9+step*3)*z,-19*z);ctx.stroke();ctx.fillStyle='#f8faf7';ctx.strokeStyle='#0c1416';ctx.lineWidth=2*z;ctx.beginPath();ctx.arc(0,-h*z*.82,7*z,0,Math.PI*2);ctx.fill();ctx.stroke();if(n.role==='employee'){
+ const leg=h*.45*z;ctx.beginPath();ctx.moveTo(0,-h*z*.56);ctx.lineTo(0,-10*z);ctx.moveTo(0,-10*z);ctx.lineTo((-7+step*4)*z,0);ctx.moveTo(0,-10*z);ctx.lineTo((7-step*4)*z,0);const pose=n.action||'idle',wave=Math.sin((n.actionPhase||0)*7),bob=moving?Math.sin(t*12+n.id.length)*1.4:0;
+ ctx.moveTo(0,-h*z*.45);
+ if(pose==='offerHelp')ctx.lineTo((-10-2*wave)*z,(-34+3*wave)*z);
+ else if(pose==='scan'||pose==='type')ctx.lineTo((-12-2*wave)*z,(-12+3*wave)*z);
+ else if(pose==='inspect')ctx.lineTo((-13-2*wave)*z,(-20-4*wave)*z);
+ else if(pose==='drink')ctx.lineTo(-4*z,-h*z*.66);
+ else ctx.lineTo((-10-step*3)*z,(-19+bob)*z);
+ ctx.moveTo(0,-h*z*.45);
+ if(pose==='offerHelp')ctx.lineTo((10+2*wave)*z,(-23+4*wave)*z);
+ else if(pose==='scan')ctx.lineTo((13+3*wave)*z,(-11+4*wave)*z);
+ else if(pose==='type')ctx.lineTo((11-2*wave)*z,(-12+2*wave)*z);
+ else if(pose==='inspect')ctx.lineTo((10+3*wave)*z,(-26+3*wave)*z);
+ else if(pose==='talk')ctx.lineTo((10+3*wave)*z,(-18+3*wave)*z);
+ else ctx.lineTo((9+step*3)*z,(-19+bob)*z);
+ ctx.stroke();ctx.fillStyle='#f8faf7';ctx.strokeStyle='#0c1416';ctx.lineWidth=2*z;ctx.beginPath();ctx.arc(0,-h*z*.82,7*z,0,Math.PI*2);ctx.fill();ctx.stroke();if(n.role==='employee'){
   // Two tailored red vest panels, shoulder seams, a V-neck and an open black center.
   ctx.lineWidth=1.15*z;ctx.strokeStyle='#171a1c';ctx.fillStyle='#c92f38';
   ctx.beginPath();
@@ -43,9 +57,24 @@ function stick(n,t){let p=project(n.rx,n.ry),z=zoom*(n.role==='customer'||n.role
   ctx.beginPath();ctx.moveTo(-5.5*z,-h*z*.21);ctx.lineTo(-5*z,-h*z*.29);
   ctx.moveTo(5.5*z,-h*z*.21);ctx.lineTo(5*z,-h*z*.29);ctx.stroke();
   ctx.fillStyle='#f0e9df';ctx.fillRect(2.3*z,-h*z*.42,3.3*z,2*z);
-}drawHair(n,z,h);ctx.restore();
+}
+ if(n.alive&&n.unconscious<=0&&n.action==='scan'){
+  ctx.fillStyle='#3c5c66';ctx.fillRect((9+Math.sin((n.actionPhase||0)*7)*3)*z,-12*z,5*z,7*z);
+  ctx.fillStyle='#9ac9cd';ctx.fillRect(10*z,-11*z,3*z,2*z);
+ }else if(n.alive&&n.unconscious<=0&&n.action==='drink'){
+  ctx.fillStyle='#ddd1b3';ctx.fillRect(-5*z,-h*z*.70,5*z,6*z);
+  ctx.fillStyle='#b0dce1';ctx.fillRect(-5*z,-h*z*.70,5*z,2*z);
+ }
+ drawHair(n,z,h);ctx.restore();
+ if(n.alive&&n.unconscious<=0&&n.action==='offerHelp'&&n.task?.kind==='help'){
+  ctx.save();ctx.font=`bold ${Math.max(8,9*z)}px system-ui`;ctx.textAlign='center';ctx.textBaseline='middle';
+  const bw=39*z,bh=16*z,bx=p.x-bw/2,by=p.y-60*z;
+  ctx.fillStyle='#e9f1e9';ctx.fillRect(bx,by,bw,bh);
+  ctx.strokeStyle='#5b7779';ctx.lineWidth=1.4*z;ctx.strokeRect(bx,by,bw,bh);
+  ctx.fillStyle='#294a4e';ctx.fillText('HELP?',p.x,by+bh*.5,bw-5*z);ctx.restore();
+ }
  if(n.alive&&n.unconscious<=0&&n.cleaning){artwork.drawCleaningSet(n.rx,n.ry,n.cleaningPhase||0)}
- else if(n.alive&&n.unconscious<=0&&n.inventory?.length){artwork.drawItem(n.inventory[0],n.rx+.28,n.ry+.12,15,.66)}
+ else if(n.alive&&n.unconscious<=0&&n.inventory?.length&&(n.role!=='employee'||!['cashier','service','patrol','break','help'].includes(n.task?.kind))){artwork.drawItem(n.inventory[0],n.rx+.28,n.ry+.12,15,.66)}
  if(selected?.id===n.id){ctx.strokeStyle='#f5de79';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,14*z,7*z,0,0,7);ctx.stroke()}
 }
 function drawHazard(h,t){let p=project(h.x,h.y),z=zoom;ctx.save();if(h.kind==='fire'){for(let i=0;i<3;i++){ctx.fillStyle=i===0?'#ed743f':i===1?'#ffc15e':'#fae2a5';ctx.beginPath();ctx.ellipse(p.x+(i-1)*6*z,p.y-11*z-Math.sin(t*8+i)*3*z,7*z,15*z,0,0,Math.PI*2);ctx.fill()}}else if(h.kind==='spill'){ctx.fillStyle='#75bdbaad';ctx.beginPath();ctx.ellipse(p.x,p.y,19*z,6*z,0,0,7);ctx.fill()}else{ctx.strokeStyle=h.kind==='electric'?'#f4da78':'#e8b0a1';ctx.lineWidth=3*z;ctx.beginPath();ctx.moveTo(p.x-9*z,p.y);ctx.lineTo(p.x,p.y-17*z);ctx.lineTo(p.x+3*z,p.y-5*z);ctx.lineTo(p.x+14*z,p.y-20*z);ctx.stroke()}ctx.restore()}
