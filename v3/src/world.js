@@ -13,8 +13,8 @@ export function createHardwareStore(){
  for(let x=2;x<=36;x++){wall(x,10);wall(x,39)}
  for(let y=10;y<=39;y++){wall(2,y,'exterior','y');wall(36,y,'exterior','y')}
  // Actual openings are the exact tiles occupied by animated doors.
- for(let x=18;x<=21;x++)walls.delete(key(x,10));
- for(let x=27;x<=30;x++)walls.delete(key(x,39));
+ for(let x of [19,20])walls.delete(key(x,10));
+ for(let x of [28,29])walls.delete(key(x,39));
  for(let y of [17,30])walls.delete(key(36,y));
  door(19,10,'sliding','Main entrance');door(20,10,'sliding','Main entrance');
  door(28,39,'rollup','Receiving door');door(29,39,'rollup','Receiving door');
