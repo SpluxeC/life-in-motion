@@ -17,7 +17,7 @@ refreshContinue();
 const saveButton=document.createElement('button');saveButton.textContent='Save';saveButton.id='saveV3';$('home').before(saveButton);saveButton.onclick=()=>{if(game){let ok=saveGame(game);$('worldStatus').textContent=ok?'Full round saved':'Save failed: browser storage unavailable';refreshContinue()}};
 $('pause').onclick=()=>{if(game){game.paused=!game.paused;$('pause').textContent=game.paused?'Resume':'Pause'}};
 document.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>{if(!game)return;game.speed=+b.dataset.speed;document.querySelectorAll('[data-speed]').forEach(t=>t.classList.toggle('active',t===b))});
-function centerCamera(){let v=view();zoom=Math.min(.87,Math.max(.43,Math.min(v.w/1300,v.h/870)));offset={x:0,y:0}}
+function centerCamera(){let v=view();zoom=Math.min(.87,Math.max(.43,Math.min(v.w/1300,v.h/870)));offset=iso(24,21)}
 function iso(x,y){return{x:(x-y)*TW*.5,y:-(x+y)*TH*.5}}
 function project(x,y,z=0){let v=view(),p=iso(x,y);return{x:v.w*.5+(p.x-offset.x)*zoom,y:v.h*.56+(p.y-offset.y-z)*zoom}}
 function unproject(sx,sy){let v=view(),px=(sx-v.w*.5)/zoom+offset.x,py=(sy-v.h*.56)/zoom+offset.y;return{x:Math.round(px/TW-py/TH),y:Math.round(-px/TW-py/TH)}}
@@ -49,7 +49,7 @@ function drawHazard(h,t){let p=project(h.x,h.y),z=zoom;ctx.save();if(h.kind==='f
 function render(t){resize();let v=view();ctx.fillStyle='#263b39';ctx.fillRect(0,0,v.w,v.h);let w=game?.world||scene;
  for(let tile of w.ground){let {x,y,area}=tile;diamond(x,y,area==='parking'?'#4a5354':area==='store'?'#87918a':area==='employee'?'#798a83':area==='garden'?'#658367':'#6d7d66')}
  for(let x=4;x<46;x+=5){let p=project(x,7);ctx.strokeStyle='#d9d6b4';ctx.lineWidth=2*zoom;ctx.beginPath();ctx.moveTo(p.x-10*zoom,p.y);ctx.lineTo(p.x+10*zoom,p.y);ctx.stroke()}
- const items=[...w.fixtures.map(o=>({depth:o.x+o.y,fn:()=>drawFixture(o)})),...w.doors.map(o=>({depth:o.x+o.y,fn:()=>drawDoor(o,t)})),...w.walls.values()].map(o=>({depth:o.x+o.y,fn:()=>wallSegment(o)})),...w.props.map(o=>({depth:o.x+o.y,fn:()=>drawVehicle(o,t)})),...(game?game.npcs.map(o=>({depth:o.rx+o.ry,fn:()=>stick(o,t)})):[]),...w.hazards.map(o=>({depth:o.x+o.y,fn:()=>drawHazard(o,t)}))];
+ const items=[...w.fixtures.map(o=>({depth:o.x+o.y,fn:()=>drawFixture(o)})),...w.doors.map(o=>({depth:o.x+o.y,fn:()=>drawDoor(o,t)})),...[...w.walls.values()].map(o=>({depth:o.x+o.y,fn:()=>wallSegment(o)})),...w.props.map(o=>({depth:o.x+o.y,fn:()=>drawVehicle(o,t)})),...(game?game.npcs.map(o=>({depth:o.rx+o.ry,fn:()=>stick(o,t)})):[]),...w.hazards.map(o=>({depth:o.x+o.y,fn:()=>drawHazard(o,t)}))];
  // Iso view reverses depth: objects further from camera render first.
  items.sort((a,b)=>b.depth-a.depth);for(let item of items)item.fn();
  if(selected){let p=project(selected.x,selected.y);ctx.strokeStyle='#ffe69c';ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,8*zoom,0,7);ctx.stroke()}
