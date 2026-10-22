@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import {createHardwareStore,walkable,pathTo,doorAt} from '../src/world.js';
 import {makeGame,applyPower,updateGame,addHazard} from '../src/simulation.js';
 import {saveGame,loadGame} from '../src/persistence.js';
+import {createArtwork} from '../src/artwork.js';
 const store=new Map();
 globalThis.localStorage={getItem:key=>store.get(key)||null,setItem:(key,value)=>store.set(key,value)};
 const world=createHardwareStore();
@@ -31,4 +32,40 @@ for(let npc of saved.npcs){npc.alive=false;npc.health=0}
 // Empty living population causes exactly one victory transition.
 updateGame(saved,.1);assert.equal(saved.completed,true);assert.equal(saved.winner,true);
 const oldLog=saved.log.length;updateGame(saved,.1);assert.equal(saved.log.length,oldLog);
+// Built-in art must render every world asset type without external PNG files.
+const graphicsCalls={count:0};
+const drawingMethods=new Set(['beginPath','moveTo','lineTo','closePath','fill','stroke','ellipse','fillRect','strokeRect','fillText','arc']);
+const drawingContext=new Proxy({},{
+ get:(obj,k)=>drawingMethods.has(k)?()=>{graphicsCalls.count++}:obj[k],
+ set:(obj,k,val)=>{obj[k]=val;return true}
+});
+const project=(x,y,h=0)=>({x:500+(x-y)*17,y:350-(x+y)*8-h*.7});
+const artwork=createArtwork(drawingContext,project,()=>.7);
+artwork.drawFloor(world,{w:1000,h:700});
+for(const f of world.fixtures)artwork.drawFixture(f);
+for(const d of world.doors)for(const opened of [0,.5,1]){d.open=opened;artwork.drawDoor(d)}
+for(const w of world.walls.values())artwork.drawWall(w,world);
+for(const p of world.props)artwork.drawVehicle(p,0.5);
+for(const item of ['hammer','wrench','broom','flashlight','paint','bandage','water','phone','gloves'])artwork.drawDrop({item,x:20,y:21});
+assert(graphicsCalls.count>1000,'Procedural artwork draws all assets');
+const occupied=new Set();
+for(const fixture of world.fixtures)for(let x=fixture.x;x<fixture.x+fixture.w;x++)for(let y=fixture.y;y<fixture.y+fixture.h;y++){
+ const footprint=x+','+y;
+ assert(!occupied.has(footprint),'Fixture collision footprints must not overlap: '+footprint);
+ assert(!world.walls.has(footprint),'Fixture must not intersect structural walls: '+footprint);
+ occupied.add(footprint);
+}
+assert(world.walls.has('18,10')&&world.walls.has('21,10'),'Front entrance has no passable gaps beside animated doors');
+assert(world.walls.has('27,39')&&world.walls.has('30,39'),'Loading bay has no door bypass');
+const passageWorld=createHardwareStore();
+const passage=makeGame(passageWorld,{staff:1,customers:1,seed:333});
+const traveler=passage.npcs[0];traveler.x=traveler.rx=19;traveler.y=traveler.ry=8;
+traveler.path=pathTo(passageWorld,{x:19,y:8},{x:19,y:17});traveler.think=99999;
+for(const npc of passage.npcs.slice(1)){npc.x=npc.rx=33;npc.y=npc.ry=30;npc.path=[];npc.think=99999}
+const frontDoor=doorAt(passageWorld,19,10);let observedOpening=false;
+for(let i=0;i<270;i++){updateGame(passage,.05);if(frontDoor.open>.65)observedOpening=true}
+assert(observedOpening,'NPC approaches and door opens');
+assert(traveler.y>=13,'NPC crosses the threshold after door opens');
+assert(frontDoor.open<.12,'Door closes after the character clears the opening');
+assert(!passageWorld.walls.has('19,10'),'Door threshold stays free of structural wall collision');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
