@@ -176,4 +176,34 @@ for(let i=0;i<boxLeft.length;i++){
  assert(boxLeft[i].points.filter(v=>boxRight[i].points.some(w=>Math.abs(v[0]-w[0])<1e-7&&Math.abs(v[1]-w[1])<1e-7)).length===2,
   'Both carton faces must share their front vertical edge');
 }
+// Only the camera-facing hanging signs carry department names; old shelf,
+ // cabinet, counter and bin labels must not duplicate the new overhead signs.
+const signCalls={rects:[],texts:[]};
+const labelCtx={
+ beginPath(){},moveTo(){},lineTo(){},closePath(){},fill(){},stroke(){},ellipse(){},
+ arc(){},save(){},restore(){},
+ fillRect(x,y,w,h){signCalls.rects.push({x,y,w,h,fill:this.fillStyle})},
+ strokeRect(){},
+ fillText(text,x,y,maxWidth){signCalls.texts.push({text,x,y,maxWidth})}
+};
+const labelArt=createArtwork(labelCtx,project,()=>.65);
+for(const type of ['shelf','checkout','serviceDesk','toolCabinet','hardwareBins','endcap']){
+ const fixture=world.fixtures.find(f=>f.type===type);
+ assert(fixture,'Missing fixture required for sign test: '+type);
+ signCalls.texts.length=0;signCalls.rects.length=0;
+ labelArt.drawFixture(fixture);
+ assert(!signCalls.texts.some(t=>['PAINT','TOOLS','ELECTRICAL','PLUMBING','HARDWARE','CHECKOUT','CUSTOMER SERVICE'].includes(t.text)),
+  'Legacy department sign duplicated on '+type);
+}
+for(const title of ['PAINT','ELECTRICAL','PLUMBING','CHECKOUT','SERVICE','GARDEN']){
+ signCalls.rects.length=0;signCalls.texts.length=0;
+ labelArt.drawDepartmentSign(17.5,16.5,title,'#c9a946');
+ const face=signCalls.rects.find(r=>r.fill==='#e8e8dc');
+ assert(face,'Camera-facing department sign panel exists');
+ const text=signCalls.texts.find(t=>t.text===title);
+ assert(text,'Department sign text exists: '+title);
+ assert(text.x>=face.x&&text.x<=face.x+face.w,'Department sign text centered horizontally');
+ assert(text.y>=face.y&&text.y<=face.y+face.h,'Department sign text centered vertically');
+ assert(text.maxWidth<=face.w,'Department sign text cannot exceed its panel');
+}
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
