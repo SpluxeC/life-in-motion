@@ -145,4 +145,35 @@ for(const d of world.doors){
  assert(pathTo(world,a,b).some(p=>p.x===d.x&&p.y===d.y),
   'Door does not join both sides of its intended passage: '+d.label);
 }
+// Isometric solid regression: visible sides must meet at the near corner,
+// not the hidden far corner. Previously the back faces were drawn, leaving
+// counters, pallets and cabinets looking like their lower half was missing.
+const faceCalls=[];
+let capturedPath=[];
+const faceCtx={
+ beginPath(){capturedPath=[]},
+ moveTo(x,y){capturedPath.push([x,y])},
+ lineTo(x,y){capturedPath.push([x,y])},
+ closePath(){},
+ fill(){faceCalls.push({color:this.fillStyle,points:capturedPath.map(p=>[...p])})},
+ stroke(){},ellipse(){},arc(){},fillRect(){},strokeRect(){},fillText(){}
+};
+const faceProjection=(x,y,z=0)=>({x:(x-y)*24,y:-(x+y)*12-z});
+const faceArt=createArtwork(faceCtx,faceProjection,()=>1);
+const near=faceProjection(20.5,34.5),far=faceProjection(22.5,35.5);
+const hasVertex=(polygon,p)=>polygon.points.some(v=>Math.abs(v[0]-p.x)<1e-7&&Math.abs(v[1]-p.y)<1e-7);
+faceArt.drawFixture({type:'toolCabinet',x:21,y:35,w:2,h:1});
+const cabinetSides=faceCalls.filter(p=>['#733c37','#974a3e'].includes(p.color));
+assert.equal(cabinetSides.length,2,'Solid cabinet draws two visible side faces');
+assert(cabinetSides.every(poly=>hasVertex(poly,near)),'Both visible sides join at the nearest ground corner');
+assert(cabinetSides.every(poly=>!hasVertex(poly,far)),'Hidden far faces must never be drawn instead');
+faceCalls.length=0;
+faceArt.drawFixture({type:'pallet',x:11,y:35,w:2,h:1});
+const boxLeft=faceCalls.filter(p=>p.color==='#7b6a58');
+const boxRight=faceCalls.filter(p=>p.color==='#9b8065');
+assert(boxLeft.length>=6&&boxLeft.length===boxRight.length,'Each merchandise carton has two side faces');
+for(let i=0;i<boxLeft.length;i++){
+ assert(boxLeft[i].points.filter(v=>boxRight[i].points.some(w=>Math.abs(v[0]-w[0])<1e-7&&Math.abs(v[1]-w[1])<1e-7)).length===2,
+  'Both carton faces must share their front vertical edge');
+}
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
