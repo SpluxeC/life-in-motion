@@ -143,29 +143,33 @@ export function createArtwork(ctx,project,getZoom){
   ellipse(handle.x,handle.y,2.3,1.7,'#edd5a0','#71593d');
   if(d.label.includes('Restroom'))label((start.x+ex)/2,(start.y+ey)/2,39,'WC','#eff5e8','#43636c',16)
  }
- function rack(x,y,w,h,dept,stock){
-  shadow(x,y,w,h,1.15);
-  solid(x,y,w,h,4,'#434e4c','#374240','#505d58');
-  // Four open metal shelves, anchored to the exact y-axis floor footprint.
-  for(const height of [12,23,34,42]){
-   surface(x,y,w,h,height,'#b7c1b8','#536464');
+ function rack(x,y,w,h,dept,stock,capacity=12){
+  shadow(x,y,w,h,1.12);
+  solid(x,y,w,h,4,'#465453','#344440','#586761');
+  // Legs occupy the actual collision footprint: never project into an aisle.
+  for(const xx of [-.44,w-.56])for(const yy of [-.44,h/2-.5,h-.56]){
+   line(P(x+xx,y+yy,1),P(x+xx,y+yy,48),'#536970',2);
   }
-  for(let pos=0;pos<=h;pos+=h){for(let xx of [.04,w-.08]){
-   const a=P(x+xx,y+pos,0),b=P(x+xx,y+pos,47);
-   line(a,b,'#607479',2.2)
-  }}
-  for(let tier=0;tier<3;tier++){
-   for(let i=0;i<Math.min(9,Math.ceil(h*2));i++){
-    // Different merchandise silhouettes per department, not randomly floating blocks.
-    const py=y+.12+i*(h-.34)/Math.min(9,Math.ceil(h*2)),px=x+.20+(i%2)*.33,z=14+tier*11;
+  const shelfHeights=[12,23,34,42];
+  const ratio=stock===undefined?1:Math.max(0,Math.min(1,stock/Math.max(1,capacity)));
+  for(let tier=0;tier<shelfHeights.length;tier++){
+   const height=shelfHeights[tier];
+   surface(x,y,w,h,height,'#b8c3b8','#556967');
+   if(tier===shelfHeights.length-1)break;
+   const slots=Math.min(9,Math.ceil(h*2));
+   const products=Math.round(slots*ratio);
+   for(let i=0;i<products;i++){
+    const py=y-.32+(i+.5)*(h-.34)/slots;
+    const px=x-.2+(i%2)*.37;
+    const z=height+2;
     if(dept==='PAINT')miniCan(px,py,z,['#b75544','#e3c67b','#7292a6'][i%3],2.3);
-    else if(dept==='TOOLS'){miniBox(px,py,z,['#ab543d','#343f49','#a78d5d'][i%3],.27,.35,5)}
-    else if(dept==='PLUMBING'){bolt(px,py,z,i%2?'#91a7a7':'#d5c8a1')}
-    else if(dept==='ELECTRICAL'){miniBox(px,py,z,i%2?'#547b90':'#c8b989',.28,.32,6)}
-    else miniBox(px,py,z,i%2?'#b8ae93':'#697b78',.29,.33,5);
+    else if(dept==='TOOLS')miniBox(px,py,z,['#ab543d','#343f49','#a78d5d'][i%3],.27,.30,5);
+    else if(dept==='PLUMBING')bolt(px,py,z,i%2?'#91a7a7':'#d5c8a1');
+    else if(dept==='ELECTRICAL')miniBox(px,py,z,i%2?'#547b90':'#c8b989',.28,.30,6);
+    else miniBox(px,py,z,i%2?'#b8ae93':'#697b78',.29,.30,5);
    }
   }
-  label(x+.5,y+h-.6,49,dept||'HARDWARE','#f4e9da','#46595d',51)
+  label(x+(w-1)*.5,y+(h-1)*.5,51,dept||'HARDWARE','#f4e9da','#46595d',51);
  }
  function checkout(o){
   shadow(o.x,o.y,o.w,o.h);
@@ -222,7 +226,7 @@ export function createArtwork(ctx,project,getZoom){
  }
  function drawFixture(o){
   const {x,y,w,h,type}=o;shadow(x,y,w,h,1.1);
-  if(type==='shelf'){rack(x,y,w,h,o.department,o.stock);return}
+  if(type==='shelf'){rack(x,y,w,h,o.department,o.stock,o.capacity||12);return}
   if(type==='checkout'){checkout(o);return}
   if(type==='serviceDesk'){
    solid(x,y,w,h,22,'#b1bcbc','#6d7778','#8f9b9a');
@@ -245,7 +249,7 @@ export function createArtwork(ctx,project,getZoom){
      type==='bagPallet'?'#d8cab1':['#a9936b','#b7a383','#989b89'][i%3],.48,.32,10)}
   }else if(type==='workbench'||type==='office'){
    solid(x,y,w,h,19,'#b9946b','#776049','#8f7255');
-   if(type==='office'){miniBox(x+.4,y+.3,26,'#465860',.63,.3,8);miniBox(x+1.35,y+.3,23,'#d7d7ca',.24,.28,2)}
+   if(type==='office'){miniBox(x+.07,y+.3,26,'#465860',.45,.3,8);miniBox(x+.57,y+.3,23,'#d7d7ca',.24,.28,2)}
    else{for(let i=0;i<4;i++)drawItem(['hammer','wrench','flashlight','gloves'][i],x+.3+i*.37,y+.4,24)}
   }else if(type==='lockers'){
    solid(x,y,w,h,48,'#91a5ac','#667b80','#81979a');
@@ -259,7 +263,7 @@ export function createArtwork(ctx,project,getZoom){
    label(x+.49,y+.15,50,type==='vending'?'SNACKS':'DRINKS','#eee5d2',type==='vending'?'#943e38':'#51818b',38)
   }else if(type==='table'){
    solid(x,y,w,h,17,'#aa8968','#6b5949');for(let i=0;i<2;i++)miniCan(x+.4+i*.8,y+.4,21,'#d5d8cb',3);
-   for(let i=0;i<2;i++)solid(x+i*1.3,y+.85,.44,.39,10,'#5b6e71')
+   for(let i=0;i<2;i++)solid(x+i*1.3,y+.42,.44,.34,10,'#5b6e71')
   }else if(type==='sink'){
    solid(x,y,w,h,27,'#c9d0c8','#8c9a95');const p=P(x+.5,y+.4,29);ellipse(p.x,p.y,10,5,'#8ca7a9','#e4eee8');
    line(P(x+.47,y+.32,34),P(x+.47,y+.32,44),'#bfcac8',2);line(P(x+.47,y+.32,44),P(x+.57,y+.43,44),'#bcc8c7',2)
@@ -270,12 +274,12 @@ export function createArtwork(ctx,project,getZoom){
    solid(x,y,w,h,type==='plants'?9:19,type==='plants'?'#a38b68':'#829784','#615c48');
    plants(x+.17,y+.18,type==='plants'?13:23,Math.min(9,Math.round(w*h*2)+2))
   }else if(type==='endcap'||type==='hardwareBins'){
-   solid(x,y,w,h,36,'#65757a','#3d555a');for(let i=0;i<7;i++){
-    miniBox(x+.12+(i%2)*.37,y+.1+Math.floor(i/2)*.32,40-(i%3)*9,
-      ['#d6b66c','#6d9da4','#d17b59'][i%3],.32,.26,6)}
+   solid(x,y,w,h,36,'#65757a','#3d555a');for(let i=0;i<Math.min(6,o.stock??6);i++){
+    miniBox(x-.2+(i%2)*.4,y-.12,12+Math.floor(i/2)*10,
+      ['#d6b66c','#6d9da4','#d17b59'][i%3],.30,.26,6)}
    label(x+.5,y+.4,44,o.department||'HARDWARE','#eceddb','#455f64',47)
   }else if(type==='bucketStack'){
-   for(let i=0;i<4;i++)miniCan(x+.18+i%2*.45,y+.18+Math.floor(i/2)*.4,8,'#dadbd0',7)
+   for(let i=0;i<Math.min(4,o.stock??4);i++)miniCan(x-.18+i%2*.38,y-.18+Math.floor(i/2)*.38,8,'#dadbd0',7)
   }else if(type==='lumberRack'){
    solid(x,y,w,h,8,'#837866','#565447');for(let i=0;i<6;i++){
     solid(x+.12,y+.1+i*.13,w-.25,.12,12+i*3,'#c09e6c','#8a684c')}
@@ -294,7 +298,7 @@ export function createArtwork(ctx,project,getZoom){
  }
  function drawVehicle(v,t){
   if(v.type==='tree'||v.type==='shrub'){drawFoliage(v);return}
-  let {x,y}=v,w=2,h=v.emergency&&v.color==='#b9594d'?4:3;
+  let {x,y}=v,w=v.w||2,h=v.h||(v.emergency&&v.color==='#b9594d'?4:3);
   shadow(x,y,w,h,1.15);
   // Tire locations, bumpers and roof use the same physical world footprint.
   for(const pos of [[.12,.36],[1.72,.36],[.12,h-.7],[1.72,h-.7]]){
