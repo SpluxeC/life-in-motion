@@ -49,7 +49,8 @@ function choose(g,n){
  if(n.role==='paramedic'){let patient=g.npcs.find(o=>o.alive&&o.health<62&&o!==n);if(patient){goto(g,n,patient);n.activity='Responding to injury';return}}
  if(n.emotion.fear>60){goto(g,n,nearestOpen(w,7+Math.floor(r()*27),5+Math.floor(r()*4)));n.activity='Seeking safety';return}
  if(r()<.22){let friend=nearest(g,n);if(friend){goto(g,n,friend);n.activity='Socializing';return}}
- if(r()<.2){let o=w.fixtures[Math.floor(r()*w.fixtures.length)];goto(g,n,{x:o.x+2,y:o.y+1});n.activity=r()<.15?'Looking for something to steal':'Using '+o.type;return}
+ if(w.drops.length&&r()<.24){let drop=w.drops[Math.floor(r()*w.drops.length)];goto(g,n,drop);n.activity='Picking up item';return}
+ if(r()<.3){let o=w.fixtures[Math.floor(r()*w.fixtures.length)];goto(g,n,{x:o.x+2,y:o.y+1});n.activity=r()<.15?'Looking for something to steal':'Using '+o.type;return}
  goto(g,n,{x:4+Math.floor(r()*31),y:12+Math.floor(r()*24)});n.activity=n.role==='employee'?'Working':'Browsing';
 }
 function injury(g,n,amount,kind,attacker=null){if(!n||!n.alive)return;n.health=clamp(n.health-amount);n.pain=clamp(n.pain+amount*.6);n.bleeding=clamp(n.bleeding+(kind==='fire'?amount*.05:amount*.1),0,15);n.emotion.fear=clamp(n.emotion.fear+amount);memory(n,'injury',attacker?.id||kind,'Injured by '+kind,2);g.stats.injuries++;reward(g,Math.min(6,Math.ceil(amount/8)),'injury');if(n.health<=0)kill(g,n,kind);else if(n.health<24)n.unconscious=20+g.random()*28}
@@ -110,7 +111,10 @@ export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
  n.think-=dt;if(n.think<=0){n.think=1.5+g.random()*2;choose(g,n)}
  if(n.path.length){let next=n.path[0],entry=doorAt(g.world,next.x,next.y);if(entry&&entry.open<.65){entry.forceUntil=g.elapsed+2;continue}let p=n.path[0],dx=p.x-n.rx,dy=p.y-n.ry,dist=Math.hypot(dx,dy),speed=(n.panic?3.6:1.65)*(n.health<50?.7:1);if(dist<=dt*speed){n.rx=p.x;n.ry=p.y;n.x=p.x;n.y=p.y;n.path.shift()}else{n.rx+=dx/dist*dt*speed;n.ry+=dy/dist*dt*speed}
  let d=doorAt(g.world,Math.round(n.rx),Math.round(n.ry));if(d)d.forceUntil=g.elapsed+2;
- }else{const other=nearest(g,n,o=>Math.hypot(o.x-n.x,o.y-n.y)<2);if(other&&g.random()<dt*.6)interact(g,n,other)}
+ }else{
+ if(n.activity==='Picking up item'&&n.inventory.length<4){let idx=g.world.drops.findIndex(d=>Math.hypot(d.x-n.x,d.y-n.y)<2);if(idx>=0){let item=g.world.drops.splice(idx,1)[0];n.inventory.push(item.item);n.activity='Carrying '+(ITEMS.find(i=>i.id===item.item)?.name||'item')}}
+ if((n.activity==='Looking for something to steal'||n.activity.startsWith('Using '))&&n.inventory.length<4){let o=g.world.fixtures.find(o=>Math.hypot(o.x-n.x,o.y-n.y)<4&&o.stock!==0);if(o&&g.random()<dt*.5){let id=ITEMS[Math.floor(g.random()*ITEMS.length)].id;n.inventory.push(id);if(o.stock>0)o.stock--;let theft=n.activity==='Looking for something to steal';n.activity=(theft?'Stole ':'Picked up ')+(ITEMS.find(i=>i.id===id)?.name||'item');if(theft){log(g,n.name+' stole an item.');let witness=nearest(g,n,c=>Math.hypot(c.x-n.x,c.y-n.y)<4);if(witness){memory(witness,'theft',n.id,'Saw '+n.name+' stealing');witness.relationships[n.id]=clamp((witness.relationships[n.id]||0)-16,-100,100);if(witness.traits.suspicion>45)incident(g,'crime')}}}}
+ const other=nearest(g,n,o=>Math.hypot(o.x-n.x,o.y-n.y)<2);if(other&&g.random()<dt*.6)interact(g,n,other)}
  if(n.panic>0)n.panic=Math.max(0,n.panic-dt);
  if(n.role==='firefighter'){let fire=g.world.hazards.find(h=>h.kind==='fire'&&h.life>0&&Math.hypot(n.x-h.x,n.y-h.y)<3);if(fire){fire.life-=dt*12;if(fire.life<=0)log(g,n.name+' extinguished a fire.')}}
  if(n.role==='paramedic'){let patient=nearest(g,n,o=>o.health<85&&Math.hypot(o.x-n.x,o.y-n.y)<3);if(patient&&g.random()<dt*.65)interact(g,n,patient)}
