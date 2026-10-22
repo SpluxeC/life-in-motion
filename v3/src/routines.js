@@ -51,7 +51,7 @@ function customerShopTarget(g,n){
 function canHelp(g,n){
  if(n.duty!=='floor'||g.elapsed<(n.nextHelpAt||0))return null;
  return g.npcs.filter(c=>isShopper(c)&&!c.helpedBy&&c.task?.kind==='browse'&&
-  Math.hypot(c.rx-n.rx,c.ry-n.ry)<13).sort((a,b)=>
+  Math.hypot(c.rx-n.rx,c.ry-n.ry)<17).sort((a,b)=>
    Math.hypot(a.rx-n.rx,a.ry-n.ry)-Math.hypot(b.rx-n.rx,b.ry-n.ry))[0];
 }
 function assignHelp(g,n,c){
@@ -60,7 +60,7 @@ function assignHelp(g,n,c){
   .filter(p=>walkable(g.world,p.x,p.y));
  for(const p of free){
   if(schedule(g,n,'help',p,4,{customerId:c.id,label:'Asking '+c.name+' if they need help'})){
-   c.helpedBy=n.id;c.path=[];c.task={kind:'helped',phase:'working',position:{x:c.rx,y:c.ry},duration:7,until:g.elapsed+7};
+   c.helpedBy=n.id;c.path=[];c.task={kind:'helped',phase:'working',position:{x:c.rx,y:c.ry},duration:Math.max(18,Math.hypot(c.rx-n.rx,c.ry-n.ry)*2.6),until:g.elapsed+Math.max(18,Math.hypot(c.rx-n.rx,c.ry-n.ry)*2.6)};
    c.activity='Getting assistance';c.action='talk';n.nextHelpAt=g.elapsed+28;return true;
   }
  }
@@ -157,6 +157,7 @@ export function updateRoutine(g,n,dt){
   const c=g.npcs.find(c=>c.id===task.customerId);
   if(c&&near(n,c,2.4)){
    n.action='offerHelp';n.activity='Asking '+c.name+' if they need help';
+   if(c.task?.kind==='helped'&&!task.conversationLogged)c.task.until=g.elapsed+4;
    if(!task.conversationLogged){task.conversationLogged=true;const words=['Can I help you find something?','Looking for anything in particular?','Need a hand finding the right aisle?'];g.log.unshift({time:Math.floor(g.elapsed),text:n.name+': '+words[Math.floor(g.random()*words.length)]});g.log.length=Math.min(g.log.length,100)}
   }
  }
