@@ -1,5 +1,5 @@
-import {createHardwareStore,doorAt,fixtureAt,nearestOpen,walkable,key} from './world.js?v=visual-20261022-2';
-import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v=visual-20261022-2';
+import {createHardwareStore,doorAt,fixtureAt,nearestOpen,walkable,key} from './world.js?v=builtin-art-20261022-1';
+import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v=builtin-art-20261022-1';
 import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js';
 import {createArtwork} from './artwork.js';
 const $=id=>document.getElementById(id);
@@ -113,7 +113,7 @@ function inspectAtScreen(sx,sy){
   const hit=boxHit(d,10,5);
   if(hit!==null)add(d,hit,4);
  }
- hits.sort((a,b)=>a.priority-b.priority||a.d-b.d);
+ hits.sort((a,b)=>a.d-b.d||a.priority-b.priority);
  if(hits.length){selected=hits[0].target;refreshHud();return}
  const tile=unproject(sx,sy);inspect(tile.x,tile.y)
 }
