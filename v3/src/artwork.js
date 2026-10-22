@@ -34,7 +34,11 @@ export function createArtwork(ctx,project,getZoom){
   ctx.fillText(text,p.x,p.y-1*s,width*s-3*s)
  }
  function miniBox(x,y,z,c='#ad865b',w=.34,h=.37,t=6){
-  return solid(x,y,w,h,t,c,'#7b6a58','#9b8065').map(p=>p)
+  const corners=[P(x-.5,y-.5,z),P(x+w-.5,y-.5,z),P(x+w-.5,y+h-.5,z),P(x-.5,y+h-.5,z)];
+  const top=[P(x-.5,y-.5,z+t),P(x+w-.5,y-.5,z+t),P(x+w-.5,y+h-.5,z+t),P(x-.5,y+h-.5,z+t)];
+  poly([top[2],top[3],corners[3],corners[2]],'#7b6a58');
+  poly([top[1],top[2],corners[2],corners[1]],'#9b8065');
+  poly(top,c,'#445154',.5);
  }
  function miniCan(x,y,z,c='#c76b4d',r=3){
   const p=P(x,y,z);ctx.fillStyle=c;ctx.fillRect(p.x-r*Z(),p.y-6*Z(),r*2*Z(),6*Z());
