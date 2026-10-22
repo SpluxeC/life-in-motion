@@ -7,7 +7,7 @@ export function createHardwareStore(){
  const door=(x,y,type='hinged',label='Door',axis='x')=>doors.push({id:'door-'+x+'-'+y,x,y,type,label,axis,open:0,target:0,auto:type==='sliding',locked:false,forceUntil:0});
  const fixture=(type,x,y,w=1,h=1,extra={})=>fixtures.push({id:type+'-'+x+'-'+y,type,x,y,w,h,...extra});
  for(let y=0;y<HEIGHT;y++)for(let x=0;x<WIDTH;x++){
-  let area=x>=65&&y<43?'road':y<10&&x<65?'parking':x>=38&&x<=46&&y>=10&&y<28?'employee':x>=38&&x<=48&&y>=28&&y<=39?'garden':y>=10&&y<=39&&x>=2&&x<=36?'store':x>=49&&x<=63&&y>=10&&y<44?'landscape':'grass';
+  let area=x>=65&&y<43?'road':y<10&&x<65?'parking':x===37&&y>=10&&y<=39?'sidewalk':x>=25&&x<=34&&y>=40&&y<=43?'loading':x>=38&&x<=46&&y>=10&&y<28?'employee':x>=38&&x<=48&&y>=28&&y<=39?'garden':y>=10&&y<=39&&x>=2&&x<=36?'store':x>=49&&x<=63&&y>=10&&y<44?'landscape':'grass';
   ground.push({x,y,area});
  }
  for(let x=2;x<=36;x++){wall(x,10);wall(x,39)}
