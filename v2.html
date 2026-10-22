@@ -214,28 +214,27 @@ const DEPARTMENTS=[
 {label:'LUMBER',product:'lumber',color:'#bb9768'},{label:'CLEANING',product:'cleaning',color:'#a6b9b0'}];
 function object(x,y,color,type,extra={}){let o={id:type+'-'+x+'-'+y,x,y,color,type,...extra};objects.push(o);if(o.block!==false)blocked.add(x+','+y);return o}
 function build(){objects=[];blocked=new Set();
-for(let x=1;x<=37;x++){if(x<24||x>28)object(x,8,'#b9c8c9','wall',{section:'front'});if(x<29||x>31)object(x,37,'#aab8b9','wall',{section:'rear'})}
-for(let y=9;y<37;y++){object(1,y,'#b9c8c9','wall',{section:'side'});if(y<17||y>19&&y<27||y>29)object(37,y,'#abbfc2','wall',{section:'side'})}
-for(let x=39;x<=46;x++){if(x!==43){object(x,14,'#8eabae','partition');object(x,19,'#8eabae','partition')}}for(let y=9;y<=26;y++){if(y!==12&&y!==17&&y!==22)object(39,y,'#9eafb0','partition',{section:'staff-side'})}for(let x=39;x<=46;x++){if(x!==43){object(x,9,'#8eabae','partition',{section:'staff-top'});object(x,26,'#8eabae','partition',{section:'staff-bottom'})}}for(let y of [10,12,17,22])object(39,y,'#bca37c','door',{block:false,section:'staff'});for(let [x,y] of [[26,8],[30,37],[37,18],[37,28],[43,14],[43,19]])object(x,y,'#bca37c','door',{block:false,section:'entrance'});
-for(let x=4,i=0;x<=32;x+=4,i++)for(let band=0;band<2;band++){let dept=DEPARTMENTS[i+band*8];for(let y=(band===0?16:23);y<=(band===0?19:26);y++)object(x,y,dept.color,'shelf',{department:dept.label,product:dept.product,capacity:12,stock:5+rand(8),aisle:i+1})}
-for(let x of [4,9,14,19])object(x,11,'#c9a878','register',{department:'CHECKOUT',capacity:1,stock:1});
-object(31,11,'#9caeb6','serviceDesk',{department:'CUSTOMER SERVICE'});
-object(27,11,'#d5ae5d','carts',{department:'ENTRANCE'});
-object(6,13,'#9e9cac','paintMixer',{department:'PAINT SERVICE'});
-object(15,13,'#aab5ae','keyCutter',{department:'KEY CUTTING'});
-object(35,30,'#bd9971','saw',{department:'LUMBER CUTTING'});
-object(31,30,'#bc9b6a','pallet',{department:'LUMBER',product:'lumber',capacity:18,stock:14});
-object(28,30,'#bc9b6a','pallet',{department:'LUMBER',product:'lumber',capacity:18,stock:12});
-object(33,32,'#b1a077','workbench',{department:'LUMBER'});
-object(40,11,'#7faac0','office',{department:'OFFICE'});
-object(41,16,'#8eb6a8','break',{department:'BREAK ROOM'});
-object(41,21,'#b9accb','restroom',{department:'RESTROOM'});
-object(45,11,'#9db4ba','lockers',{department:'STAFF ROOM'});
-object(45,16,'#93aaa2','vending',{department:'BREAK ROOM'});
-object(45,21,'#b9accb','sink',{department:'RESTROOM'});
-object(43,24,'#8aaf88','gardenDesk',{department:'GARDEN CENTER'});
-for(let x of [40,43,46])for(let y of [27,30,33])object(x,y,'#6b9e6f','plant',{department:'GARDEN CENTER',product:'garden supplies',capacity:8,stock:4+rand(5)});
-object(40,33,'#7ba488','greenhouse',{department:'GARDEN CENTER'});
+ // Expanded showroom: central customer lanes, separated staff wing and rear receiving.
+ for(let x=1;x<=37;x++){if(x<24||x>28)object(x,8,'#b9c8c9','wall',{section:'front'});if(x<29||x>31)object(x,37,'#aab8b9','wall',{section:'rear'})}
+ for(let y=9;y<37;y++){object(1,y,'#b9c8c9','wall',{section:'side'});if(![18,28].includes(y))object(37,y,'#abbfc2','wall',{section:'side'})}
+ // Staff rooms enclosed on every side, including a continuous rear wall at y=26.
+ for(let x=39;x<=46;x++){object(x,9,'#8eabae','partition',{section:'staff-top'});object(x,26,'#8eabae','partition',{section:'staff-bottom'});if(x!==43)for(let y of [14,19])object(x,y,'#8eabae','partition',{section:'staff-row'})}
+ for(let y=10;y<26;y++){if(![12,17,22].includes(y))object(39,y,'#9eafb0','partition',{section:'staff-side'});object(46,y,'#9eafb0','partition',{section:'staff-outer'})}
+ for(let [x,y] of [[39,12],[39,17],[39,22],[43,14],[43,19],[26,8],[30,37],[37,18],[37,28]])object(x,y,'#bca37c','door',{block:false,section:'entrance'});
+ // Six wide parallel aisles, grouped into two runs with open cross-aisles.
+ const xs=[5,10,15,20,25,30];
+ for(let i=0;i<xs.length;i++)for(let band=0;band<2;band++){let dept=DEPARTMENTS[(i+band*8)%DEPARTMENTS.length];for(let y=(band?26:16);y<=(band?29:19);y++)object(xs[i],y,dept.color,'shelf',{department:dept.label,product:dept.product,capacity:12,stock:5+rand(8),aisle:i+1+band*6,rotation:0})}
+ // Front services and checkout: keep y=9-14 as a clear circulation zone.
+ for(let x of [5,11,17,23])object(x,11,'#c9a878','register',{department:'CHECKOUT',capacity:1,stock:1});
+ object(32,11,'#9caeb6','serviceDesk',{department:'CUSTOMER SERVICE'});object(27,11,'#d5ae5d','carts',{department:'ENTRANCE'});
+ object(6,13,'#9e9cac','paintMixer',{department:'PAINT SERVICE'});object(15,13,'#aab5ae','keyCutter',{department:'KEY CUTTING'});
+ // Rear lumber/receiving stays clear of the main loading entrance.
+ object(35,33,'#bd9971','saw',{department:'LUMBER CUTTING'});for(let x of [21,25])object(x,33,'#bc9b6a','pallet',{department:'LUMBER',product:'lumber',capacity:18,stock:14});object(32,33,'#b1a077','workbench',{department:'LUMBER'});
+ object(41,11,'#7faac0','office',{department:'OFFICE'});object(41,16,'#8eb6a8','break',{department:'BREAK ROOM'});object(41,21,'#b9accb','restroom',{department:'RESTROOM'});
+ object(45,11,'#9db4ba','lockers',{department:'STAFF ROOM'});object(45,16,'#93aaa2','vending',{department:'BREAK ROOM'});object(45,21,'#b9accb','sink',{department:'RESTROOM'});
+ object(43,29,'#8aaf88','gardenDesk',{department:'GARDEN CENTER'});
+ for(let x of [40,43,46])for(let y of [31,34])object(x,y,'#6b9e6f','plant',{department:'GARDEN CENTER',product:'garden supplies',capacity:8,stock:4+rand(5)});
+ object(40,34,'#7ba488','greenhouse',{department:'GARDEN CENTER'});
 }
 function closestOpen(x,y){x=Math.max(0,Math.min(W-1,Math.round(x)));y=Math.max(0,Math.min(H-1,Math.round(y)));if(valid(x,y))return{x,y};for(let radius=1;radius<W;radius++)for(let dx=-radius;dx<=radius;dx++)for(let dy=-radius;dy<=radius;dy++){if(Math.abs(dx)+Math.abs(dy)!==radius)continue;if(valid(x+dx,y+dy))return{x:x+dx,y:y+dy}}return{x:26,y:9}}
 const pathCache=new Map();let hazardVersion=0;let pathRiskSignature='',pathRiskCacheAt=0;function findPath(x,y,tx,ty){
@@ -568,7 +567,7 @@ function drawJoinedPartitions(s){
  const segments=[];let keys=new Set(pieces.map(o=>o.x+','+o.y));
  // Render contiguous tiles as a single planar run, instead of overlapping cuboids.
  for(let o of pieces){if(o.type==='wall')continue;
-  let horiz=['staff-top','staff-bottom'].includes(o.section)||[14,19].includes(o.y);
+  let horiz=['staff-top','staff-bottom','staff-row'].includes(o.section)||[14,19,26].includes(o.y);
   if(horiz&&keys.has((o.x-1)+','+o.y))continue;
   if(!horiz&&keys.has(o.x+','+(o.y-1)))continue;
   let x=o.x,y=o.y,end=horiz?x:y;
@@ -584,9 +583,9 @@ function drawJoinedPartitions(s){
 }
 function drawRefinedFixture(o,s){
  let p=project(o.x,o.y),t=o.type;
- ctx.save();ctx.translate(p.x,p.y);ctx.scale(s*(o.scale||1),s*(o.scale||1));ctx.rotate((o.rotation||0)*Math.PI/180);ctx.lineJoin='round';if(t!=='shelf')ctx.transform(1,-.18,.20,1,0,0);
+ ctx.save();ctx.translate(p.x,p.y);ctx.scale(s*(o.scale||1),s*(o.scale||1));ctx.rotate((o.rotation||0)*Math.PI/180);ctx.lineJoin='round';ctx.transform(1,-.27,.27,1,0,0);
  let box=(w,h,c,edge='#293940')=>{ctx.fillStyle='#10191e6b';ctx.beginPath();ctx.ellipse(5,3,w*.65,8,0,0,7);ctx.fill();ctx.fillStyle=edge;ctx.fillRect(-w/2+5,-h+6,w, h-6);ctx.fillStyle=c;ctx.fillRect(-w/2,-h,w-5,h-6);ctx.fillStyle='#c9d3ca';ctx.fillRect(-w/2,-h,w-5,4);ctx.strokeStyle='#283941';ctx.lineWidth=1.4;ctx.strokeRect(-w/2,-h,w-5,h-6)};
- if(t==='shelf'){ctx.transform(1,-.30,.30,1,0,0);box(34,39,'#485a60');for(let row=0;row<3;row++){let y=-32+row*11;ctx.fillStyle='#a5afb0';ctx.fillRect(-15,y+7,28,2);for(let k=0;k<4;k++){let hues=['#be8b57','#7898a4','#d1b96c','#6c9b77'];ctx.fillStyle=hues[(row+k+(o.x|0))%4];ctx.fillRect(-13+k*7,y,5,7);ctx.fillStyle='#f2e9d5';ctx.fillRect(-13+k*7,y+3,5,1)}}ctx.fillStyle=o.color||'#ceac68';ctx.fillRect(-16,-43,30,5);ctx.fillStyle='#f7efe0';ctx.font='bold 6px system-ui';ctx.textAlign='center';ctx.fillText((o.product||'HARDWARE').slice(0,11).toUpperCase(),-1,-39)}
+ if(t==='shelf'){box(34,39,'#485a60');for(let row=0;row<3;row++){let y=-32+row*11;ctx.fillStyle='#a5afb0';ctx.fillRect(-15,y+7,28,2);for(let k=0;k<4;k++){let hues=['#be8b57','#7898a4','#d1b96c','#6c9b77'];ctx.fillStyle=hues[(row+k+(o.x|0))%4];ctx.fillRect(-13+k*7,y,5,7);ctx.fillStyle='#f2e9d5';ctx.fillRect(-13+k*7,y+3,5,1)}}ctx.fillStyle=o.color||'#ceac68';ctx.fillRect(-16,-43,30,5);ctx.fillStyle='#f7efe0';ctx.font='bold 6px system-ui';ctx.textAlign='center';ctx.fillText((o.product||'HARDWARE').slice(0,11).toUpperCase(),-1,-39)}
  else if(t==='register'||t==='serviceDesk'||t==='gardenDesk'){box(41,26,'#967956');ctx.fillStyle='#486771';ctx.fillRect(-10,-39,19,13);ctx.fillStyle='#c1d3d4';ctx.fillRect(-7,-36,13,7);ctx.fillStyle='#273943';ctx.fillRect(-17,-31,9,5);ctx.fillStyle='#d4c18e';ctx.fillRect(-16,-24,30,3)}
  else if(t==='plant'||t==='greenhouse'){box(30,12,'#827155');for(let i=0;i<3;i++){let x=-10+i*10;ctx.strokeStyle='#40764c';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(x,-10);ctx.lineTo(x,-38);ctx.stroke();for(let j=0;j<3;j++){ctx.fillStyle=j%2?'#87af68':'#418c58';ctx.beginPath();ctx.ellipse(x+(j-1)*5,-33+j*6,7,4,j-1,0,7);ctx.fill()}}}
  else if(t==='pallet'){box(36,15,'#806446');for(let j=0;j<2;j++)for(let i=0;i<3;i++){ctx.fillStyle=['#b89c70','#ac8d5a','#c6ad81'][i];ctx.fillRect(-15+i*10,-29+j*12,9,11);ctx.strokeStyle='#785c40';ctx.strokeRect(-15+i*10,-29+j*12,9,11)}}
