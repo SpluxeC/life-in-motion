@@ -327,9 +327,60 @@ export function createArtwork(ctx,project,getZoom){
   }else{for(let i=0;i<6;i++){const q=P(x+(i%3)*.22-.25,y+Math.floor(i/3)*.25-.13,12+(i%2)*3);
    ellipse(q.x,q.y,7,5,['#356947','#558350','#6e9857'][i%3])}}
  }
+ // Overhead department signage is an independent visual layer:
+ // signs have no collision footprint and do not block doors or aisles.
+ function drawDepartmentSign(x,y,name,accent='#467887'){
+  const z=68,a=P(x-.95,y-.12,z),b=P(x+.95,y-.12,z);
+  const c=P(x+.95,y-.12,z-18),d=P(x-.95,y-.12,z-18);
+  const leftTop=P(x-.6,y-.12,z+17),rightTop=P(x+.6,y-.12,z+17);
+  line(leftTop,P(x-.6,y-.12,z),'#b7c3b8',1.7);
+  line(rightTop,P(x+.6,y-.12,z),'#b7c3b8',1.7);
+  poly([a,b,c,d],'#e8e8dc','#4b6669',1.8);
+  line(P(x-.91,y-.12,z-3),P(x+.91,y-.12,z-3),accent,3);
+  const mid=P(x,y-.12,z-10);
+  ctx.font=`bold ${Math.max(8,10*Z())}px system-ui,sans-serif`;
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#2d4549';
+  ctx.fillText(name,mid.x,mid.y,86*Z())
+ }
+ // A-frame warning sign sits at the actual wet-floor tile and persists briefly.
+ function drawWetFloorSign(x,y){
+  const baseLeft=P(x-.22,y-.1,0),baseRight=P(x+.24,y-.1,0);
+  const top=P(x,y-.1,25),back=P(x,y+.14,1);
+  poly([baseLeft,baseRight,top],'#efd04d','#7e6c23',1.7);
+  poly([baseRight,back,top],'#c6a53f','#7b6425',1.2);
+  line(top,P(x,y-.1,4),'#8b7324',1.2);
+  const p=P(x,y-.1,17);
+  ctx.fillStyle='#3d391c';ctx.beginPath();
+  ctx.moveTo(p.x,p.y-5*Z());ctx.lineTo(p.x+5*Z(),p.y+4*Z());
+  ctx.lineTo(p.x-5*Z(),p.y+4*Z());ctx.closePath();ctx.fill();
+  ctx.font=`bold ${Math.max(6,7*Z())}px system-ui,sans-serif`;
+  ctx.textAlign='center';ctx.fillStyle='#fff2b4';ctx.fillText('!',p.x,p.y+2*Z(),9*Z());
+  const writing=P(x,y-.1,8);ctx.fillStyle='#41351d';
+  ctx.font=`bold ${Math.max(5,6*Z())}px system-ui,sans-serif`;
+  ctx.fillText('WET FLOOR',writing.x,writing.y,33*Z())
+ }
+ // Movement-driven mop head and bucket; time comes from the NPC's own cleaning phase.
+ function drawCleaningSet(x,y,phase=0){
+  const z=Z(),swing=Math.sin(phase*7)*.33,bucket=P(x+.52,y+.20);
+  shadow(x+.48,y+.17,.4,.4,.7);
+  // Bucket walls, handle, water surface and a moving reflection.
+  const a=P(x+.35,y+.06,1),b=P(x+.68,y+.06,1),c=P(x+.68,y+.40,1),d=P(x+.35,y+.40,1);
+  const at=P(x+.35,y+.06,15),bt=P(x+.68,y+.06,15),ct=P(x+.68,y+.40,15),dt=P(x+.35,y+.40,15);
+  poly([dt,ct,c,d],'#e5bd41','#7b6832',1);poly([bt,ct,c,b],'#d4a734','#7b6832',1);
+  poly([at,bt,ct,dt],'#edcd56','#987b2b',1);
+  ellipse(bucket.x,bucket.y-15*z,6.5,3.1,'#93cdd3','#4b8086');
+  line(P(x+.34,y+.12,14),P(x+.47,y+.20,26),'#a7b4af',1.3);
+  line(P(x+.47,y+.20,26),P(x+.68,y+.3,14),'#a7b4af',1.3);
+  const mopX=x-.28+swing,mopY=y-.14-swing*.18;
+  const foot=P(mopX,mopY,2),hand=P(x-.08,y-.05,44);
+  line(hand,foot,'#b68d57',3);
+  line(P(mopX-.16,mopY+.12,3),P(mopX+.18,mopY-.10,3),'#94a8a4',4);
+  for(let k=-2;k<=2;k++)line(P(mopX+k*.05,mopY+.15,1),P(mopX+k*.05+.04,mopY+.28,1),'#d7d1b8',1.2);
+  if(phase>0)for(let i=0;i<3;i++){const p=P(mopX+i*.12-.12,mopY+.33,1);ellipse(p.x,p.y,2.2,1,'#9bc9cc88')}
+ }
  function drawDrop(d){
   shadow(d.x-.1,d.y-.1,.25,.25,.75);
   drawItem(d.item,d.x,d.y,6,1.2)
  }
- return {drawFloor,drawWall,drawDoor,drawFixture,drawVehicle,drawDrop,drawItem};
+ return {drawFloor,drawWall,drawDoor,drawFixture,drawVehicle,drawDrop,drawItem,drawDepartmentSign,drawWetFloorSign,drawCleaningSet};
 }
