@@ -1,0 +1,85 @@
+import {createHardwareStore,doorAt,fixtureAt,nearestOpen,walkable,key} from './world.js';
+import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js';
+import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js';
+const $=id=>document.getElementById(id);
+const canvas=$('game'),ctx=canvas.getContext('2d');
+let game=null,scene=createHardwareStore(),zoom=.72,offset={x:0,y:0},last=performance.now(),acc=0,lastHud=0,lastSave=0,lastViewport={w:0,h:0},drag=null,selected=null,resultShown=false;
+const TW=48,TH=24,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const view=()=>({w:canvas.clientWidth,h:canvas.clientHeight});
+function show(screen){for(let id of ['mainMenu','howToPlayScreen','worldSetup'])$(id).classList.toggle('hidden',id!==screen)}
+function setup(step){show('worldSetup');$('setupMapStep').hidden=step!==1;$('setupOptionsStep').hidden=step!==2;$('setupStepLabel').textContent='STEP '+step+' OF 2 · '+(step===1?'SELECT MAP':'NEW WORLD')}
+$('startGame').onclick=()=>setup(1);$('howToPlayButton').onclick=()=>show('howToPlayScreen');$('howToBack').onclick=()=>show('mainMenu');$('setupBack').onclick=()=>{$('setupOptionsStep').hidden?show('mainMenu'):setup(1)};
+$('mapHardware').onclick=()=>setup(2);$('home').onclick=()=>{if(game&&!game.completed)saveGame(game);show('mainMenu');refreshContinue()};
+$('setupLaunch').onclick=()=>{scene=createHardwareStore();game=makeGame(scene,{staff:+$('setupStaff').value,customers:+$('setupCustomers').value});selected=null;resultShown=false;show(null);centerCamera();refreshHud()};
+$('continueGame').onclick=()=>{let restored=loadGame();if(!restored){$('continueGame').disabled=true;return}game=restored;scene=game.world;selected=null;resultShown=false;show(null);centerCamera();refreshHud()};
+function refreshContinue(){$('continueGame').disabled=!hasSave()}
+refreshContinue();
+const saveButton=document.createElement('button');saveButton.textContent='Save';saveButton.id='saveV3';$('home').before(saveButton);saveButton.onclick=()=>{if(game){let ok=saveGame(game);$('worldStatus').textContent=ok?'Full round saved':'Save failed: browser storage unavailable';refreshContinue()}};
+$('pause').onclick=()=>{if(game){game.paused=!game.paused;$('pause').textContent=game.paused?'Resume':'Pause'}};
+document.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>{if(!game)return;game.speed=+b.dataset.speed;document.querySelectorAll('[data-speed]').forEach(t=>t.classList.toggle('active',t===b))});
+function centerCamera(){let v=view();zoom=Math.min(.87,Math.max(.43,Math.min(v.w/1300,v.h/870)));offset={x:0,y:0}}
+function iso(x,y){return{x:(x-y)*TW*.5,y:-(x+y)*TH*.5}}
+function project(x,y,z=0){let v=view(),p=iso(x,y);return{x:v.w*.5+(p.x-offset.x)*zoom,y:v.h*.56+(p.y-offset.y-z)*zoom}}
+function unproject(sx,sy){let v=view(),px=(sx-v.w*.5)/zoom+offset.x,py=(sy-v.h*.56)/zoom+offset.y;return{x:Math.round(px/TW-py/TH),y:Math.round(-px/TW-py/TH)}}
+function resize(){let dpr=Math.min(2,window.devicePixelRatio||1),v=view();if(lastViewport.w!==v.w||lastViewport.h!==v.h||canvas.width!==Math.round(v.w*dpr)){canvas.width=Math.round(v.w*dpr);canvas.height=Math.round(v.h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);lastViewport={...v}}}
+function polygon(points,fill,stroke=null,width=1){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=width*zoom;ctx.stroke()}}
+function diamond(x,y,color){let p=project(x,y),a=TW*.5*zoom,b=TH*.5*zoom;polygon([{x:p.x,y:p.y-b},{x:p.x+a,y:p.y},{x:p.x,y:p.y+b},{x:p.x-a,y:p.y}],color)}
+function prism(x,y,w,h,height,top,front='#667b79',edge='#263b3f'){const p=project(x,y),q=project(x+w,y),r=project(x+w,y+h),t=project(x,y+h),z=height*zoom;polygon([p,q,r,t].map(e=>({x:e.x,y:e.y-z})),top,edge);polygon([{x:t.x,y:t.y-z},{x:r.x,y:r.y-z},r,t],front,edge);polygon([{x:q.x,y:q.y-z},{x:r.x,y:r.y-z},r,q],front,edge)}
+function wallSegment(o){let p=project(o.x,o.y),q=project(o.x+.9,o.y),h=49*zoom,face='#8b9c97',alpha=o.section==='staff'?.88:.65;ctx.save();ctx.globalAlpha=alpha;polygon([{x:p.x,y:p.y},{x:q.x,y:q.y},{x:q.x,y:q.y-h},{x:p.x,y:p.y-h}],face,'#334e51');ctx.strokeStyle='#d5d8c9';ctx.lineWidth=2*zoom;ctx.beginPath();ctx.moveTo(p.x,p.y-h);ctx.lineTo(q.x,q.y-h);ctx.stroke();ctx.restore()}
+function drawDoor(d,time){let p=project(d.x,d.y),op=clamp(d.open,0,1),w=24*zoom,h=42*zoom;
+ ctx.save();ctx.strokeStyle='#354a4d';ctx.lineWidth=3*zoom;ctx.strokeRect(p.x-w*.5,p.y-h,w,h);
+ if(d.type==='sliding'){ctx.fillStyle='#9dcbcfb3';let slide=w*.5*(1-op);ctx.fillRect(p.x-w*.5,p.y-h,slide,h);ctx.fillRect(p.x+w*.5-slide,p.y-h,slide,h)}
+ else if(d.type==='rollup'){ctx.fillStyle='#bac0b6';ctx.fillRect(p.x-w*.6,p.y-h,w*1.2,h*(1-op));ctx.strokeStyle='#4d6268';for(let t=.1;t<1-op;t+=.15){ctx.beginPath();ctx.moveTo(p.x-w*.6,p.y-h+h*t);ctx.lineTo(p.x+w*.6,p.y-h+h*t);ctx.stroke()}}
+ else{ctx.fillStyle='#b5a58c';let width=w*(1-op*.85);ctx.fillRect(p.x-w*.5,p.y-h,width,h);ctx.fillStyle='#dfc17c';ctx.fillRect(p.x-w*.5+width-5*zoom,p.y-h*.42,3*zoom,3*zoom)}
+ ctx.restore()}
+function drawFixture(o){let palette={shelf:['#768b8a','#354a50'],checkout:['#aa8e68','#6d6255'],serviceDesk:['#7594a0','#485963'],pallet:['#a58b65','#736149'],plants:['#62896c','#3e6547'],paintMixer:['#a4adaf','#5a7477'],keyCutter:['#9caca3','#637974'],saw:['#caa879','#87664b'],workbench:['#b69d78','#665b50'],vending:['#9cb9ba','#527080'],lockers:['#a0b2ba','#5f7981'],office:['#9db5b4','#718b87'],restroom:['#c8c1b7','#8e9897'],sink:['#c9d6d0','#8ca1a2'],table:['#aa967a','#6b6556'],gardenDesk:['#92a38c','#667b69']};
+ let [top,front]=palette[o.type]||palette.shelf;
+ if(o.type==='shelf'){prism(o.x-.12,o.y-.1,1.24,o.h+.2,31,top,front);
+ // Individual merchandise shelves follow the same y-axis as the true collision footprint.
+ for(let i=0;i<o.h;i++){let p=project(o.x+.3,o.y+i+.55,34);ctx.fillStyle=['#e6bd81','#8baaa8','#c59f7c','#d5c1a2'][i%4];ctx.beginPath();ctx.ellipse(p.x,p.y,7*zoom,3*zoom,-.43,0,Math.PI*2);ctx.fill()}
+ }else{prism(o.x,o.y,o.w,o.h,o.type==='plants'?22:22,top,front);if(o.type==='plants'){for(let i=0;i<4;i++){let p=project(o.x+(i%2)*.6,o.y+Math.floor(i/2)*.6,25);ctx.fillStyle=i%2?'#9ab977':'#427d52';ctx.beginPath();ctx.arc(p.x,p.y,7*zoom,0,7);ctx.fill()}}}
+ if(o.damaged){let p=project(o.x,o.y,33);ctx.fillStyle='#e8b866';ctx.beginPath();ctx.arc(p.x,p.y,5*zoom,0,7);ctx.fill()}
+}
+function drawVehicle(v,t){let p=project(v.x,v.y),z=zoom;ctx.save();ctx.translate(p.x,p.y);ctx.fillStyle='#0f1b1e55';ctx.beginPath();ctx.ellipse(0,6*z,37*z,14*z,0,0,7);ctx.fill();ctx.fillStyle='#202c35';for(let x of [-27,25]){ctx.fillRect(x*z,-11*z,9*z,8*z)}ctx.fillStyle=v.color||'#849da9';ctx.beginPath();ctx.moveTo(-36*z,-4*z);ctx.lineTo(-27*z,-18*z);ctx.lineTo(23*z,-18*z);ctx.lineTo(36*z,-4*z);ctx.lineTo(27*z,7*z);ctx.lineTo(-28*z,7*z);ctx.closePath();ctx.fill();ctx.fillStyle='#2a4c58';ctx.fillRect(-16*z,-20*z,27*z,9*z);ctx.fillStyle='#e8dac0';ctx.fillRect(-34*z,-5*z,4*z,5*z);ctx.fillRect(30*z,-5*z,4*z,5*z);if(v.emergency){ctx.fillStyle=Math.sin(t*8)>0?'#ef4545':'#427be8';ctx.fillRect(-3*z,-23*z,13*z,4*z)}ctx.restore()}
+function stick(n,t){let p=project(n.rx,n.ry),z=zoom*(n.role==='customer'||n.role==='employee'?1:1.07),moving=n.path.length>0,step=moving?Math.sin(t*10+n.id.length):0,h=n.unconscious>0?5:35;ctx.save();ctx.translate(p.x,p.y);ctx.strokeStyle=n.role==='police'?'#81b9ec':n.role==='firefighter'?'#eec27f':n.role==='paramedic'?'#92dcc2':n.role==='employee'?'#e8c7a7':'#e4edf2';ctx.lineWidth=2.6*z;ctx.lineCap='round';ctx.fillStyle='#121b2380';ctx.beginPath();ctx.ellipse(0,2*z,10*z,4*z,0,0,7);ctx.fill();if(!n.alive){ctx.rotate(Math.PI/2);ctx.translate(0,9*z)}if(n.unconscious>0){ctx.rotate(1.4);ctx.translate(0,9*z)}
+ const leg=h*.45*z;ctx.beginPath();ctx.moveTo(0,-h*z*.56);ctx.lineTo(0,-10*z);ctx.moveTo(0,-10*z);ctx.lineTo((-7+step*4)*z,0);ctx.moveTo(0,-10*z);ctx.lineTo((7-step*4)*z,0);ctx.moveTo(0,-h*z*.45);ctx.lineTo((-10-step*3)*z,-19*z);ctx.moveTo(0,-h*z*.45);ctx.lineTo((9+step*3)*z,-19*z);ctx.stroke();ctx.fillStyle=n.role==='employee'?'#e3b18f':'#e7c9a4';ctx.beginPath();ctx.arc(0,-h*z*.82,7*z,0,Math.PI*2);ctx.fill();ctx.restore();
+ if(selected?.id===n.id){ctx.strokeStyle='#f5de79';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,14*z,7*z,0,0,7);ctx.stroke()}
+}
+function drawHazard(h,t){let p=project(h.x,h.y),z=zoom;ctx.save();if(h.kind==='fire'){for(let i=0;i<3;i++){ctx.fillStyle=i===0?'#ed743f':i===1?'#ffc15e':'#fae2a5';ctx.beginPath();ctx.ellipse(p.x+(i-1)*6*z,p.y-11*z-Math.sin(t*8+i)*3*z,7*z,15*z,0,0,Math.PI*2);ctx.fill()}}else if(h.kind==='spill'){ctx.fillStyle='#75bdbaad';ctx.beginPath();ctx.ellipse(p.x,p.y,19*z,6*z,0,0,7);ctx.fill()}else{ctx.strokeStyle=h.kind==='electric'?'#f4da78':'#e8b0a1';ctx.lineWidth=3*z;ctx.beginPath();ctx.moveTo(p.x-9*z,p.y);ctx.lineTo(p.x,p.y-17*z);ctx.lineTo(p.x+3*z,p.y-5*z);ctx.lineTo(p.x+14*z,p.y-20*z);ctx.stroke()}ctx.restore()}
+function render(t){resize();let v=view();ctx.fillStyle='#263b39';ctx.fillRect(0,0,v.w,v.h);let w=game?.world||scene;
+ for(let tile of w.ground){let {x,y,area}=tile;diamond(x,y,area==='parking'?'#4a5354':area==='store'?'#87918a':area==='employee'?'#798a83':area==='garden'?'#658367':'#6d7d66')}
+ for(let x=4;x<46;x+=5){let p=project(x,7);ctx.strokeStyle='#d9d6b4';ctx.lineWidth=2*zoom;ctx.beginPath();ctx.moveTo(p.x-10*zoom,p.y);ctx.lineTo(p.x+10*zoom,p.y);ctx.stroke()}
+ const items=[...w.fixtures.map(o=>({depth:o.x+o.y,fn:()=>drawFixture(o)})),...w.doors.map(o=>({depth:o.x+o.y,fn:()=>drawDoor(o,t)})),...w.walls.values()].map(o=>({depth:o.x+o.y,fn:()=>wallSegment(o)})),...w.props.map(o=>({depth:o.x+o.y,fn:()=>drawVehicle(o,t)})),...(game?game.npcs.map(o=>({depth:o.rx+o.ry,fn:()=>stick(o,t)})):[]),...w.hazards.map(o=>({depth:o.x+o.y,fn:()=>drawHazard(o,t)}))];
+ // Iso view reverses depth: objects further from camera render first.
+ items.sort((a,b)=>b.depth-a.depth);for(let item of items)item.fn();
+ if(selected){let p=project(selected.x,selected.y);ctx.strokeStyle='#ffe69c';ctx.lineWidth=2;ctx.beginPath();ctx.arc(p.x,p.y,8*zoom,0,7);ctx.stroke()}
+}
+function inspect(x,y){if(!game)return;let w=game.world;let n=[...game.npcs].filter(n=>Math.hypot(n.rx-x,n.ry-y)<2).sort((a,b)=>Math.hypot(a.rx-x,a.ry-y)-Math.hypot(b.rx-x,b.ry-y))[0];
+ let d=doorAt(w,x,y),f=fixtureAt(w,x,y),target=n||f||d||{id:'tile-'+x+'-'+y,x,y,type:'tile'};selected=target;refreshHud()}
+function refreshHud(){if(!game)return;const g=game,alive=g.npcs.filter(n=>n.alive).length;
+ $('worldStatus').textContent='Living '+alive+'/'+g.npcs.length+' · God Energy '+Math.floor(g.energy)+' · '+(g.paused?'Paused':g.speed+'×')+' · '+Math.floor(g.elapsed)+'s';
+ const panel=$('inspect');let html='<div class="tag">GOD ENERGY '+Math.floor(g.energy)+' · ALIVE '+alive+'</div>';
+ if(selected){let n=g.npcs.find(o=>o.id===selected.id),f=g.world.fixtures.find(o=>o.id===selected.id),d=g.world.doors.find(o=>o.id===selected.id);
+ html+='<h3>'+escapeHTML(n?.name||f?.type||d?.label||'World tile')+'</h3>';
+ if(n){html+='<p>'+escapeHTML(n.role)+' · '+(n.alive?(n.arrested?'Detained':n.unconscious>0?'Unconscious':escapeHTML(n.activity)):'Deceased')+'<br>Health '+Math.round(n.health)+' · Pain '+Math.round(n.pain)+' · Anger '+Math.round(n.emotion.anger)+' · Fear '+Math.round(n.emotion.fear)+'</p><p>Traits: '+Object.entries(n.traits).map(([k,v])=>k+' '+v).join(' · ')+'</p><p>Inventory: '+(n.inventory.map(id=>ITEMS.find(i=>i.id===id)?.name||id).join(', ')||'Empty')+'</p><p>Memory: '+escapeHTML(n.memory.slice(0,3).map(m=>m.text).join(' · ')||'None')+'</p>'}
+ if(d)html+='<p>Animated '+d.type+' door · '+Math.round(d.open*100)+'% open</p>';
+ if(f)html+='<p>'+escapeHTML(f.department||'Interactable fixture')+' · '+(f.damaged?'Damaged':'Functional')+'</p>';
+ let type=n?'npc':f?'fixture':'tile';html+='<h3>God Powers</h3>';
+ for(let power of POWER_LIST.filter(p=>p.targets.includes(type))){let disabled=g.energy<power.cost||!n?.alive&&!!n||g.paused||g.cooldowns[power.id]>g.elapsed;html+='<button style="display:block;width:100%;margin:5px 0" data-power="'+power.id+'" '+(disabled?'disabled':'')+'>'+escapeHTML(power.name)+' · '+power.cost+' energy</button>'}
+ }
+ html+='<h3>World Events</h3>'+g.log.slice(0,7).map(e=>'<p style="font-size:12px">'+escapeHTML(e.text)+'</p>').join('');
+ panel.innerHTML=html;panel.querySelectorAll('[data-power]').forEach(b=>b.onclick=()=>{let out=applyPower(g,b.dataset.power,selected);$('worldStatus').textContent=out.message;refreshHud()});
+ if(g.completed&&!resultShown){resultShown=true;showVictory()}
+}
+const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function showVictory(){const g=game;let overlay=document.createElement('div');overlay.className='screen';overlay.id='victoryOverlay';overlay.innerHTML='<div class="menuPanel"><h2>TOTAL ELIMINATION</h2><p>Every NPC on the map has died.</p><p>Deaths: '+g.stats.deaths+' · Chain reactions: '+g.stats.chains+'<br>God Powers: '+g.stats.powers+' · Time: '+Math.round(g.elapsed)+'s</p><button id="restartRound">Play Again</button><button id="freeplayRound">Continue Freeplay</button><button id="menuRound">Main Menu</button></div>';document.body.append(overlay);unlockMap('hardware-store');
+ overlay.querySelector('#restartRound').onclick=()=>{overlay.remove();game=makeGame(createHardwareStore(),{staff:+$('setupStaff').value,customers:+$('setupCustomers').value});scene=game.world;resultShown=false;selected=null;centerCamera();refreshHud()};
+ overlay.querySelector('#freeplayRound').onclick=()=>{overlay.remove();g.freeplay=true};
+ overlay.querySelector('#menuRound').onclick=()=>{overlay.remove();show('mainMenu');refreshContinue()};
+}
+canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);drag={x:e.clientX,y:e.clientY,ox:offset.x,oy:offset.y,moved:false}});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;let dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>7)drag.moved=true;offset.x=drag.ox-dx/zoom;offset.y=drag.oy-dy/zoom});
+canvas.addEventListener('pointerup',e=>{if(!drag)return;if(!drag.moved){let rect=canvas.getBoundingClientRect(),tile=unproject(e.clientX-rect.left,e.clientY-rect.top);inspect(tile.x,tile.y)}drag=null});
+canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=clamp(zoom*(e.deltaY>0?.91:1.1),.32,2)},{passive:false});
+function frame(now){let dt=Math.min(.08,(now-last)/1000);last=now;if(game&&!game.paused){acc+=dt*game.speed;let steps=0;while(acc>=1/30&&steps<16){updateGame(game,1/30);acc-=1/30;steps++}}render(now/1000);if(now-lastHud>300){refreshHud();lastHud=now}if(game&&!game.completed&&now-lastSave>30000){saveGame(game);lastSave=now}requestAnimationFrame(frame)}
+centerCamera();requestAnimationFrame(frame);
