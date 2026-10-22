@@ -19,6 +19,7 @@ jobs:
           node --check v3/src/simulation.js
           node --check v3/src/persistence.js
           node --check v3/src/main.js
+          node --check v3/src/artwork.js
       - name: Run v3 core regression tests
         working-directory: v3
         run: npm test
