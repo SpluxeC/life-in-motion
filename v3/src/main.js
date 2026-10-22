@@ -1,5 +1,5 @@
-import {createHardwareStore,doorAt,fixtureAt,nearestOpen,walkable,key} from './world.js';
-import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js';
+import {createHardwareStore,doorAt,fixtureAt,nearestOpen,walkable,key} from './world.js?v=visual-20261022-2';
+import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v=visual-20261022-2';
 import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d');
