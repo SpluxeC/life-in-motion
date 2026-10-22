@@ -594,7 +594,7 @@ function drawJoinedPartitions(s){
 }
 function drawRefinedFixture(o,s){
  let p=project(o.x,o.y),t=o.type;
- ctx.save();ctx.translate(p.x,p.y);ctx.scale(s,s);ctx.lineJoin='round';
+ ctx.save();ctx.translate(p.x,p.y);ctx.scale(s,s);ctx.lineJoin='round';if(t!=='shelf')ctx.transform(1,-.18,.20,1,0,0);
  let box=(w,h,c,edge='#293940')=>{ctx.fillStyle='#10191e6b';ctx.beginPath();ctx.ellipse(5,3,w*.65,8,0,0,7);ctx.fill();ctx.fillStyle=edge;ctx.fillRect(-w/2+5,-h+6,w, h-6);ctx.fillStyle=c;ctx.fillRect(-w/2,-h,w-5,h-6);ctx.fillStyle='#c9d3ca';ctx.fillRect(-w/2,-h,w-5,4);ctx.strokeStyle='#283941';ctx.lineWidth=1.4;ctx.strokeRect(-w/2,-h,w-5,h-6)};
  if(t==='shelf'){ctx.transform(1,-.30,.30,1,0,0);box(34,39,'#485a60');for(let row=0;row<3;row++){let y=-32+row*11;ctx.fillStyle='#a5afb0';ctx.fillRect(-15,y+7,28,2);for(let k=0;k<4;k++){let hues=['#be8b57','#7898a4','#d1b96c','#6c9b77'];ctx.fillStyle=hues[(row+k+(o.x|0))%4];ctx.fillRect(-13+k*7,y,5,7);ctx.fillStyle='#f2e9d5';ctx.fillRect(-13+k*7,y+3,5,1)}}ctx.fillStyle=o.color||'#ceac68';ctx.fillRect(-16,-43,30,5);ctx.fillStyle='#f7efe0';ctx.font='bold 6px system-ui';ctx.textAlign='center';ctx.fillText((o.product||'HARDWARE').slice(0,11).toUpperCase(),-1,-39)}
  else if(t==='register'||t==='serviceDesk'||t==='gardenDesk'){box(41,26,'#967956');ctx.fillStyle='#486771';ctx.fillRect(-10,-39,19,13);ctx.fillStyle='#c1d3d4';ctx.fillRect(-7,-36,13,7);ctx.fillStyle='#273943';ctx.fillRect(-17,-31,9,5);ctx.fillStyle='#d4c18e';ctx.fillRect(-16,-24,30,3)}
