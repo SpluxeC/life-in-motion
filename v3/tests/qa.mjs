@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict';
+import {createHardwareStore,walkable,pathTo,doorAt} from '../src/world.js';
+import {makeGame,applyPower,updateGame,addHazard} from '../src/simulation.js';
+import {saveGame,loadGame} from '../src/persistence.js';
+const store=new Map();
+globalThis.localStorage={getItem:key=>store.get(key)||null,setItem:(key,value)=>store.set(key,value)};
+const world=createHardwareStore();
+assert(world.walls.has('40,27'),'Employee rear wall is continuous');
+assert(!walkable(world,5,18),'Shelves block movement');
+assert(walkable(world,28,38),'Receiving access clear');
+assert(pathTo(world,{x:20,y:9},{x:41,y:13}).length>0,'Employee room reachable');
+const g=makeGame(world,{staff:4,customers:8,seed:42});
+assert.equal(g.npcs.length,12);
+assert(g.npcs.every(n=>n.alive));
+assert(applyPower(g,'whisper',g.npcs[0]).ok);
+assert(!applyPower(g,'hazard',{type:'tile',x:5,y:18}).ok,'Cannot place hazard inside shelf');
+assert(addHazard(g,28,37,'fire'),'Fire created');
+for(let i=0;i<250;i++)updateGame(g,.1);
+assert(g.npcs.length>=12,'Characters cannot despawn');
+assert(g.npcs.length<=21,'Finite reinforcement cap');
+const at=doorAt(world,38,12);assert(at&&at.type==='hinged');
+assert(saveGame(g),'Full save succeeds');
+const saved=loadGame();
+assert(saved&&saved.npcs.length===g.npcs.length);
+assert(saved.world.walls instanceof Map);
+assert.equal(saved.random.state(),g.random.state(),'RNG state persists');
+assert(pathTo(saved.world,{x:20,y:9},{x:41,y:13}).length>0);
+const pauseTime=saved.elapsed;saved.paused=true;updateGame(saved,30);assert.equal(saved.elapsed,pauseTime);
+saved.paused=false;
+for(let npc of saved.npcs){npc.alive=false;npc.health=0} 
+// Empty living population causes exactly one victory transition.
+updateGame(saved,.1);assert.equal(saved.completed,true);assert.equal(saved.winner,true);
+const oldLog=saved.log.length;updateGame(saved,.1);assert.equal(saved.log.length,oldLog);
+console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
