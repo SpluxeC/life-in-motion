@@ -102,4 +102,47 @@ assert(placedSign,'A-frame caution sign placed at finished spill');
 assert(!loadedCleanGame.world.hazards.some(h=>h.kind==='spill'&&h.life>0),'Spill is removed after cleaning');
 for(let i=0;i<155;i++)updateGame(loadedCleanGame,.1);
 assert(!loadedCleanGame.world.props.some(p=>p.type==='wetFloorSign'),'Warning sign expires after cleaning');
+// Artwork refinement regression: shelf stock must be reflected in visual merchandise.
+function drawingOpCount(fixture){
+ let calls=0;
+ const methods=new Set(['beginPath','moveTo','lineTo','closePath','fill','stroke','ellipse','fillRect','strokeRect','fillText','arc']);
+ const ctx=new Proxy({},{
+  get:(o,k)=>methods.has(k)?()=>{calls++}:o[k],
+  set:(o,k,v)=>{o[k]=v;return true}
+ });
+ createArtwork(ctx,project,()=>.7).drawFixture(fixture);
+ return calls;
+}
+const aisle=world.fixtures.find(f=>f.type==='shelf');
+const emptyDrawing=drawingOpCount({...aisle,stock:0});
+const partialDrawing=drawingOpCount({...aisle,stock:7});
+const stockedDrawing=drawingOpCount({...aisle,stock:12});
+assert(emptyDrawing<partialDrawing&&partialDrawing<stockedDrawing,
+ 'Shelves visibly lose merchandise as stock decreases');
+
+// Car artwork must respect the parking-space footprint used by game collision.
+const parkedCar=world.props.find(p=>p.type==='car');
+const carCoordinates=[];
+const carRenderer=createArtwork(drawingContext,(x,y,z=0)=>{
+ carCoordinates.push({x,y,z});
+ return project(x,y,z)
+},()=>.7);
+carRenderer.drawVehicle(parkedCar,0);
+assert(carCoordinates.length>10,'Detailed vehicle geometry was drawn');
+for(const p of carCoordinates){
+ assert(p.x>=parkedCar.x-.501&&p.x<=parkedCar.x+parkedCar.w-.499,
+  'Vehicle artwork exceeds parked collision footprint in X');
+ assert(p.y>=parkedCar.y-.501&&p.y<=parkedCar.y+parkedCar.h-.499,
+  'Vehicle artwork exceeds parked collision footprint in Y');
+}
+
+// Every doorway connects the two tiles it is designed to separate.
+for(const d of world.doors){
+ const a=d.axis==='y'?{x:d.x-1,y:d.y}:{x:d.x,y:d.y-1};
+ const b=d.axis==='y'?{x:d.x+1,y:d.y}:{x:d.x,y:d.y+1};
+ assert(walkable(world,a.x,a.y)&&walkable(world,b.x,b.y),
+  'Door has an obstructed approach: '+d.label);
+ assert(pathTo(world,a,b).some(p=>p.x===d.x&&p.y===d.y),
+  'Door does not join both sides of its intended passage: '+d.label);
+}
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
