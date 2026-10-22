@@ -1,6 +1,7 @@
 import {nearestOpen,pathTo,doorAt,fixtureAt,walkable,key} from './world.js';
 const clamp=(n,a=0,b=100)=>Math.max(a,Math.min(b,n));
 export const POWER_LIST=[
+ {id:'whisper',name:'Whisper Doubt',cost:0,targets:['npc'],cooldown:12},
  {id:'anger',name:'Increase Anger',cost:5,targets:['npc']},{id:'fear',name:'Increase Fear',cost:5,targets:['npc']},
  {id:'suspicion',name:'Plant Suspicion',cost:10,targets:['npc']},{id:'trust',name:'Alter Trust',cost:8,targets:['npc']},
  {id:'rumor',name:'Spread Rumor',cost:12,targets:['npc']},{id:'item',name:'Influence Item Interest',cost:6,targets:['npc','fixture']},
@@ -56,7 +57,7 @@ function kill(g,n,cause){if(!n.alive)return;n.alive=false;n.health=0;n.unconscio
 function incident(g,kind,source){if(g.completed)return;g.stats.incidents++;if(g.dispatchCooldown>0)return;
  const service=kind==='fire'?'fire':kind==='injury'?'medic':'police';if(g.respondersRemaining[service]>0&&!g.pending.some(p=>p.service===service)){g.pending.push({service,time:8+g.random()*7});g.dispatchCooldown=12;log(g,'Emergency call placed: '+service+' response requested.')}
 }
-function dispatch(g,service){if(g.respondersRemaining[service]<=0)return;g.respondersRemaining[service]--;const role={fire:'firefighter',medic:'paramedic',police:'police'}[service];let n=spawnNPC(g,role);n.x=n.rx=4;n.y=n.ry=5;n.inventory=service==='medic'?['bandage']:service==='police'?['flashlight']:['water'];n.relationships={};log(g,role+' '+n.name+' arrived. '+g.respondersRemaining[service]+' reserve teams remain.')}
+function dispatch(g,service){if(g.respondersRemaining[service]<=0)return;g.respondersRemaining[service]--;const role={fire:'firefighter',medic:'paramedic',police:'police'}[service];let n=spawnNPC(g,role);n.x=n.rx=4;n.y=n.ry=5;g.world.props.push({id:'response-'+n.id,type:'car',x:1,y:5,targetX:5+(g.nextId%4)*3,targetY:5,emergency:true,color:service==='fire'?'#b9594d':service==='police'?'#668ba9':'#dfd8be'});n.inventory=service==='medic'?['bandage']:service==='police'?['flashlight']:['water'];n.relationships={};log(g,role+' '+n.name+' arrived. '+g.respondersRemaining[service]+' reserve teams remain.')}
 export function addHazard(g,x,y,kind='fire',source='god'){const w=g.world;if(!walkable(w,x,y))return false;if(w.hazards.some(h=>h.x===x&&h.y===y&&h.life>0))return false;w.hazards.push({id:'haz-'+(w.hazards.length+1),x,y,kind,life:kind==='fire'?48:kind==='spill'?65:30,tick:0,source,spread:0});log(g,'A '+kind+' hazard appeared.');incident(g,kind==='fire'?'fire':'injury');return true}
 export function applyPower(g,id,target,secondary=null){const p=POWER_LIST.find(o=>o.id===id);if(!p)return{ok:false,message:'Unknown power'};
  if(g.paused)return{ok:false,message:'Resume time to activate powers'};
@@ -70,6 +71,7 @@ export function applyPower(g,id,target,secondary=null){const p=POWER_LIST.find(o
  g.energy-=p.cost;g.stats.powers++;if(p.cooldown)g.cooldowns[id]=g.elapsed+p.cooldown;
  if(n){const roll=g.random()*100,resistance=n.traits.suspicion*.3+n.traits.bravery*.25+(100-n.emotion.stress)*.1;
  if(roll<resistance*.42){log(g,n.name+' resisted '+p.name+'.');return{ok:true,message:n.name+' resisted the influence.'}}
+ if(id==='whisper'){n.emotion.anger=clamp(n.emotion.anger+14);memory(n,'rumor',null,'An unsettling thought took hold');reward(g,4,'whispered doubt')}
  if(id==='anger')n.emotion.anger=clamp(n.emotion.anger+44);
  if(id==='fear'){n.emotion.fear=clamp(n.emotion.fear+50);n.panic=12}
  if(id==='suspicion'){n.traits.suspicion=clamp(n.traits.suspicion+28);memory(n,'rumor',secondary?.id||null,'Someone may be untrustworthy',2)}
@@ -94,6 +96,7 @@ export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
  g.elapsed+=dt;g.dispatchCooldown=Math.max(0,g.dispatchCooldown-dt);
  for(let k of Object.keys(g.cooldowns))if(g.cooldowns[k]<g.elapsed)delete g.cooldowns[k];
  for(let d of g.world.doors){let near=g.npcs.some(n=>n.alive&&Math.hypot(n.rx-d.x,n.ry-d.y)<2.2);d.target=near||d.forceUntil>g.elapsed?1:0;d.open=clamp(d.open+(d.target-d.open)*Math.min(1,dt*4),0,1)}
+ for(let v of g.world.props){if(v.targetX!==undefined){let dx=v.targetX-v.x,dy=v.targetY-v.y,dist=Math.hypot(dx,dy);if(dist>.04){v.x+=dx/dist*Math.min(dist,dt*2);v.y+=dy/dist*Math.min(dist,dt*2)}}}
  for(let p of [...g.pending]){p.time-=dt;if(p.time<=0){dispatch(g,p.service);g.pending.splice(g.pending.indexOf(p),1)}}
  for(let h of [...g.world.hazards]){h.life-=dt;h.tick+=dt;if(h.life<=0)continue;
  if(h.tick>1){h.tick=0;for(let n of g.npcs)if(n.alive&&Math.hypot(n.x-h.x,n.y-h.y)<(h.kind==='fire'?2.3:1.5))injury(g,n,h.kind==='fire'?9:h.kind==='electric'?14:5,h.kind);
@@ -105,7 +108,7 @@ export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
  if(n.bleeding>0){n.health-=n.bleeding*dt*.09;if(n.health<=0){kill(g,n,'untreated injury');continue}}n.pain=clamp(n.pain-dt*.13);if(n.unconscious>0){n.unconscious-=dt;continue}
  if(n.arrested){n.detention-=dt;if(n.detention<=0){n.arrested=false;n.activity='Released from detention'}continue}
  n.think-=dt;if(n.think<=0){n.think=1.5+g.random()*2;choose(g,n)}
- if(n.path.length){let p=n.path[0],dx=p.x-n.rx,dy=p.y-n.ry,dist=Math.hypot(dx,dy),speed=(n.panic?3.6:1.65)*(n.health<50?.7:1);if(dist<=dt*speed){n.rx=p.x;n.ry=p.y;n.x=p.x;n.y=p.y;n.path.shift()}else{n.rx+=dx/dist*dt*speed;n.ry+=dy/dist*dt*speed}
+ if(n.path.length){let next=n.path[0],entry=doorAt(g.world,next.x,next.y);if(entry&&entry.open<.65){entry.forceUntil=g.elapsed+2;continue}let p=n.path[0],dx=p.x-n.rx,dy=p.y-n.ry,dist=Math.hypot(dx,dy),speed=(n.panic?3.6:1.65)*(n.health<50?.7:1);if(dist<=dt*speed){n.rx=p.x;n.ry=p.y;n.x=p.x;n.y=p.y;n.path.shift()}else{n.rx+=dx/dist*dt*speed;n.ry+=dy/dist*dt*speed}
  let d=doorAt(g.world,Math.round(n.rx),Math.round(n.ry));if(d)d.forceUntil=g.elapsed+2;
  }else{const other=nearest(g,n,o=>Math.hypot(o.x-n.x,o.y-n.y)<2);if(other&&g.random()<dt*.6)interact(g,n,other)}
  if(n.panic>0)n.panic=Math.max(0,n.panic-dt);
