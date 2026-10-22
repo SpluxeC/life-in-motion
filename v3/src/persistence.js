@@ -1,5 +1,5 @@
-import {createHardwareStore} from './world.js';
-import {rngFor} from './simulation.js';
+import {createHardwareStore} from './world.js?v=npc-routines-20261022-1';
+import {rngFor} from './simulation.js?v=npc-routines-20261022-1';
 const SAVE='life-in-motion-v3-round-v1',PROGRESS='life-in-motion-v3-progression-v1';
 export const hasSave=()=>{try{return !!localStorage.getItem(SAVE)}catch{return false}};
 export const getProgress=()=>{try{return JSON.parse(localStorage.getItem(PROGRESS)||'{"unlocked":["hardware-store"]}')}catch{return{unlocked:['hardware-store']}}};
