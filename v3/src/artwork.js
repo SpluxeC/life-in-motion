@@ -26,7 +26,7 @@ export function createArtwork(ctx,project,getZoom){
   poly(topPts,top,'#405354',.8);return topPts;
  }
  function shadow(x,y,w,h,scale=1){
-  const p=P(x+w*.5,y+h*.5);ellipse(p.x+4*Z(),p.y+6*Z(),Math.max(8,(w+h)*11*scale),Math.max(3,(w+h)*4*scale),'#111e203b')
+  const p=P(x+(w-1)*.5,y+(h-1)*.5);ellipse(p.x+4*Z(),p.y+6*Z(),Math.max(8,(w+h)*11*scale),Math.max(3,(w+h)*4*scale),'#111e203b')
  }
  function label(x,y,z,text,ink='#f4eee2',bg='#344951',width=46){
   const p=P(x,y,z),s=Z();ctx.fillStyle=bg;ctx.fillRect(p.x-width*s*.5,p.y-7*s,width*s,11*s);
@@ -301,7 +301,7 @@ export function createArtwork(ctx,project,getZoom){
   let {x,y}=v,w=v.w||2,h=v.h||(v.emergency&&v.color==='#b9594d'?4:3);
   shadow(x,y,w,h,1.15);
   // Tire locations, bumpers and roof use the same physical world footprint.
-  for(const pos of [[.12,.36],[1.72,.36],[.12,h-.7],[1.72,h-.7]]){
+  for(const pos of [[-.25,.16],[w-.75,.16],[-.25,h-.7],[w-.75,h-.7]]){
    const p=P(x+pos[0],y+pos[1]);ellipse(p.x,p.y,7,4,'#1b292c','#101a1d');
   }
   const body=v.emergency?(v.color==='#b9594d'?'#bf4d43':v.color==='#dfd8be'?'#e0e1d9':'#4a7395'):(v.color||'#81969a');
@@ -310,9 +310,9 @@ export function createArtwork(ctx,project,getZoom){
   surface(x+.35,y+.63,1.3,.55,22,'#33545b','#6d8990');
   surface(x+.35,y+h-1.25,1.3,.5,22,'#375d66','#5c7980');
   for(let side=0;side<2;side++){
-   const head=P(x+side*1.65,y+.08,13);
+   const head=P(x-.25+side*(w-.5),y+.08,13);
    ellipse(head.x,head.y,4,2,'#ede1bb','#928f7d');
-   const rear=P(x+side*1.65,y+h-.1,13);ellipse(rear.x,rear.y,3,2,'#b14e44');
+   const rear=P(x-.25+side*(w-.5),y+h-.67,13);ellipse(rear.x,rear.y,3,2,'#b14e44');
   }
   if(v.emergency){
    const beacon=P(x+1,y+1.15,27),flash=Math.sin(t*9)>0;
