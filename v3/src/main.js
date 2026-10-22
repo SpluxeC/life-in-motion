@@ -27,6 +27,7 @@ function resize(){let dpr=Math.min(2,window.devicePixelRatio||1),v=view();if(las
 function drawHair(n,z,h){const hash=Number(String(n.id).replace(/[^0-9]/g,''))||0,style=n.role==='firefighter'?5:n.role==='police'?4:hash%6;const head=-h*z*.82;ctx.fillStyle='#11171b';ctx.strokeStyle='#101517';ctx.lineWidth=2*z;if(style===4||style===5){ctx.fillStyle=style===5?'#d4ba64':'#25394c';ctx.fillRect(-8*z,head-9*z,16*z,5*z);ctx.fillRect(-12*z,head-4*z,17*z,3*z)}else if(style===0){ctx.beginPath();ctx.arc(0,head-2*z,7*z,Math.PI,Math.PI*2);ctx.fill()}else if(style===1){ctx.beginPath();ctx.arc(0,head-3*z,7.5*z,Math.PI,Math.PI*2);ctx.fill();ctx.fillRect(6*z,head,4*z,9*z)}else if(style===2){ctx.fillRect(-7*z,head-9*z,14*z,4*z);ctx.fillRect(5*z,head-6*z,4*z,11*z)}else if(style===3){ctx.beginPath();ctx.arc(0,head-5*z,7*z,Math.PI,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(7*z,head-10*z,5*z,0,7);ctx.fill()}else{ctx.beginPath();ctx.arc(0,head-6*z,6*z,Math.PI,Math.PI*2);ctx.fill()}}
 function stick(n,t){let p=project(n.rx,n.ry),z=zoom*(n.role==='customer'||n.role==='employee'?1:1.07),moving=n.path.length>0,step=moving?Math.sin(t*10+n.id.length):0,h=n.unconscious>0?5:35;ctx.save();ctx.translate(p.x,p.y);ctx.strokeStyle='#121a1c';ctx.lineWidth=2.6*z;ctx.lineCap='round';ctx.fillStyle='#121b2380';ctx.beginPath();ctx.ellipse(0,2*z,10*z,4*z,0,0,7);ctx.fill();if(!n.alive){ctx.rotate(Math.PI/2);ctx.translate(0,9*z)}if(n.unconscious>0){ctx.rotate(1.4);ctx.translate(0,9*z)}
  const leg=h*.45*z;ctx.beginPath();ctx.moveTo(0,-h*z*.56);ctx.lineTo(0,-10*z);ctx.moveTo(0,-10*z);ctx.lineTo((-7+step*4)*z,0);ctx.moveTo(0,-10*z);ctx.lineTo((7-step*4)*z,0);ctx.moveTo(0,-h*z*.45);ctx.lineTo((-10-step*3)*z,-19*z);ctx.moveTo(0,-h*z*.45);ctx.lineTo((9+step*3)*z,-19*z);ctx.stroke();ctx.fillStyle='#f8faf7';ctx.strokeStyle='#0c1416';ctx.lineWidth=2*z;ctx.beginPath();ctx.arc(0,-h*z*.82,7*z,0,Math.PI*2);ctx.fill();ctx.stroke();if(n.role==='employee'){ctx.fillStyle='#d53436';ctx.fillRect(-6*z,-h*z*.53,12*z,13*z);ctx.strokeStyle='#101517';ctx.lineWidth=1.3*z;ctx.strokeRect(-6*z,-h*z*.53,12*z,13*z)}drawHair(n,z,h);ctx.restore();
+ if(n.alive&&n.unconscious<=0&&n.inventory?.length){artwork.drawItem(n.inventory[0],n.rx+.28,n.ry+.12,15,.66)}
  if(selected?.id===n.id){ctx.strokeStyle='#f5de79';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,14*z,7*z,0,0,7);ctx.stroke()}
 }
 function drawHazard(h,t){let p=project(h.x,h.y),z=zoom;ctx.save();if(h.kind==='fire'){for(let i=0;i<3;i++){ctx.fillStyle=i===0?'#ed743f':i===1?'#ffc15e':'#fae2a5';ctx.beginPath();ctx.ellipse(p.x+(i-1)*6*z,p.y-11*z-Math.sin(t*8+i)*3*z,7*z,15*z,0,0,Math.PI*2);ctx.fill()}}else if(h.kind==='spill'){ctx.fillStyle='#75bdbaad';ctx.beginPath();ctx.ellipse(p.x,p.y,19*z,6*z,0,0,7);ctx.fill()}else{ctx.strokeStyle=h.kind==='electric'?'#f4da78':'#e8b0a1';ctx.lineWidth=3*z;ctx.beginPath();ctx.moveTo(p.x-9*z,p.y);ctx.lineTo(p.x,p.y-17*z);ctx.lineTo(p.x+3*z,p.y-5*z);ctx.lineTo(p.x+14*z,p.y-20*z);ctx.stroke()}ctx.restore()}
@@ -71,7 +72,51 @@ function showVictory(){const g=game;let overlay=document.createElement('div');ov
  overlay.querySelector('#freeplayRound').onclick=()=>{overlay.remove();g.freeplay=true};
  overlay.querySelector('#menuRound').onclick=()=>{overlay.remove();show('mainMenu');refreshContinue()};
 }
-function inspectAtScreen(sx,sy){if(!game)return;const w=game.world;const hits=[];for(let n of game.npcs){const p=project(n.rx,n.ry,20);const d=Math.hypot(sx-p.x,sy-p.y);if(d<Math.max(15,21*zoom))hits.push({d,priority:0,target:n})}for(let d of w.doors){let p=project(d.x,d.y,24),dist=Math.hypot(sx-p.x,sy-p.y);if(dist<Math.max(16,32*zoom))hits.push({d:dist,priority:1,target:d})}for(let o of w.fixtures){let p=project(o.x+o.w*.5,o.y+o.h*.5,18),dist=Math.hypot(sx-p.x,sy-p.y);if(dist<Math.max(20,(20+Math.max(o.w,o.h)*9)*zoom))hits.push({d:dist,priority:2,target:o})}for(let o of w.props){let p=project(o.x,o.y,o.type==='tree'?38:5),dist=Math.hypot(sx-p.x,sy-p.y);if(dist<Math.max(19,(o.type==='car'?41:23)*zoom))hits.push({d:dist,priority:3,target:o})}hits.sort((a,b)=>a.d-b.d||a.priority-b.priority);if(hits.length){selected=hits[0].target;refreshHud();return}let tile=unproject(sx,sy);inspect(tile.x,tile.y)}
+function inspectAtScreen(sx,sy){
+ if(!game)return;
+ const world=game.world,hits=[];
+ const add=(target,d,priority)=>hits.push({target,d,priority});
+ // Select the actual rendered object footprint, including tall/long shelving,
+ // instead of rounding the click to a single ground tile.
+ function boxHit(o,height=35,padding=5){
+  const x=o.x,y=o.y,w=o.w||1,h=o.h||1;
+  const pts=[
+   project(x-.5,y-.5,0),project(x+w-.5,y-.5,0),
+   project(x+w-.5,y+h-.5,0),project(x-.5,y+h-.5,0),
+   project(x-.5,y-.5,height),project(x+w-.5,y-.5,height),
+   project(x+w-.5,y+h-.5,height),project(x-.5,y+h-.5,height)
+  ];
+  const xs=pts.map(p=>p.x),ys=pts.map(p=>p.y),pad=padding*zoom;
+  const inBox=sx>=Math.min(...xs)-pad&&sx<=Math.max(...xs)+pad&&sy>=Math.min(...ys)-pad&&sy<=Math.max(...ys)+pad;
+  if(!inBox)return null;
+  const middle=project(x+(w-1)*.5,y+(h-1)*.5,height*.5);
+  return Math.hypot(sx-middle.x,sy-middle.y)/Math.max(1,(w+h)*zoom);
+ }
+ for(const n of world?game.npcs:[]){
+  const p=project(n.rx,n.ry,19),d=Math.hypot(sx-p.x,sy-p.y);
+  if(d<Math.max(16,24*zoom))add(n,d*.3,0);
+ }
+ for(const d of world.doors){
+  const hit=boxHit(d,d.type==='rollup'?53:48,10);
+  if(hit!==null)add(d,hit,1);
+ }
+ for(const f of world.fixtures){
+  const tall=['lockers','vending','drinkCooler','shelf','hardwareBins'].includes(f.type);
+  const hit=boxHit(f,tall?49:35,5);
+  if(hit!==null)add(f,hit,2);
+ }
+ for(const v of world.props){
+  const hit=boxHit(v,v.type==='tree'?75:v.type==='shrub'?20:26,7);
+  if(hit!==null)add(v,hit,3);
+ }
+ for(const d of world.drops||[]){
+  const hit=boxHit(d,10,5);
+  if(hit!==null)add(d,hit,4);
+ }
+ hits.sort((a,b)=>a.priority-b.priority||a.d-b.d);
+ if(hits.length){selected=hits[0].target;refreshHud();return}
+ const tile=unproject(sx,sy);inspect(tile.x,tile.y)
+}
 canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);drag={x:e.clientX,y:e.clientY,ox:offset.x,oy:offset.y,moved:false}});
 canvas.addEventListener('pointermove',e=>{if(!drag)return;let dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>7)drag.moved=true;offset.x=drag.ox-dx/zoom;offset.y=drag.oy-dy/zoom});
 canvas.addEventListener('pointerup',e=>{if(!drag)return;if(!drag.moved){let rect=canvas.getBoundingClientRect(),tile=unproject(e.clientX-rect.left,e.clientY-rect.top);inspectAtScreen(e.clientX-rect.left,e.clientY-rect.top)}drag=null});
