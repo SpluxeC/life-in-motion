@@ -21,8 +21,12 @@ export function createArtwork(ctx,project,getZoom){
  }
  function solid(x,y,w,h,height,top='#aab0a9',sideX='#687877',sideY='#84918b'){
   const base=footprint(x,y,w,h),z=height*Z(),topPts=base.map(p=>({x:p.x,y:p.y-z}));
-  poly([topPts[2],topPts[3],base[3],base[2]],sideX,'#35474a',.7);
-  poly([topPts[1],topPts[2],base[2],base[1]],sideY,'#35474a',.7);
+  // In this projection both +X and +Y recede upward on screen.
+  // The visible vertical faces share the NEAR corner (index 0), not
+  // the far corner (index 2). Drawing far faces made cabinets/pallets
+  // appear to have their entire lower halves missing.
+  poly([topPts[3],topPts[0],base[0],base[3]],sideX,'#35474a',.7);
+  poly([topPts[0],topPts[1],base[1],base[0]],sideY,'#35474a',.7);
   poly(topPts,top,'#405354',.8);return topPts;
  }
  function shadow(x,y,w,h,scale=1){
@@ -36,8 +40,9 @@ export function createArtwork(ctx,project,getZoom){
  function miniBox(x,y,z,c='#ad865b',w=.34,h=.37,t=6){
   const corners=[P(x-.5,y-.5,z),P(x+w-.5,y-.5,z),P(x+w-.5,y+h-.5,z),P(x-.5,y+h-.5,z)];
   const top=[P(x-.5,y-.5,z+t),P(x+w-.5,y-.5,z+t),P(x+w-.5,y+h-.5,z+t),P(x-.5,y+h-.5,z+t)];
-  poly([top[2],top[3],corners[3],corners[2]],'#7b6a58');
-  poly([top[1],top[2],corners[2],corners[1]],'#9b8065');
+  // Small cartons use the identical near-face rule as all fixtures.
+  poly([top[3],top[0],corners[0],corners[3]],'#7b6a58');
+  poly([top[0],top[1],corners[1],corners[0]],'#9b8065');
   poly(top,c,'#445154',.5);
  }
  function miniCan(x,y,z,c='#c76b4d',r=3){
