@@ -68,4 +68,38 @@ assert(observedOpening,'NPC approaches and door opens');
 assert(traveler.y>=13,'NPC crosses the threshold after door opens');
 assert(frontDoor.open<.12,'Door closes after the character clears the opening');
 assert(!passageWorld.walls.has('19,10'),'Door threshold stays free of structural wall collision');
+// Overhead signs and spill-cleaning equipment draw entirely from Canvas primitives.
+artwork.drawDepartmentSign(17.5,16.5,'ELECTRICAL','#c9a946');
+artwork.drawWetFloorSign(30,30);
+artwork.drawCleaningSet(31,30,0);
+artwork.drawCleaningSet(31,30,1.5);
+
+// A staff member sees a spill, travels to it, cleans it, and leaves a temporary sign.
+const cleanWorld=createHardwareStore();
+const cleanGame=makeGame(cleanWorld,{staff:1,customers:1,seed:1549});
+const cleaner=cleanGame.npcs.find(n=>n.role==='employee');
+const observer=cleanGame.npcs.find(n=>n.role==='customer');
+cleaner.x=cleaner.rx=31;cleaner.y=cleaner.ry=30;cleaner.path=[];cleaner.think=.01;
+observer.x=observer.rx=6;observer.y=observer.ry=14;observer.path=[];observer.think=1000;
+assert(addHazard(cleanGame,30,30,'spill'));
+let animated=false;
+for(let i=0;i<100;i++){
+ updateGame(cleanGame,.1);
+ if(cleaner.cleaning){animated=true;break}
+}
+assert(animated,'Employee begins mopping with visible equipment');
+assert(cleaner.cleaningTarget,'Cleaning target is tracked');
+assert(saveGame(cleanGame),'Mid-cleaning saves without losing state');
+const loadedCleanGame=loadGame();
+const resumedCleaner=loadedCleanGame.npcs.find(n=>n.id===cleaner.id);
+assert.equal(resumedCleaner.cleaningTarget,cleaner.cleaningTarget,'Save retains active cleaning task');
+let placedSign=false;
+for(let i=0;i<120;i++){
+ updateGame(loadedCleanGame,.1);
+ if(loadedCleanGame.world.props.some(p=>p.type==='wetFloorSign')){placedSign=true;break}
+}
+assert(placedSign,'A-frame caution sign placed at finished spill');
+assert(!loadedCleanGame.world.hazards.some(h=>h.kind==='spill'&&h.life>0),'Spill is removed after cleaning');
+for(let i=0;i<155;i++)updateGame(loadedCleanGame,.1);
+assert(!loadedCleanGame.world.props.some(p=>p.type==='wetFloorSign'),'Warning sign expires after cleaning');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
