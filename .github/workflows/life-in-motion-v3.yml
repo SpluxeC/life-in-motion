@@ -1,0 +1,24 @@
+name: Life in Motion v3 QA
+on:
+  push:
+    paths:
+      - 'v3/**'
+      - '.github/workflows/life-in-motion-v3.yml'
+  workflow_dispatch:
+jobs:
+  core-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check module syntax
+        run: |
+          node --check v3/src/world.js
+          node --check v3/src/simulation.js
+          node --check v3/src/persistence.js
+          node --check v3/src/main.js
+      - name: Run v3 core regression tests
+        working-directory: v3
+        run: npm test
