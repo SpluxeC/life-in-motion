@@ -96,7 +96,16 @@ function interact(g,n,other){if(!other||!other.alive)return;
 export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
  g.elapsed+=dt;g.dispatchCooldown=Math.max(0,g.dispatchCooldown-dt);
  for(let k of Object.keys(g.cooldowns))if(g.cooldowns[k]<g.elapsed)delete g.cooldowns[k];
- for(let d of g.world.doors){let near=g.npcs.some(n=>n.alive&&Math.hypot(n.rx-d.x,n.ry-d.y)<2.2);d.target=near||d.forceUntil>g.elapsed?1:0;d.open=clamp(d.open+(d.target-d.open)*Math.min(1,dt*4),0,1)}
+ for(let d of g.world.doors){
+  // A door begins opening as the character approaches its planned doorway,
+  // stays open while the opening is occupied and closes after a short clear period.
+  const approaching=g.npcs.some(n=>n.alive&&!n.arrested&&n.unconscious<=0&&
+    (Math.hypot(n.rx-d.x,n.ry-d.y)<2.4 ||
+      (n.path||[]).slice(0,4).some(p=>p.x===d.x&&p.y===d.y&&Math.hypot(n.rx-d.x,n.ry-d.y)<4.8)));
+  if(approaching)d.forceUntil=Math.max(d.forceUntil||0,g.elapsed+1.7);
+  d.target=approaching||(d.forceUntil||0)>g.elapsed?1:0;
+  d.open=clamp(d.open+(d.target-d.open)*Math.min(1,dt*(d.target?3.7:2.2)),0,1);
+}
  for(let v of g.world.props){if(v.targetX!==undefined){let dx=v.targetX-v.x,dy=v.targetY-v.y,dist=Math.hypot(dx,dy);if(dist>.04){v.x+=dx/dist*Math.min(dist,dt*2);v.y+=dy/dist*Math.min(dist,dt*2)}}}
  for(let p of [...g.pending]){p.time-=dt;if(p.time<=0){dispatch(g,p.service);g.pending.splice(g.pending.indexOf(p),1)}}
  for(let h of [...g.world.hazards]){h.life-=dt;h.tick+=dt;if(h.life<=0)continue;
