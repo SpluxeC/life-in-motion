@@ -1,4 +1,5 @@
 import {nearestOpen,pathTo,doorAt,fixtureAt,walkable,key} from './world.js';
+import {initializeRoutine,chooseRoutine,updateRoutine} from './routines.js';
 const clamp=(n,a=0,b=100)=>Math.max(a,Math.min(b,n));
 export const POWER_LIST=[
  {id:'whisper',name:'Whisper Doubt',cost:0,targets:['npc'],cooldown:12},
@@ -28,9 +29,16 @@ export function makeGame(world,options={}){
 }
 export function log(g,text){g.log.unshift({time:Math.floor(g.elapsed),text});g.log.length=Math.min(g.log.length,100)}
 export function spawnNPC(g,role='customer'){
- const r=g.random,i=g.nextId++,pos=nearestOpen(g.world,role==='employee'?9+Math.floor(r()*23):5+Math.floor(r()*28),role==='employee'?12+Math.floor(r()*22):12+Math.floor(r()*24));
+ const r=g.random,i=g.nextId++;
+ const coworkerCount=g.npcs.filter(o=>o.role==='employee').length;
+ const shopperCount=g.npcs.filter(o=>o.role==='customer').length;
+ const lotStops=[10,18,26,34,42,50,58];
+ const lotX=lotStops[shopperCount%lotStops.length];
+ const pos=role==='customer'?nearestOpen(g.world,lotX,8):
+  nearestOpen(g.world,role==='employee'?12+Math.floor(r()*19):4,role==='employee'?15+Math.floor(r()*11):5);
  const traits={aggression:Math.round(r()*100),bravery:Math.round(r()*100),compassion:Math.round(r()*100),suspicion:Math.round(r()*100),loyalty:Math.round(r()*100)};
  const n={id:'npc-'+i,name:FIRST[Math.floor(r()*FIRST.length)]+' '+LAST[Math.floor(r()*LAST.length)],role,x:pos.x,y:pos.y,rx:pos.x,ry:pos.y,health:100,bleeding:0,pain:0,unconscious:0,alive:true,arrested:false,detention:0,emotion:{anger:r()*20,fear:r()*15,stress:r()*15},traits,relationships:{},memory:[],inventory:r()<.6?[ITEMS[Math.floor(r()*ITEMS.length)].id]:[],path:[],target:null,activity:role==='employee'?'Working':'Browsing',think:1+r()*3,callCooldown:0,recovery:0,panic:0};
+ if(role==='employee'||role==='customer')initializeRoutine(n,role==='employee'?coworkerCount:shopperCount);
  g.npcs.push(n);return n;
 }
 function memory(n,type,subject,text,strength=1){n.memory.unshift({type,subject,text,strength,age:0});n.memory.length=Math.min(n.memory.length,22)}
@@ -67,14 +75,15 @@ function choose(g,n){
  const r=g.random,w=g.world;
  if(!n.alive||n.unconscious>0||n.arrested)return;
  const danger=w.hazards.filter(h=>h.life>0&&(n.role!=='employee'||h.kind!=='spill')&&Math.hypot(n.x-h.x,n.y-h.y)<5).sort((a,b)=>Math.hypot(n.x-a.x,n.y-a.y)-Math.hypot(n.x-b.x,n.y-b.y))[0];
- if(danger&&n.traits.bravery<55+n.emotion.fear*.25){if(n.cleaningTarget)clearCleanup(g,n);n.emotion.fear=clamp(n.emotion.fear+24);n.panic=10;let flee=nearestOpen(w,n.x+(n.x-danger.x>0?7:-7),n.y+(n.y-danger.y>0?7:-7));goto(g,n,flee);n.activity='Fleeing '+danger.kind;return}
+ if(danger&&n.traits.bravery<55+n.emotion.fear*.25){n.task=null;n.action='panic';if(n.cleaningTarget)clearCleanup(g,n);n.emotion.fear=clamp(n.emotion.fear+24);n.panic=10;let flee=nearestOpen(w,n.x+(n.x-danger.x>0?7:-7),n.y+(n.y-danger.y>0?7:-7));goto(g,n,flee);n.activity='Fleeing '+danger.kind;return}
  if(n.role==='employee'&&assignSpillCleanup(g,n))return;
  if(n.health<45&&n.inventory.includes('bandage')){n.health=clamp(n.health+16);n.bleeding=Math.max(0,n.bleeding-1);n.inventory.splice(n.inventory.indexOf('bandage'),1);n.activity='Treating injury';return}
  if(n.emotion.anger>64&&n.traits.aggression>35){let victim=nearest(g,n,o=>!o.arrested);if(victim&&Math.hypot(victim.x-n.x,victim.y-n.y)<5){goto(g,n,victim);n.activity='Confronting '+victim.name;return}}
  if(n.role==='police'){let suspect=g.npcs.find(o=>o.alive&&!o.arrested&&o!==n&&o.emotion.anger>72);if(suspect){goto(g,n,suspect);n.activity='Responding to suspect';return}}
  if(n.role==='firefighter'){let fire=w.hazards.find(h=>h.kind==='fire'&&h.life>0);if(fire){goto(g,n,nearestOpen(w,fire.x+2,fire.y));n.activity='Responding to fire';return}}
  if(n.role==='paramedic'){let patient=g.npcs.find(o=>o.alive&&o.health<62&&o!==n);if(patient){goto(g,n,patient);n.activity='Responding to injury';return}}
- if(n.emotion.fear>60){goto(g,n,nearestOpen(w,7+Math.floor(r()*27),5+Math.floor(r()*4)));n.activity='Seeking safety';return}
+ if(n.emotion.fear>60){n.task=null;goto(g,n,nearestOpen(w,7+Math.floor(r()*27),5+Math.floor(r()*4)));n.activity='Seeking safety';return}
+ if(chooseRoutine(g,n))return;
  if(r()<.22){let friend=nearest(g,n);if(friend){goto(g,n,friend);n.activity='Socializing';return}}
  if(w.drops.length&&r()<.24){let drop=w.drops[Math.floor(r()*w.drops.length)];goto(g,n,drop);n.activity='Picking up item';return}
  if(r()<.3){let o=w.fixtures[Math.floor(r()*w.fixtures.length)];goto(g,n,{x:o.x+2,y:o.y+1});n.activity=r()<.15?'Looking for something to steal':'Using '+o.type;return}
@@ -167,6 +176,7 @@ export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
    }
   }else{n.cleaning=false}
  }
+ updateRoutine(g,n,dt);
  if(n.panic>0)n.panic=Math.max(0,n.panic-dt);
  if(n.role==='firefighter'){let fire=g.world.hazards.find(h=>h.kind==='fire'&&h.life>0&&Math.hypot(n.x-h.x,n.y-h.y)<3);if(fire){fire.life-=dt*12;if(fire.life<=0)log(g,n.name+' extinguished a fire.')}}
  if(n.role==='paramedic'){let patient=nearest(g,n,o=>o.health<85&&Math.hypot(o.x-n.x,o.y-n.y)<3);if(patient&&g.random()<dt*.65)interact(g,n,patient)}
