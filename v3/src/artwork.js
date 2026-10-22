@@ -174,7 +174,6 @@ export function createArtwork(ctx,project,getZoom){
     else miniBox(px,py,z,i%2?'#b8ae93':'#697b78',.29,.30,5);
    }
   }
-  label(x+(w-1)*.5,y+(h-1)*.5,51,dept||'HARDWARE','#f4e9da','#46595d',51);
  }
  function checkout(o){
   shadow(o.x,o.y,o.w,o.h);
@@ -186,7 +185,6 @@ export function createArtwork(ctx,project,getZoom){
   ctx.fillStyle='#263f44';ctx.fillRect(screen.x-8*Z(),screen.y-9*Z(),16*Z(),12*Z());
   ctx.fillStyle='#77c8a3';ctx.fillRect(screen.x-5*Z(),screen.y-6*Z(),10*Z(),2.5*Z());
   miniBox(o.x+1.48,o.y+.49,21,'#d8dbcf',.19,.23,3);
-  label(o.x+o.w*.5,o.y+.17,24,'CHECKOUT','#fff5e8','#a64d3e',43);
  }
  function drawItem(id,x,y,z=5,scale=1){
   const p=P(x,y,z),s=Z()*scale,at=(dx,dy)=>({x:p.x+dx*s,y:p.y+dy*s});
@@ -235,7 +233,7 @@ export function createArtwork(ctx,project,getZoom){
   if(type==='checkout'){checkout(o);return}
   if(type==='serviceDesk'){
    solid(x,y,w,h,22,'#b1bcbc','#6d7778','#8f9b9a');
-   surface(x+.1,y+.1,w-.2,h-.2,23,'#d5cec0','#8e9994');label(x+1,y,31,'CUSTOMER SERVICE','#fff8e9','#456b73',77);
+   surface(x+.1,y+.1,w-.2,h-.2,23,'#d5cec0','#8e9994');
    miniBox(x+.3,y+.28,27,'#354e59',.45,.33,7);miniBox(x+1.15,y+.33,27,'#e8dec7',.25,.32,3)
   }else if(type==='paintMixer'){
    solid(x,y,1,1,18,'#bdc5c0','#737e80');miniCan(x+.35,y+.4,24,'#bd4e3c',5);
@@ -282,7 +280,7 @@ export function createArtwork(ctx,project,getZoom){
    solid(x,y,w,h,36,'#65757a','#3d555a');for(let i=0;i<Math.min(6,o.stock??6);i++){
     miniBox(x-.2+(i%2)*.4,y-.12,12+Math.floor(i/2)*10,
       ['#d6b66c','#6d9da4','#d17b59'][i%3],.30,.26,6)}
-   label(x+.5,y+.4,44,o.department||'HARDWARE','#eceddb','#455f64',47)
+
   }else if(type==='bucketStack'){
    for(let i=0;i<Math.min(4,o.stock??4);i++)miniCan(x-.18+i%2*.38,y-.18+Math.floor(i/2)*.38,8,'#dadbd0',7)
   }else if(type==='lumberRack'){
@@ -291,7 +289,7 @@ export function createArtwork(ctx,project,getZoom){
   }else if(type==='toolCabinet'){
    solid(x,y,w,h,33,'#a34438','#733c37','#974a3e');
    for(let i=0;i<3;i++)line(P(x+.13,y+.1+i*.26,22),P(x+1.75,y+.1+i*.26,22),'#d0cbb4',1.5)
-   ;label(x+1,y+.15,39,'TOOLS','#e5e6d8','#6b3331',47)
+
   }else if(type==='safetyStation'){
    solid(x,y,w,h,28,'#e6e9dc','#b8c5c0');label(x+.5,y+.3,35,'FIRST AID','#ebfff5','#51866c',42);
    miniCan(x+.52,y+.55,28,'#c94940',4)
@@ -339,17 +337,32 @@ export function createArtwork(ctx,project,getZoom){
  // Overhead department signage is an independent visual layer:
  // signs have no collision footprint and do not block doors or aisles.
  function drawDepartmentSign(x,y,name,accent='#467887'){
-  const z=68,a=P(x-.95,y-.12,z),b=P(x+.95,y-.12,z);
-  const c=P(x+.95,y-.12,z-18),d=P(x-.95,y-.12,z-18);
-  const leftTop=P(x-.6,y-.12,z+17),rightTop=P(x+.6,y-.12,z+17);
-  line(leftTop,P(x-.6,y-.12,z),'#b7c3b8',1.7);
-  line(rightTop,P(x+.6,y-.12,z),'#b7c3b8',1.7);
-  poly([a,b,c,d],'#e8e8dc','#4b6669',1.8);
-  line(P(x-.91,y-.12,z-3),P(x+.91,y-.12,z-3),accent,3);
-  const mid=P(x,y-.12,z-10);
-  ctx.font=`bold ${Math.max(8,10*Z())}px system-ui,sans-serif`;
-  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#2d4549';
-  ctx.fillText(name,mid.x,mid.y,86*Z())
+  // Camera-facing sign face: text and colored panel share *screen* coordinates.
+  // The previous isometric parallelogram left half the text off its narrow face.
+  const p=P(x,y,68),z=Z();
+  const title=String(name).toUpperCase();
+  const width=Math.max(86,title.length*9.2+24)*z,height=26*z;
+  const left=p.x-width*.5,top=p.y-height*.5;
+  ctx.save();
+  // Two hanging rods and a slight edge give depth without twisting the lettering.
+  ctx.strokeStyle='#b3bdb6';ctx.lineWidth=Math.max(.7,z*1.5);
+  for(const fraction of [.24,.76]){
+   const sx=left+width*fraction;
+   ctx.beginPath();ctx.moveTo(sx,top-12*z);ctx.lineTo(sx,top);ctx.stroke();
+  }
+  ctx.fillStyle='#526366';
+  ctx.fillRect(left+3*z,top+3*z,width,height);
+  ctx.fillStyle='#e8e8dc';ctx.fillRect(left,top,width,height);
+  ctx.strokeStyle='#425d60';ctx.lineWidth=Math.max(.7,z*1.5);
+  ctx.strokeRect(left,top,width,height);
+  ctx.fillStyle=accent;ctx.fillRect(left+2*z,top+2*z,width-4*z,4*z);
+  const fontSize=Math.min(12*z,Math.max(6,9*z));
+  ctx.font=`700 ${fontSize}px system-ui, sans-serif`;
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#263b40';
+  const textX=left+width*.5,textY=top+height*.63;
+  // Always constrain text to the sign's own face, including mobile zoom.
+  ctx.fillText(title,textX,textY,width-12*z);
+  ctx.restore();
  }
  // A-frame warning sign sits at the actual wet-floor tile and persists briefly.
  function drawWetFloorSign(x,y){
