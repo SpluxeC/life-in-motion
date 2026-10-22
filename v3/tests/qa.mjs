@@ -34,7 +34,7 @@ updateGame(saved,.1);assert.equal(saved.completed,true);assert.equal(saved.winne
 const oldLog=saved.log.length;updateGame(saved,.1);assert.equal(saved.log.length,oldLog);
 // Built-in art must render every world asset type without external PNG files.
 const graphicsCalls={count:0};
-const drawingMethods=new Set(['beginPath','moveTo','lineTo','closePath','fill','stroke','ellipse','fillRect','strokeRect','fillText','arc']);
+const drawingMethods=new Set(['beginPath','moveTo','lineTo','closePath','fill','stroke','ellipse','fillRect','strokeRect','fillText','arc','save','restore']);
 const drawingContext=new Proxy({},{
  get:(obj,k)=>drawingMethods.has(k)?()=>{graphicsCalls.count++}:obj[k],
  set:(obj,k,val)=>{obj[k]=val;return true}
