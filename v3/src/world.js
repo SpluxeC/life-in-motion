@@ -2,7 +2,7 @@
 export const WIDTH=48,HEIGHT=43;
 export const key=(x,y)=>x+','+y;
 export function createHardwareStore(){
- const walls=new Map(),doors=[],fixtures=[],props=[],ground=[];
+ const walls=new Map(),doors=[],fixtures=[],props=[],ground=[],blocked=new Set();
  const wall=(x,y,section='exterior')=>walls.set(key(x,y),{x,y,section});
  const door=(x,y,type='hinged',label='Door')=>doors.push({id:'door-'+x+'-'+y,x,y,type,label,open:0,target:0,auto:type==='sliding',locked:false});
  const fixture=(type,x,y,w=1,h=1,extra={})=>fixtures.push({id:type+'-'+x+'-'+y,type,x,y,w,h,...extra});
@@ -39,8 +39,8 @@ export function createHardwareStore(){
  fixture('lockers',43,13,2,1);fixture('office',40,13,1,1);
  fixture('vending',44,19,1,1);fixture('table',41,19,2,1);fixture('sink',44,24,1,1);fixture('restroom',41,24,1,1);
  fixture('plants',41,33,2,2);fixture('plants',45,35,1,2);fixture('gardenDesk',42,29,2,1);
- for(let x of [7,15,23,31])props.push({type:'car',id:'car-'+x,x,y:4,w:2,h:3,color:['#8faab5','#b8a28b','#697f89','#b5b6ae'][(x-7)/8],heading:0});
- return {id:'hardware-store',title:'Hardware Store',width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:new Set()};
+ for(let x of [7,15,23,31]){props.push({type:'car',id:'car-'+x,x,y:4,w:2,h:3,color:['#8faab5','#b8a28b','#697f89','#b5b6ae'][(x-7)/8],heading:0});for(let xx=x;xx<x+2;xx++)for(let yy=4;yy<7;yy++)blocked.add(key(xx,yy))}
+ return {id:'hardware-store',title:'Hardware Store',width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
 }
 export const inside=(x,y)=>x>=0&&y>=0&&x<WIDTH&&y<HEIGHT;
 export function fixtureAt(world,x,y){return world.fixtures.find(o=>x>=o.x&&x<o.x+o.w&&y>=o.y&&y<o.y+o.h)}
