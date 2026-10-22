@@ -180,13 +180,45 @@ export function createArtwork(ctx,project,getZoom){
   label(o.x+o.w*.5,o.y+.17,24,'CHECKOUT','#fff5e8','#a64d3e',43);
  }
  function drawItem(id,x,y,z=5,scale=1){
-  const s=Z();const color={hammer:'#875c40',wrench:'#bac9c9',broom:'#a98454',flashlight:'#7b8e97',paint:'#c66f4c',bandage:'#faf1d4',water:'#7eb4c0',phone:'#343e43',gloves:'#dbb47e'}[id]||'#c8a273';
-  if(id==='paint'||id==='water'){miniCan(x,y,z,color,3*scale);return}
-  const p=P(x,y,z);
-  if(id==='wrench'||id==='hammer'||id==='broom'||id==='flashlight'){
-   line({x:p.x-7*s*scale,y:p.y+3*s*scale},{x:p.x+7*s*scale,y:p.y-5*s*scale},color,3*scale);
-   if(id==='hammer')ctx.fillRect(p.x+2*s,p.y-10*s,8*s*scale,4*s*scale);
-  }else{ellipse(p.x,p.y,4*scale,3*scale,color,'#3a464a')}
+  const p=P(x,y,z),s=Z()*scale,at=(dx,dy)=>({x:p.x+dx*s,y:p.y+dy*s});
+  const stroke=(v1,v2,c,w=2)=>line(at(...v1),at(...v2),c,w*scale);
+  if(id==='hammer'){
+   stroke([-7,4],[4,-5],'#916541',2.8);
+   poly([at(0,-9),at(7,-13),at(11,-7),at(4,-3)],'#87969a','#39484c',.8)
+  }else if(id==='wrench'){
+   stroke([-6,4],[5,-7],'#a3b4ba',3);
+   ctx.beginPath();ctx.arc(p.x+7*s,p.y-8*s,3.4*s,-.5,2.4);ctx.strokeStyle='#b8c6ca';ctx.lineWidth=2.1*s;ctx.stroke()
+  }else if(id==='broom'){
+   stroke([-8,5],[8,-9],'#bd9a61',2);
+   poly([at(-10,2),at(-5,-2),at(0,2),at(-6,7)],'#c5b37c','#7f704e',.8);
+   for(let i=0;i<4;i++)stroke([-9+i*2.2,3],[-7+i*2,8],'#94774e',.7)
+  }else if(id==='flashlight'){
+   stroke([-8,4],[3,-3],'#4b5962',5);
+   poly([at(2,-5),at(7,-8),at(10,-3),at(4,0)],'#b5c6c5','#596b71',.8);
+   ellipse(p.x+8*s,p.y-6*s,2.5*scale,2*scale,'#f2dfac')
+  }else if(id==='paint'){
+   ellipse(p.x,p.y+2*s,6*scale,2.6*scale,'#5a777d');
+   ctx.fillStyle='#b65f4d';ctx.fillRect(p.x-6*s,p.y-6*s,12*s,8*s);
+   ellipse(p.x,p.y-6*s,6*scale,3*scale,'#e5e1d4','#596666');
+   ctx.fillStyle='#f3d59a';ctx.fillRect(p.x-2*s,p.y-3*s,4*s,4*s)
+  }else if(id==='bandage'){
+   poly([at(-7,1),at(-2,-5),at(8,-1),at(2,5)],'#f7eee3','#b6b4a5',.7);
+   poly([at(-1,-3),at(3,-2),at(2,3),at(-2,2)],'#d7a48b');
+   ellipse(p.x,p.y,1.4*scale,1.2*scale,'#f7e8d0')
+  }else if(id==='water'){
+   poly([at(-3,4),at(-4,-6),at(-2,-9),at(2,-9),at(4,-6),at(3,4)],'#82bec6','#cbdedf',.8);
+   poly([at(-3,-4),at(3,-4),at(3,1),at(-3,1)],'#e1f1e7b8');
+   line(at(-2,-10),at(2,-10),'#467e97',2)
+  }else if(id==='phone'){
+   poly([at(-5,4),at(-4,-8),at(5,-8),at(5,4)],'#293942','#9aaeb1',.8);
+   poly([at(-3,-6),at(3,-6),at(3,0),at(-3,0)],'#4b9aad');
+   ellipse(p.x,p.y+2*s,1*scale,1*scale,'#becfd1')
+  }else if(id==='gloves'){
+   for(let i=0;i<2;i++){
+    const shift=i*8-4;
+    poly([at(shift-3,5),at(shift-4,-2),at(shift-1,-7),at(shift+1,-3),at(shift+3,-7),at(shift+5,-1),at(shift+3,5)],'#d2aa71','#725e44',.6)
+   }
+  }else{ellipse(p.x,p.y,4*scale,3*scale,'#c8a273','#3a464a')}
  }
  function drawFixture(o){
   const {x,y,w,h,type}=o;shadow(x,y,w,h,1.1);
