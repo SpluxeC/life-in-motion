@@ -206,4 +206,52 @@ for(const title of ['PAINT','ELECTRICAL','PLUMBING','CHECKOUT','SERVICE','GARDEN
  assert(text.y>=face.y&&text.y<=face.y+face.h,'Department sign text centered vertically');
  assert(text.maxWidth<=face.w,'Department sign text cannot exceed its panel');
 }
+// NPC schedules: employees staff actual counters, help customers and cover all
+// reachable map zones; shoppers browse, visit garden, check out and return to cars.
+const scheduleWorld=createHardwareStore();
+const scheduleGame=makeGame(scheduleWorld,{staff:4,customers:6,seed:43});
+const employees=scheduleGame.npcs.filter(n=>n.role==='employee');
+const shoppers=scheduleGame.npcs.filter(n=>n.role==='customer');
+assert.deepEqual(employees.map(n=>n.duty),['cashier','service','floor','floor']);
+assert(shoppers.every(n=>n.duty==='shopper'));
+assert(shoppers.every(n=>n.y===8),'Shoppers enter from the parking lot');
+const zones=Object.fromEntries(scheduleGame.npcs.map(n=>[n.id,new Set()]));
+const jobs=Object.fromEntries(scheduleGame.npcs.map(n=>[n.id,new Set()]));
+const poses=Object.fromEntries(scheduleGame.npcs.map(n=>[n.id,new Set()]));
+let cashierTime=0,serviceTime=0;
+for(let i=0;i<2400;i++){
+ updateGame(scheduleGame,.1);
+ if(i%5===0){
+  for(const n of scheduleGame.npcs){
+   const tile=scheduleWorld.ground.find(t=>t.x===Math.round(n.rx)&&t.y===Math.round(n.ry));
+   if(tile)zones[n.id].add(tile.area);
+   if(n.task)jobs[n.id].add(n.task.kind);
+   if(n.action)poses[n.id].add(n.action);
+  }
+  if(employees[0].task?.kind==='cashier'&&!employees[0].path.length)cashierTime+=.5;
+  if(employees[1].task?.kind==='service'&&!employees[1].path.length)serviceTime+=.5;
+ }
+}
+assert(cashierTime>20,'Cashier spends real work time stationed at register');
+assert(serviceTime>20,'Service associate spends real work time at customer service');
+assert(poses[employees[0].id].has('scan'),'Cashier performs scan animation');
+assert(poses[employees[1].id].has('type'),'Service associate performs desk animation');
+assert(employees.slice(2).some(n=>zones[n.id].has('garden')),'Floor associates visit garden');
+assert(employees.slice(2).some(n=>zones[n.id].has('employee')),'Floor associates visit employee rooms');
+assert(employees.slice(2).some(n=>zones[n.id].has('parking')),'Floor associates inspect parking lot');
+assert(employees.slice(2).some(n=>jobs[n.id].has('help')),'Floor associates initiate customer assistance');
+assert(shoppers.some(n=>jobs[n.id].has('checkout')),'Customers use checkout');
+assert(shoppers.some(n=>zones[n.id].has('garden')),'Customers visit the garden');
+assert(shoppers.some(n=>jobs[n.id].has('parking')),'Customers return to their cars');
+assert(scheduleGame.log.some(entry=>/Can I help|Looking for anything|Need a hand/.test(entry.text)),
+ 'Associate asks customers if help is needed');
+assert(walkable(scheduleWorld,37,18),'Staff corridor remains walkable');
+assert(pathTo(scheduleWorld,{x:10,y:8},{x:40,y:18}).length>0,'Route from parking to staff areas');
+assert(pathTo(scheduleWorld,{x:20,y:13},{x:43,y:33}).length>0,'Route from store to garden');
+assert(saveGame(scheduleGame),'Routine schedules save');
+const loadedSchedules=loadGame();
+assert.equal(loadedSchedules.npcs[0].duty,'cashier','Assigned cashier role survives save');
+assert.equal(loadedSchedules.npcs[1].duty,'service','Assigned service role survives save');
+assert(loadedSchedules.npcs.every(n=>Array.isArray(n.path)),'Saved routine paths survive');
+for(let i=0;i<15;i++)updateGame(loadedSchedules,.1);
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
