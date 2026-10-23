@@ -92,7 +92,46 @@ export function createArtwork(ctx,project,getZoom){
   }
   for(let y=13;y<42;y+=5)line(P(69,y),P(69,y+2.2),'#e4d1a0',2.1);
  }
+ // All vertical panels are oriented in world space; wall-side cabinets face
+ // accessible staff aisles instead of appearing like camera-facing billboards.
+ function cabinetFace(o,height=43){
+  const facing=o.facing||'south',x=o.x,y=o.y,w=o.w||1,h=o.h||1;
+  let p1,p2,p3,p4;
+  if(facing==='west'){
+   p1=P(x-.48,y-.42,2);p2=P(x-.48,y+h-.58,2);
+   p3=P(x-.48,y+h-.58,height-5);p4=P(x-.48,y-.42,height-5);
+  }else{
+   p1=P(x-.42,y-.48,2);p2=P(x+w-.58,y-.48,2);
+   p3=P(x+w-.58,y-.48,height-5);p4=P(x-.42,y-.48,height-5);
+  }
+  poly([p1,p2,p3,p4],'#526c7188','#d0dfda',1.1);
+  line({x:p1.x*.3+p4.x*.7,y:p1.y*.3+p4.y*.7},{x:p2.x*.3+p3.x*.7,y:p2.y*.3+p3.y*.7},'#e6e9dc',.8);
+  return [p1,p2,p3,p4];
+ }
+ function drawTimberFence(o){
+  const x=o.x-.5,y=o.y-.5;
+  const a=P(x,y),b=o.axis==='y'?P(x,y+1):P(x+1,y);
+  const at=h=>({x:a.x,y:a.y-h*Z()}),bt=h=>({x:b.x,y:b.y-h*Z()});
+  // Two continuous rails behind closely spaced pickets, with sturdy posts.
+  for(const height of [9,22]){
+   const low=height-2,high=height+2;
+   poly([at(high),bt(high),bt(low),at(low)],'#ad8859','#694a32',.8);
+  }
+  for(let i=0;i<=4;i++){
+   const t=i/4,px=x+(o.axis==='y'?0:t),py=y+(o.axis==='y'?t:0);
+   const bottom=P(px,py,2),top=P(px,py,30+(i%2));
+   line(bottom,top,i%2?'#a77d51':'#bd9667',5.2);
+   line(P(px,py,29),P(px,py,32), '#ddbb83',2.5);
+  }
+  for(const pt of [[x,y],[x+(o.axis==='y'?0:1),y+(o.axis==='y'?1:0)]]){
+   const base=P(pt[0],pt[1],0),top=P(pt[0],pt[1],35);
+   line(base,top,'#805633',7);
+   ellipse(top.x,top.y,4.5,2.3,'#e2b77d','#865a39');
+   line(P(pt[0],pt[1],15),P(pt[0],pt[1],18),'#5e432b',.8);
+  }
+ }
  function drawWall(o,world){
+  if(o.section==='gardenFence'){drawTimberFence(o);return}
   let axis=o.axis;if(!axis){const onY=world.walls.has((o.x)+','+(o.y+1))||world.walls.has((o.x)+','+(o.y-1));axis=onY?'y':'x'}
   const p=P(o.x-.5,o.y-.5),q=axis==='y'?P(o.x-.5,o.y+.5):P(o.x+.5,o.y-.5),height=o.section==='staff'?55:53,z=height*Z();
   const top={x:p.x,y:p.y-z},end={x:q.x,y:q.y-z},shade=axis==='y'?'#a6b7b0':'#c0c6ba';
@@ -119,6 +158,23 @@ export function createArtwork(ctx,project,getZoom){
   // Rigid frame: ground threshold, twin jambs, lintel; opening stays empty.
   line(a,b,d.type==='sliding'?'#b6d0d1':'#4f6665',3);
   line(a,at,'#3e5659',3.7);line(b,bt,'#3e5659',3.7);line(at,bt,'#d2d7c9',3.5);
+  if(d.type==='gate'){
+   // Garden entry is a working hinged gate and uses the same collision
+   // and auto-open timing as staff doors, not a static fence graphic.
+   const swing=open*1.30,ex=start.x-Math.sin(swing),ey=start.y+Math.cos(swing);
+   const from=t=>({x:start.x+(ex-start.x)*t,y:start.y+(ey-start.y)*t});
+   line(P(start.x,start.y),P(start.x,start.y,35),'#815634',7);
+   line(P(end.x,end.y),P(end.x,end.y,35),'#815634',7);
+   for(const h of [10,22]){
+    line(P(start.x,start.y,h),P(ex,ey,h),'#b58a58',3);
+   }
+   for(let i=0;i<=5;i++){
+    const p=from(i/5);
+    line(P(p.x,p.y,2),P(p.x,p.y,31),'#b58e5c',4);
+   }
+   ellipse(P(ex,ey,17).x,P(ex,ey,17).y,2,1.5,'#d7d3b1');
+   return;
+  }
   if(d.type==='rollup'){
    const visible=h*(1-open);
    if(visible>1){
@@ -256,14 +312,29 @@ export function createArtwork(ctx,project,getZoom){
    else{for(let i=0;i<4;i++)drawItem(['hammer','wrench','flashlight','gloves'][i],x+.3+i*.37,y+.4,24)}
   }else if(type==='lockers'){
    solid(x,y,w,h,48,'#91a5ac','#667b80','#81979a');
-   for(let i=0;i<4;i++){const k=P(x+i*.47,y+.16,31);ctx.fillStyle='#54696d';ctx.fillRect(k.x-4*Z(),k.y-8*Z(),8*Z(),14*Z());
-    line({x:k.x+2*Z(),y:k.y},{x:k.x+2*Z(),y:k.y+5*Z()},'#d9e3e0',1.5)}
+   // Tall double-bank doors follow the cabinet plane, not the camera.
+   for(let i=0;i<4;i++){
+    const py=y-.40+(i+.5)*.20,px=x-.48;
+    const a=P(px,py,6),b=P(px,py+.15,6),c=P(px,py+.15,43),d=P(px,py,43);
+    poly([a,b,c,d],i%2?'#748b90':'#8da4a9','#4d676a',1);
+    line(P(px,py+.10,22),P(px,py+.10,28),'#e0ebe5',1.6);
+   }
   }else if(type==='vending'||type==='drinkCooler'){
-   solid(x,y,w,h,49,type==='vending'?'#aa4b40':'#d2dad6','#56686d','#859395');
-   const a=P(x+.1,y+.07,40),b=P(x+.82,y+.07,40),c=P(x+.82,y+.07,11),d=P(x+.1,y+.07,11);
-   poly([a,b,c,d],'#254753','#819a99',1.5);
-   for(let row=0;row<4;row++)for(let col=0;col<3;col++)miniCan(x+.22+col*.23,y+.08,17+row*6,['#d2b774','#e5e5d5','#8ab8c9'][col],1.3);
-   label(x+.49,y+.15,50,type==='vending'?'SNACKS':'DRINKS','#eee5d2',type==='vending'?'#943e38':'#51818b',38)
+   solid(x,y,w,h,49,type==='vending'?'#ad5445':'#d2dad6','#56686d','#859395');
+   const panel=cabinetFace(o,48);
+   poly(panel,'#345861bb','#bed4d0',1.2);
+   // Display shelves read along the vertical wall-mounted plane.
+   for(let row=0;row<4;row++){
+    const front=o.facing==='west';
+    const a=front?P(x-.5,y-.32,10+row*8):P(x-.32,y-.5,10+row*8);
+    const b=front?P(x-.5,y+.32,10+row*8):P(x+.32,y-.5,10+row*8);
+    line(a,b,'#bbd7d6',1.1);
+    for(let col=0;col<3;col++){
+     const q=front?P(x-.51,y-.23+col*.23,13+row*8):P(x-.23+col*.23,y-.51,13+row*8);
+     ellipse(q.x,q.y,2.5,4,row%2?'#d9bd74':'#a8d3cf');
+    }
+   }
+   label(x,y,54,type==='vending'?'SNACKS':'DRINKS','#eee5d2',type==='vending'?'#943e38':'#51818b',38)
   }else if(type==='table'){
    solid(x,y,w,h,17,'#aa8968','#6b5949');for(let i=0;i<2;i++)miniCan(x+.4+i*.8,y+.4,21,'#d5d8cb',3);
    for(let i=0;i<2;i++)solid(x+i*1.3,y+.42,.44,.34,10,'#5b6e71')
