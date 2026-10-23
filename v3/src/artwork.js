@@ -830,36 +830,44 @@ export function createArtwork(ctx,project,getZoom){
   }else if(type==='wireCutter'){
    wireCuttingStation(o);
   }else if(type==='saw'){
-   // Real two-tile cabinet table saw: cast-metal bed and extensions.
-   solid(x,y,w,h,22,'#9baeb0','#47616a','#667e83');
-   surface(x+.06,y+.07,w-.12,h-.14,23,'#c4d1cc','#506a71');
-   for(const xx of [x-.35,x+.60]){
-    poly([P(xx,y+.51,5),P(xx+.81,y+.51,5),
-          P(xx+.81,y+.51,20),P(xx,y+.51,20)],'#4a6872','#2f4b54',1);
-    line(P(xx+.28,y+.52,13),P(xx+.48,y+.52,13),'#d9e5db',2);
+   // A recognizably industrial two-tile table saw: bright orange elevated
+   // overhead blade guard, cast-iron top, cut lumber and freestanding legs.
+   shadow(x,y,w,h,1.16);
+   for(const xx of [x-.38,x+1.38])for(const yy of [y-.34,y+.32]){
+    line(P(xx,yy,2),P(xx,yy,27),'#3c505b',5.5);
+    const foot=P(xx,yy,2);ellipse(foot.x,foot.y,4.5,2.2,'#253e49');
    }
-   // Rip fence and a lumber board spanning the entire infeed table.
-   surface(x+.09,y+.20,w-.18,.27,24,'#c89e69','#916d45');
-   line(P(x-.43,y-.27,28),P(x+1.42,y-.27,28),'#dfebe2',4);
-   line(P(x-.43,y-.27,24),P(x+1.42,y-.27,24),'#536d75',2);
-   // Blade guard, exposed circular blade and its anchored safety struts.
-   const blade=P(x+.46,y+.20,37);
-   ellipse(blade.x,blade.y,13,12,'#becacb','#52686f');
-   ellipse(blade.x,blade.y,9,8,'#dfe6e2','#73888a');
-   ellipse(blade.x,blade.y,3,3,'#4c636c');
-   line(P(x+.20,y+.22,47),P(x+.72,y+.22,47),'#d6b56b',5);
-   line(P(x+.23,y+.22,47),P(x+.23,y+.22,26),'#536f76',3);
-   line(P(x+.69,y+.22,47),P(x+.69,y+.22,26),'#536f76',3);
-   // Safety stop, height adjustment handwheel and a timber push stick.
-   const dial=P(x+1.38,y+.49,15);
-   ellipse(dial.x,dial.y,6,5,'#344f57','#c3d6cf');
-   ellipse(dial.x,dial.y,2.4,2.4,'#becac7');
-   solid(x+1.54,y+.15,.32,.32,28,'#99b4b1','#526d75','#789397');
-   const stop=P(x+1.70,y+.31,32);
-   ellipse(stop.x,stop.y,4.1,3,'#c74544','#873d3c');
-   line(P(x+1.10,y-.16,25),P(x+1.37,y+.06,25),'#cba06d',3.3);
-   for(const px of [x-.34,x+1.34])for(const py of [y-.30,y+.31])
-    line(P(px,py,3),P(px,py,20),'#38505a',3.2);
+   solid(x,y,w,h,17,'#3d5a68','#243b46','#657b80');
+   solid(x+.02,y+.03,w-.04,h-.06,28,'#b3c4c2','#3d585e','#7c9695');
+   surface(x+.06,y+.06,w-.12,h-.12,29,'#d0ddda','#5f7677');
+   // Bright orange safety-shrouded cutting unit raised prominently above bed.
+   solid(x+.70,y+.13,.66,.68,55,'#e6a742','#a35b30','#c77d36');
+   surface(x+.74,y+.17,.58,.50,56,'#f7c466','#8b4f29');
+   const blade=P(x+1.05,y+.58,52);
+   ellipse(blade.x,blade.y,16,15,'#394c55','#edc36b');
+   ellipse(blade.x,blade.y,11.5,11,'#dde7df','#516b73');
+   ellipse(blade.x,blade.y,3.5,3.5,'#415e68','#ceddd8');
+   // Enclosing orange blade crown is tall and unmistakable at game zoom.
+   poly([P(x+.75,y+.18,58),P(x+1.32,y+.18,58),
+     P(x+1.36,y+.49,61),P(x+.71,y+.49,61)],'#ee933c','#754a35',2.1);
+   line(P(x+.75,y+.18,58),P(x+.75,y+.18,33),'#b87b3e',4.5);
+   // Long unmistakable rip fence and two timber planks staged across table.
+   line(P(x-.43,y-.25,32),P(x+1.44,y-.25,32),'#273f4e',6);
+   line(P(x-.43,y-.27,34),P(x+1.44,y-.27,34),'#e6e9dd',2.7);
+   for(let i=0;i<2;i++){
+    const yy=y+.18+i*.18;
+    surface(x+.09,yy,1.73,.12,31+i*.8,i?'#c49b68':'#dcbb87','#936d48');
+    line(P(x+.15,yy+.06,32),P(x+1.65,yy+.06,32),'#a77c51',.85);
+   }
+   // Larger safety-stop panel on the cabinet face.
+   poly([P(x+1.48,y+.51,13),P(x+1.80,y+.51,13),
+     P(x+1.80,y+.51,27),P(x+1.48,y+.51,27)],'#e6ad4c','#7b5335',1.5);
+   const off=P(x+1.63,y+.53,21);
+   ellipse(off.x,off.y,5.5,5,'#c23f36','#f6d7a5');
+   line(P(x+1.54,y+.53,17),P(x+1.74,y+.53,17),'#f6dfba',1.5);
+   // Separate push stick and timber supports remain inside actual footprint.
+   line(P(x+.13,y-.30,35),P(x+.45,y-.10,35),'#d8a76c',4);
+   line(P(x-.34,y+.36,11),P(x+1.35,y+.36,11),'#536f72',4);
   }else if(type==='pallet'||type==='bagPallet'){
    solid(x,y,w,h,5,'#b79566','#8a6545','#a47e58');
    for(let i=0;i<6;i++){miniBox(x+.08+i%3*.56,y+.12+Math.floor(i/3)*.36,13+i%2*5,
@@ -913,6 +921,34 @@ export function createArtwork(ctx,project,getZoom){
    o.facing==='west'?westWallDisplay(o):endcapDisplay({...o,department:'HARDWARE'});
   }else if(type==='bucketStack'){
    paintBucketStack(o);
+  }else if(type==='lumberBundle'){
+   // Several courses of individually drawn milled boards. Each bundle's real
+   // tile width controls its length; colored straps bind the full stack.
+   shadow(x,y,w,h,1.1);
+   solid(x,y,w,h,5,'#876646','#5d4939','#997654');
+   const courses=o.bundleSize==='long'?4:o.bundleSize==='medium'?3:2;
+   for(let layer=0;layer<courses;layer++){
+    const z=7+layer*6;
+    for(let board=0;board<3;board++){
+     const yy=y-.36+board*.26;
+     solid(x+.06,yy,w-.12,.21,5+z,
+      ['#d3ab75','#bf9564','#dfbc85'][(layer+board)%3],
+      '#846448','#b58d60');
+     // End grain outlines distinguish stacked lumber from boxes.
+     const tip=P(x+w-.56,yy+.10,z+5);
+     line({x:tip.x-3*Z(),y:tip.y-2*Z()},
+       {x:tip.x+3*Z(),y:tip.y+2*Z()},'#9d764e',.85);
+    }
+   }
+   for(const dx of [.34,w-.70]){
+    poly([P(x+dx,y-.47,9),P(x+dx+.12,y-.47,9),
+      P(x+dx+.12,y-.47,13+courses*6),P(x+dx,y-.47,13+courses*6)],
+      '#374e57','#233c43',1);
+    line(P(x+dx,y-.47,13+courses*6),
+         P(x+dx,y+.43,13+courses*6),'#415e64',3);
+   }
+   // Lift-truck timber skids keep each pack visibly grounded.
+   for(const dx of [.22,w-.75])solid(x+dx,y+.02,.30,.78,5,'#77543a','#554333','#87654a');
   }else if(type==='lumberRack'){
    solid(x,y,w,h,8,'#837866','#565447');for(let i=0;i<6;i++){
     solid(x+.12,y+.1+i*.13,w-.25,.12,12+i*3,'#c09e6c','#8a684c')}
