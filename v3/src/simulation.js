@@ -1,5 +1,5 @@
-import {nearestOpen,pathTo,doorAt,fixtureAt,walkable,key} from './world.js?v=visible-shelves-machine-labels-20261023-1';
-import {initializeRoutine,chooseRoutine,updateRoutine} from './routines.js?v=visible-shelves-machine-labels-20261023-1';
+import {nearestOpen,pathTo,doorAt,fixtureAt,walkable,key} from './world.js?v=lumber-saw-paint-buckets-20261023-1';
+import {initializeRoutine,chooseRoutine,updateRoutine} from './routines.js?v=lumber-saw-paint-buckets-20261023-1';
 const clamp=(n,a=0,b=100)=>Math.max(a,Math.min(b,n));
 export const POWER_LIST=[
  {id:'whisper',name:'Whisper Doubt',cost:0,targets:['npc'],cooldown:12},
