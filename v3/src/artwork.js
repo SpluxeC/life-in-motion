@@ -830,9 +830,36 @@ export function createArtwork(ctx,project,getZoom){
   }else if(type==='wireCutter'){
    wireCuttingStation(o);
   }else if(type==='saw'){
-   solid(x,y,w,h,18,'#bca98b','#665f54');surface(x+.08,y+.06,.87,.87,20,'#a1a9a9');
-   const p=P(x+.5,y+.5,27);ellipse(p.x,p.y,12,5,'#c1c7bf','#455255');
-   ellipse(p.x,p.y,3,3,'#a35e44');line(P(x+.28,y+.3,34),P(x+.72,y+.52,34),'#bf6c40',3)
+   // Real two-tile cabinet table saw: cast-metal bed and extensions.
+   solid(x,y,w,h,22,'#9baeb0','#47616a','#667e83');
+   surface(x+.06,y+.07,w-.12,h-.14,23,'#c4d1cc','#506a71');
+   for(const xx of [x-.35,x+.60]){
+    poly([P(xx,y+.51,5),P(xx+.81,y+.51,5),
+          P(xx+.81,y+.51,20),P(xx,y+.51,20)],'#4a6872','#2f4b54',1);
+    line(P(xx+.28,y+.52,13),P(xx+.48,y+.52,13),'#d9e5db',2);
+   }
+   // Rip fence and a lumber board spanning the entire infeed table.
+   surface(x+.09,y+.20,w-.18,.27,24,'#c89e69','#916d45');
+   line(P(x-.43,y-.27,28),P(x+1.42,y-.27,28),'#dfebe2',4);
+   line(P(x-.43,y-.27,24),P(x+1.42,y-.27,24),'#536d75',2);
+   // Blade guard, exposed circular blade and its anchored safety struts.
+   const blade=P(x+.46,y+.20,37);
+   ellipse(blade.x,blade.y,13,12,'#becacb','#52686f');
+   ellipse(blade.x,blade.y,9,8,'#dfe6e2','#73888a');
+   ellipse(blade.x,blade.y,3,3,'#4c636c');
+   line(P(x+.20,y+.22,47),P(x+.72,y+.22,47),'#d6b56b',5);
+   line(P(x+.23,y+.22,47),P(x+.23,y+.22,26),'#536f76',3);
+   line(P(x+.69,y+.22,47),P(x+.69,y+.22,26),'#536f76',3);
+   // Safety stop, height adjustment handwheel and a timber push stick.
+   const dial=P(x+1.38,y+.49,15);
+   ellipse(dial.x,dial.y,6,5,'#344f57','#c3d6cf');
+   ellipse(dial.x,dial.y,2.4,2.4,'#becac7');
+   solid(x+1.54,y+.15,.32,.32,28,'#99b4b1','#526d75','#789397');
+   const stop=P(x+1.70,y+.31,32);
+   ellipse(stop.x,stop.y,4.1,3,'#c74544','#873d3c');
+   line(P(x+1.10,y-.16,25),P(x+1.37,y+.06,25),'#cba06d',3.3);
+   for(const px of [x-.34,x+1.34])for(const py of [y-.30,y+.31])
+    line(P(px,py,3),P(px,py,20),'#38505a',3.2);
   }else if(type==='pallet'||type==='bagPallet'){
    solid(x,y,w,h,5,'#b79566','#8a6545','#a47e58');
    for(let i=0;i<6;i++){miniBox(x+.08+i%3*.56,y+.12+Math.floor(i/3)*.36,13+i%2*5,
