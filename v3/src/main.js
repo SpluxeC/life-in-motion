@@ -357,7 +357,7 @@ function inspectAtScreen(sx,sy){
   if(hit!==null)add(d,hit,1);
  }
  for(const f of world.fixtures){
-  const tall=['lockers','vending','drinkCooler','shelf','hardwareBins','paintMixer','keyCutter','wireCutter','saw','forklift','handTruck','gardenToolsRack'].includes(f.type);
+  const tall=['lockers','vending','drinkCooler','shelf','hardwareBins','paintMixer','keyCutter','wireCutter','saw','forklift','handTruck','gardenToolsRack','ridingMower'].includes(f.type);
   const hit=boxHit(f,tall?49:35,5);
   if(hit!==null)add(f,hit,2);
  }
