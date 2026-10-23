@@ -361,7 +361,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===5,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===6,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(migrated.world.fixtures.some(f=>f.type==='flowerBed')&&
@@ -745,4 +745,59 @@ assert(newHairCode.includes('M23 10Q1 20 8 56'),
  'Portrait ponytail is on the rear of the head');
 assert(newHairCode.includes('ctx.scale(dir,1)'),
  'Hair still mirrors when the direction of travel changes');
+// The longer service desk has genuine, approachable employee/customer sides;
+// emergency gear is wall-mounted away from the employee door.
+const serviceWorldV6=createHardwareStore();
+const serviceDeskV6=serviceWorldV6.fixtures.find(f=>f.type==='serviceDesk');
+const safetyV6=serviceWorldV6.fixtures.find(f=>f.type==='safetyStation');
+assert.deepEqual([serviceDeskV6.x,serviceDeskV6.y,serviceDeskV6.w,serviceDeskV6.h],
+ [31,13,3,1],'Service desk spans three tiles along the customer-facing front');
+assert.equal(serviceDeskV6.monitorFaces,'south');
+assert.deepEqual([safetyV6.x,safetyV6.y,safetyV6.w,safetyV6.h],[35,12,1,1],
+ 'Wall-mounted emergency station is relocated away from staff entry');
+assert.equal(safetyV6.facing,'west','Safety cabinet doors face the open aisle');
+for(const p of [{x:32,y:12},{x:32,y:14},{x:34,y:17},{x:35,y:17},{x:36,y:17}]){
+ assert(walkable(serviceWorldV6,p.x,p.y),
+  'Desk front, employee workstation, and entire staff-door approach are clear at '+p.x+','+p.y);
+}
+assert(pathTo(serviceWorldV6,{x:20,y:12},{x:32,y:14}).length>0,
+ 'An employee can reach the PC at the longer service counter');
+assert(pathTo(serviceWorldV6,{x:20,y:12},{x:32,y:12}).length>0,
+ 'Customers can reach the opposite side of the desk');
+assert(pathTo(serviceWorldV6,{x:34,y:18},{x:38,y:17}).length>0,
+ 'Moving the emergency station clears the staff access route');
+const serviceNpcGameV6=makeGame(serviceWorldV6,{staff:4,customers:1,seed:94});
+const serviceNpcV6=serviceNpcGameV6.npcs.find(n=>n.duty==='service');
+serviceNpcV6.task=null;serviceNpcV6.path=[];serviceNpcV6.think=0;
+assert(chooseRoutine(serviceNpcGameV6,serviceNpcV6),'Service associate finds the longer desk');
+assert.deepEqual(serviceNpcV6.task.position,{x:32,y:14},
+ 'Service associate works next to the computer on the staff side');
+const deskDrawFillsV6=[];let deskPolygonV6=[];
+const deskCtxV6={
+ beginPath(){deskPolygonV6=[]},
+ moveTo(x,y){deskPolygonV6.push([x,y])},lineTo(x,y){deskPolygonV6.push([x,y])},
+ closePath(){},
+ fill(){deskDrawFillsV6.push({color:this.fillStyle,vertices:deskPolygonV6.map(pt=>[...pt])})},
+ stroke(){},arc(){},ellipse(){},fillRect(){},strokeRect(){},fillText(){}
+};
+const deskArtV6=createArtwork(deskCtxV6,project,()=>.72);
+deskArtV6.drawFixture(serviceDeskV6);
+for(const color of ['#253740','#387a84','#f8f6ed','#c4c9c3','#836f61']){
+ assert(deskDrawFillsV6.some(a=>a.color===color),
+  'Desk displays computer, active screen, paper forms, printer and finished wood panel: '+color);
+}
+const pcFaceV6=deskDrawFillsV6.find(a=>a.color==='#253740');
+assert(pcFaceV6.vertices.length===4,'Service desk screen is a real vertical face');
+const pcMonitorV6=project(serviceDeskV6.x+.15,serviceDeskV6.y+.435,32);
+assert(pcFaceV6.vertices.some(pt=>Math.hypot(pt[0]-pcMonitorV6.x,pt[1]-pcMonitorV6.y)<.001),
+ 'The PC monitor faces south where its employee stands');
+deskDrawFillsV6.length=0;
+deskArtV6.drawFixture(safetyV6);
+for(const color of ['#eaf1ea','#a0c8cabb','#bf4f50','#c84340']){
+ assert(deskDrawFillsV6.some(a=>a.color===color),
+  'Wall-mounted emergency station includes cabinet, glazed supplies, medical cross, extinguisher: '+color);
+}
+const safetyArtV6=readFileSync(new URL('../src/artwork.js',import.meta.url),'utf8');
+assert(safetyArtV6.includes("function serviceDesk(o)")&&safetyArtV6.includes("function safetyStation(o)"),
+ 'Both service and safety fixtures have dedicated real-world art renderers');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
