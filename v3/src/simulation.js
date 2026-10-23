@@ -51,7 +51,7 @@ export function spawnNPC(g,role='customer'){
  else if(moodRoll<.9)emotion={anger:13+moodStrength*15,fear:14+moodVariation*15,stress:63+moodStrength*16}; // Stressed
  else if(moodRoll<.95)emotion={anger:66+moodStrength*16,fear:4+moodVariation*15,stress:30+moodVariation*18}; // Furious
  else emotion={anger:5+moodVariation*17,fear:65+moodStrength*16,stress:39+moodVariation*17}; // Terrified
- const n={hairColor,hairStyle,id:'npc-'+i,name:FIRST[Math.floor(r()*FIRST.length)]+' '+LAST[Math.floor(r()*LAST.length)],role,x:pos.x,y:pos.y,rx:pos.x,ry:pos.y,health:100,bleeding:0,pain:0,unconscious:0,alive:true,arrested:false,detention:0,emotion,traits,relationships:{},memory:[],inventory:r()<.6?[ITEMS[Math.floor(r()*ITEMS.length)].id]:[],path:[],target:null,activity:role==='employee'?'Working':'Browsing',think:1+r()*3,callCooldown:0,recovery:0,panic:0};
+ const n={hairColor,hairStyle,facing:'right',id:'npc-'+i,name:FIRST[Math.floor(r()*FIRST.length)]+' '+LAST[Math.floor(r()*LAST.length)],role,x:pos.x,y:pos.y,rx:pos.x,ry:pos.y,health:100,bleeding:0,pain:0,unconscious:0,alive:true,arrested:false,detention:0,emotion,traits,relationships:{},memory:[],inventory:r()<.6?[ITEMS[Math.floor(r()*ITEMS.length)].id]:[],path:[],target:null,activity:role==='employee'?'Working':'Browsing',think:1+r()*3,callCooldown:0,recovery:0,panic:0};
  if(role==='employee'||role==='customer')initializeRoutine(n,role==='employee'?coworkerCount:shopperCount);
  g.npcs.push(n);return n;
 }
@@ -149,9 +149,13 @@ export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
  for(let d of g.world.doors){
   // A door begins opening as the character approaches its planned doorway,
   // stays open while the opening is occupied and closes after a short clear period.
+  // A double-width opening is one door with one animation and two
+  // accessible grid tiles. Characters nearing either half trigger it.
+  const cells=[];
+  for(let ix=0;ix<(d.w||1);ix++)for(let iy=0;iy<(d.h||1);iy++)cells.push({x:d.x+ix,y:d.y+iy});
   const approaching=g.npcs.some(n=>n.alive&&!n.arrested&&n.unconscious<=0&&
-    (Math.hypot(n.rx-d.x,n.ry-d.y)<2.4 ||
-      (n.path||[]).slice(0,4).some(p=>p.x===d.x&&p.y===d.y&&Math.hypot(n.rx-d.x,n.ry-d.y)<4.8)));
+    cells.some(c=>Math.hypot(n.rx-c.x,n.ry-c.y)<2.4||
+       (n.path||[]).slice(0,4).some(p=>p.x===c.x&&p.y===c.y&&Math.hypot(n.rx-c.x,n.ry-c.y)<4.8)));
   if(approaching)d.forceUntil=Math.max(d.forceUntil||0,g.elapsed+1.7);
   d.target=approaching||(d.forceUntil||0)>g.elapsed?1:0;
   d.open=clamp(d.open+(d.target-d.open)*Math.min(1,dt*(d.target?3.7:2.2)),0,1);
@@ -169,7 +173,7 @@ export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
  if(n.bleeding>0){n.health-=n.bleeding*dt*.09;if(n.health<=0){kill(g,n,'untreated injury');continue}}n.pain=clamp(n.pain-dt*.13);if(n.unconscious>0){if(n.cleaningTarget)clearCleanup(g,n);n.unconscious-=dt;continue}
  if(n.arrested){if(n.cleaningTarget)clearCleanup(g,n);n.detention-=dt;if(n.detention<=0){n.arrested=false;n.activity='Released from detention'}continue}
  n.think-=dt;if(n.think<=0){n.think=1.5+g.random()*2;choose(g,n)}
- if(n.path.length){let next=n.path[0],entry=doorAt(g.world,next.x,next.y);if(entry&&entry.open<.65){entry.forceUntil=g.elapsed+2;continue}let p=n.path[0],dx=p.x-n.rx,dy=p.y-n.ry,dist=Math.hypot(dx,dy),speed=(n.panic?3.6:1.65)*(n.health<50?.7:1);if(dist<=dt*speed){n.rx=p.x;n.ry=p.y;n.x=p.x;n.y=p.y;n.path.shift()}else{n.rx+=dx/dist*dt*speed;n.ry+=dy/dist*dt*speed}
+ if(n.path.length){let next=n.path[0],entry=doorAt(g.world,next.x,next.y);if(entry&&entry.open<.65){entry.forceUntil=g.elapsed+2;continue}let p=n.path[0],dx=p.x-n.rx,dy=p.y-n.ry,dist=Math.hypot(dx,dy),speed=(n.panic?3.6:1.65)*(n.health<50?.7:1);if(dist>.001&&Math.abs(dx-dy)>.025)n.facing=dx-dy>0?'right':'left';if(dist<=dt*speed){n.rx=p.x;n.ry=p.y;n.x=p.x;n.y=p.y;n.path.shift()}else{n.rx+=dx/dist*dt*speed;n.ry+=dy/dist*dt*speed}
  let d=doorAt(g.world,Math.round(n.rx),Math.round(n.ry));if(d)d.forceUntil=g.elapsed+2;
  }else{
  if(n.activity==='Picking up item'&&n.inventory.length<4){let idx=g.world.drops.findIndex(d=>Math.hypot(d.x-n.x,d.y-n.y)<2);if(idx>=0){let item=g.world.drops.splice(idx,1)[0];n.inventory.push(item.item);n.activity='Carrying '+(ITEMS.find(i=>i.id===item.item)?.name||'item')}}
