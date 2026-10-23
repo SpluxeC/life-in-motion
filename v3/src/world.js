@@ -72,7 +72,7 @@ export function createHardwareStore(){
  fixture('coffeeStation',44,20,1,1,{facing:'west'});
  fixture('coatRack',39,18,1,1,{facing:'east'});
  fixture('storageShelves',45,25,1,1,{facing:'west'});
- fixture('supplyCabinet',39,24,1,1,{facing:'east'});
+ fixture('supplyCabinet',39,25,1,1,{facing:'east'});
  // Garden beds are set back from the fence, leaving wide routes from the gate.
  fixture('flowerBed',40,36,2,1);fixture('flowerBed',44,32,2,1);
  fixture('flowerBed',46,34,1,1);fixture('seedDisplay',46,30,1,1,{facing:'west'});
