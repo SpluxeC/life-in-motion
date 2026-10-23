@@ -3,6 +3,7 @@ import {createHardwareStore,walkable,pathTo,doorAt} from '../src/world.js';
 import {makeGame,applyPower,updateGame,addHazard} from '../src/simulation.js';
 import {saveGame,loadGame} from '../src/persistence.js';
 import {createArtwork} from '../src/artwork.js';
+import {renderDepth,compareRenderDepth} from '../src/render-depth.js';
 const store=new Map();
 globalThis.localStorage={getItem:key=>store.get(key)||null,setItem:(key,value)=>store.set(key,value)};
 const world=createHardwareStore();
@@ -34,7 +35,7 @@ updateGame(saved,.1);assert.equal(saved.completed,true);assert.equal(saved.winne
 const oldLog=saved.log.length;updateGame(saved,.1);assert.equal(saved.log.length,oldLog);
 // Built-in art must render every world asset type without external PNG files.
 const graphicsCalls={count:0};
-const drawingMethods=new Set(['beginPath','moveTo','lineTo','closePath','fill','stroke','ellipse','fillRect','strokeRect','fillText','arc','save','restore']);
+const drawingMethods=new Set(['beginPath','moveTo','lineTo','closePath','fill','stroke','ellipse','fillRect','strokeRect','fillText','arc','save','restore','translate','rotate']);
 const drawingContext=new Proxy({},{
  get:(obj,k)=>drawingMethods.has(k)?()=>{graphicsCalls.count++}:obj[k],
  set:(obj,k,val)=>{obj[k]=val;return true}
@@ -176,35 +177,51 @@ for(let i=0;i<boxLeft.length;i++){
  assert(boxLeft[i].points.filter(v=>boxRight[i].points.some(w=>Math.abs(v[0]-w[0])<1e-7&&Math.abs(v[1]-w[1])<1e-7)).length===2,
   'Both carton faces must share their front vertical edge');
 }
-// Only the camera-facing hanging signs carry department names; old shelf,
- // cabinet, counter and bin labels must not duplicate the new overhead signs.
-const signCalls={rects:[],texts:[]};
+// No more legacy machine/store/door branding; hanging department panels
+// and their text share a true isometric angle, including long titles.
+const signCalls={texts:[],polygons:[],rotation:null,translation:null};
+let signPath=[];
 const labelCtx={
- beginPath(){},moveTo(){},lineTo(){},closePath(){},fill(){},stroke(){},ellipse(){},
- arc(){},save(){},restore(){},
- fillRect(x,y,w,h){signCalls.rects.push({x,y,w,h,fill:this.fillStyle})},
- strokeRect(){},
- fillText(text,x,y,maxWidth){signCalls.texts.push({text,x,y,maxWidth})}
+ beginPath(){signPath=[]},moveTo(x,y){signPath.push([x,y])},
+ lineTo(x,y){signPath.push([x,y])},closePath(){},
+ fill(){signCalls.polygons.push({color:this.fillStyle,vertices:signPath.map(p=>[...p])})},
+ stroke(){},ellipse(){},arc(){},save(){},restore(){},
+ translate(x,y){signCalls.translation=[x,y]},rotate(angle){signCalls.rotation=angle},
+ fillRect(){},strokeRect(){},
+ fillText(text,x,y,maxWidth){signCalls.texts.push({text,x,y,maxWidth,angle:signCalls.rotation,position:signCalls.translation})}
 };
 const labelArt=createArtwork(labelCtx,project,()=>.65);
-for(const type of ['shelf','checkout','serviceDesk','toolCabinet','hardwareBins','endcap']){
- const fixture=world.fixtures.find(f=>f.type===type);
- assert(fixture,'Missing fixture required for sign test: '+type);
- signCalls.texts.length=0;signCalls.rects.length=0;
+const forbidden=['NORTHLINE','COLOR MIX','FIRST AID','DRINKS','SNACKS','WC'];
+for(const fixture of world.fixtures.filter(f=>['shelf','checkout','serviceDesk','toolCabinet','hardwareBins','endcap','paintMixer','vending','drinkCooler','safetyStation'].includes(f.type))){
+ signCalls.texts.length=0;
  labelArt.drawFixture(fixture);
- assert(!signCalls.texts.some(t=>['PAINT','TOOLS','ELECTRICAL','PLUMBING','HARDWARE','CHECKOUT','CUSTOMER SERVICE'].includes(t.text)),
-  'Legacy department sign duplicated on '+type);
+ assert(!signCalls.texts.some(t=>forbidden.includes(t.text)),
+  'Outdated branding should not appear on '+fixture.type);
 }
+signCalls.texts.length=0;
+for(const wall of world.walls.values())labelArt.drawWall(wall,world);
+for(const door of world.doors)labelArt.drawDoor(door);
+assert(!signCalls.texts.some(t=>forbidden.includes(t.text)),
+ 'Outdated building and restroom signs should be removed');
 for(const title of ['PAINT','ELECTRICAL','PLUMBING','CHECKOUT','SERVICE','GARDEN']){
- signCalls.rects.length=0;signCalls.texts.length=0;
+ signCalls.texts.length=0;signCalls.polygons.length=0;
+ signCalls.rotation=null;signCalls.translation=null;
  labelArt.drawDepartmentSign(17.5,16.5,title,'#c9a946');
- const face=signCalls.rects.find(r=>r.fill==='#e8e8dc');
- assert(face,'Camera-facing department sign panel exists');
+ const face=signCalls.polygons.find(r=>r.color==='#e9e8db');
+ assert(face&&face.vertices.length===4,'An isometric sign face exists for '+title);
+ const [a,b,c,d]=face.vertices;
+ const angle=Math.atan2(b[1]-a[1],b[0]-a[0]);
+ assert(Math.abs(angle)>.2,'Sign face must be tilted with world perspective');
  const text=signCalls.texts.find(t=>t.text===title);
- assert(text,'Department sign text exists: '+title);
- assert(text.x>=face.x&&text.x<=face.x+face.w,'Department sign text centered horizontally');
- assert(text.y>=face.y&&text.y<=face.y+face.h,'Department sign text centered vertically');
- assert(text.maxWidth<=face.w,'Department sign text cannot exceed its panel');
+ assert(text,'Department title appears: '+title);
+ assert(Math.abs(text.angle-angle)<1e-7,'Department lettering rotates with its panel');
+ assert.equal(text.x,0,'Title horizontally centered in the angled local frame');
+ assert.equal(text.y,0,'Title vertically centered in the angled local frame');
+ const width=Math.hypot(b[0]-a[0],b[1]-a[1]);
+ assert(text.maxWidth>0&&text.maxWidth<width,'Lettering is clamped within sign width');
+ const centerX=(a[0]+b[0]+c[0]+d[0])/4,centerY=(a[1]+b[1]+c[1]+d[1])/4;
+ assert(Math.hypot(text.position[0]-centerX,text.position[1]-centerY)<7,
+  'Tilted title is actually positioned in its panel');
 }
 // NPC schedules: employees staff actual counters, help customers and cover all
 // reachable map zones; shoppers browse, visit garden, check out and return to cars.
@@ -273,15 +290,18 @@ assert(nearlyEmpty.stock>=5,'Completing a restock adds actual merchandise to the
 const extended=createHardwareStore();
 assert(extended.walls.has('37,10')&&extended.walls.has('37,27'),
  'Both ends of the employee hallway have solid walls');
-for(const k of ['38,29','38,31','48,34','43,39']){
+for(const k of ['48,34','44,39','47,28']){
  assert.equal(extended.walls.get(k)?.section,'gardenFence',
   'Wooden fence seals the garden perimeter at '+k);
 }
-const gardenGate=doorAt(extended,38,30);
-assert(gardenGate&&gardenGate.type==='gate','Garden fence has a functional wooden entrance');
+assert(![...extended.walls.values()].some(w=>w.section==='gardenFence'&&w.x===38),
+ 'No redundant wooden fencing along the building-side garden boundary');
+const gardenGate=doorAt(extended,43,39);
+assert(gardenGate&&gardenGate.type==='gate','The relocated garden outer gate remains functional');
+assert(!extended.walls.has('43,39'),'Outer garden gate is an unobstructed opening');
 const gardenRoute=pathTo(extended,{x:35,y:30},{x:43,y:33});
 assert(gardenRoute.some(p=>p.x===38&&p.y===30),
- 'NPC navigation passes through the garden gate rather than clipping through the fence');
+ 'NPC navigation crosses the newly open garden edge without clipping through the building');
 assert(walkable(extended,28,38)&&walkable(extended,28,40),
  'Receiving door and central loading lane remain open');
 assert(pathTo(extended,{x:28,y:42},{x:28,y:37}).some(p=>p.y===39),
@@ -303,15 +323,15 @@ for(const type of ['receivingDesk','palletStack','boxStack','handTruck','flatCar
 // Exercise both the fence and animated garden gate with a real NPC crossing.
 const gateGame=makeGame(extended,{staff:4,customers:2,seed:23});
 const gateWalker=gateGame.npcs[2];
-gateWalker.x=gateWalker.rx=37;gateWalker.y=gateWalker.ry=30;
-gateWalker.path=pathTo(extended,{x:37,y:30},{x:40,y:30});
+gateWalker.x=gateWalker.rx=43;gateWalker.y=gateWalker.ry=41;
+gateWalker.path=pathTo(extended,{x:43,y:40},{x:43,y:37});
 gateWalker.think=99999;gateWalker.task=null;
 for(const other of gateGame.npcs.filter(n=>n!==gateWalker)){
  other.x=other.rx=11;other.y=other.ry=20;other.think=99999;other.path=[];
 }
 let gateOpened=false;
 for(let i=0;i<120;i++){updateGame(gateGame,.05);if(gardenGate.open>.65)gateOpened=true}
-assert(gateOpened&&gateWalker.x>=39,'NPC opens garden gate and crosses the fence');
+assert(gateOpened&&gateWalker.y<=38,'NPC opens relocated garden gate and crosses the fence');
 const originalFences=[...extended.walls.values()].filter(w=>w.section==='gardenFence');
 for(const o of originalFences)artwork.drawWall(o,extended);
 for(const fraction of [0,.5,1]){gardenGate.open=fraction;artwork.drawDoor(gardenGate)}
@@ -328,7 +348,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===2,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===3,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(migrated.world.fixtures.some(f=>f.type==='flowerBed')&&
@@ -336,4 +356,21 @@ assert(migrated.world.fixtures.some(f=>f.type==='flowerBed')&&
  'Save migration restores new garden and loading props');
 assert.equal(migrated.world.fixtures.find(f=>f.id===preserved.id).stock,3,
  'Save migration preserves shelf inventory');
+// Occlusion regression: fixtures occupy large footprints while character
+// torsos rise above the floor; foreground staff should render after counters.
+const order=(object,actor)=>[
+ {kind:'fixture',depth:renderDepth('fixture',object)},
+ {kind:'npc',depth:renderDepth('npc',actor)}
+].sort(compareRenderDepth).map(e=>e.kind);
+const counter=extended.fixtures.find(f=>f.type==='checkout');
+assert.deepEqual(order(counter,{rx:counter.x+1,ry:counter.y+2}),['fixture','npc'],
+ 'A cashier standing by a register is not hidden behind its artwork');
+const shelf=extended.fixtures.find(f=>f.type==='shelf');
+assert.deepEqual(order(shelf,{rx:shelf.x+1,ry:shelf.y+1}),['fixture','npc'],
+ 'An NPC in the near aisle is rendered above shelf art');
+assert.deepEqual(order(shelf,{rx:shelf.x+2,ry:shelf.y+shelf.h+3}),['npc','fixture'],
+ 'An NPC beyond the far side of a shelf stays behind it');
+const receiving=extended.fixtures.find(f=>f.type==='palletStack');
+assert.deepEqual(order(receiving,{rx:receiving.x+2,ry:receiving.y}),['fixture','npc'],
+ 'A worker in front of a receiving pallet stays visible');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
