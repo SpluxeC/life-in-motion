@@ -17,7 +17,10 @@ export function loadGame(){try{let data=JSON.parse(localStorage.getItem(SAVE)||'
   // preserving existing people, stock levels, incidents and response vehicles.
   const oldFixtures=new Map((data.world.fixtures||[]).map(o=>[o.id,o]));
   world.fixtures=world.fixtures.map(o=>{
-   const saved=oldFixtures.get(o.id);
+   // The stocked Garden Shelf moved from Receiving in map v14. Keep its
+   // previous inventory when migrating an existing saved round.
+   const saved=oldFixtures.get(o.id)||(o.type==='bagPallet'&&o.department==='GARDEN'?
+    oldFixtures.get('bagPallet-32-35'):null);
    return saved?{...o,stock:saved.stock??o.stock,damaged:saved.damaged??o.damaged}:o;
   });
   const oldDoors=new Map((data.world.doors||[]).map(o=>[o.id,o]));
