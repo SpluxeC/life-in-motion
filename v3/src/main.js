@@ -86,8 +86,9 @@ function drawHair(n,z,h){
   oval(0,-4.4,7.2,5.7,color);
   if(style==='buzz'){oval(0,-3.8,7.1,3.4,color)}
   else if(style==='sidePart'){
-   shape([[-7,-6],[-2,-11],[7,-8],[8,-3],[3,-3],[0,-6],[-4,-2]],color);
-   stroke([[0,-8],[4,-5],[7,-5]],'#dfcfb280',.9);
+   // Combed fringe points toward the face (positive local X); rear is short.
+   shape([[-7,-5],[-5,-9],[2,-11],[8,-7],[8,-1],[4,-2],[2,-5],[-3,-3]],color);
+   stroke([[-2,-8],[4,-7],[7,-3]],'#dfcfb280',.9);
   }else if(style==='curly'){
    for(let i=0;i<7;i++)oval(-6+i*2.15,-7-(i%3)*1.5,3.1,3.2,color);
    oval(-7,1,2.9,3,color);oval(7,0,3,3.2,color);
@@ -96,9 +97,10 @@ function drawHair(n,z,h){
   }else if(style==='bob'){
    shape([[-7,-7],[7,-7],[9,5],[6,7],[-7,7],[-9,4]],color);
   }else if(style==='ponytail'){
-   oval(8,-1,3.6,4,color);
-   shape([[7,0],[11,0],[13,9],[9,11]],color);
-   stroke([[8,1],[12,3]],'#d6b788',1);
+   // The tied hair must sit on the REAR (-X), opposite the face/brim.
+   oval(-8,-2,3.6,4,color);
+   shape([[-7,-1],[-11,0],[-13,9],[-9,11]],color);
+   stroke([[-8,-1],[-12,3]],'#d6b788',1);
   }else if(style==='bun'){
    oval(0,-12,4.6,4,color);oval(0,-7,7,4,color);
   }else if(style==='long'){
@@ -224,7 +226,7 @@ function portraitHTML(n){
   stressed?'M38 72q12-7 24 0':mood==='Calm'?'M36 63q14 15 28 0':'M39 69q11 5 22 0';
  const hairShape=style==='buzz'?'<path d="M20 38q0-42 30-42t30 42q-13-25-30-25T20 38"/>':
   style==='bun'?'<circle cx="51" cy="4" r="13"/><path d="M19 38Q14-4 50-5q37 1 32 43-12-28-32-27-19 0-31 27"/>':
-  style==='ponytail'?'<path d="M18 35Q13-5 50-6q36 0 32 38l-10-15-47 0z"/><path d="M77 10q23 10 15 43l-11-8 1-24z"/>':
+  style==='ponytail'?'<path d="M18 35Q13-5 50-6q36 0 32 38l-10-15-47 0z"/><path d="M23 10Q1 20 8 56l11-9-1-24z"/>':
   style==='long'||style==='bob'?'<path d="M18 40Q7-6 50-7q43 1 33 45l2 43H70V31Q49 12 30 30v51H15z"/>':
   style==='curly'?'<path d="M15 41Q4 16 21 8Q18-13 40-7Q58-21 69-5Q89-7 88 13Q100 35 81 43L73 23Q50 11 27 25z"/>':
   style==='wavy'?'<path d="M16 43Q6 2 32-5Q62-20 82 11l2 31-10 17-6-30Q45 13 29 30l-6 29z"/>':
