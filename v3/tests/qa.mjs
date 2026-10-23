@@ -9,7 +9,7 @@ import {chooseRoutine} from '../src/routines.js';
 import {saveGame,loadGame} from '../src/persistence.js';
 import {createArtwork} from '../src/artwork.js';
 import {renderDepth,compareRenderDepth} from '../src/render-depth.js';
-import {signOpacity,signCoversNpc} from '../src/sign-visibility.js';
+import {signOpacity,signCoversNpc,signFace} from '../src/sign-visibility.js';
 import {hitProjectedFixture,isGroundTileTap,selectionLabel} from '../src/selection.js';
 import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness,HAIR_COLORS,HAIR_STYLES} from '../src/hud.js';
 import {readFileSync} from 'node:fs';
