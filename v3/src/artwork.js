@@ -216,30 +216,122 @@ export function createArtwork(ctx,project,getZoom){
   const handle=P(start.x+(ex-start.x)*.8,start.y+(ey-start.y)*.8,19);
   ellipse(handle.x,handle.y,2.3,1.7,'#edd5a0','#71593d');
  }
- function rack(x,y,w,h,dept,stock,capacity=12){
-  shadow(x,y,w,h,1.12);
-  solid(x,y,w,h,4,'#465453','#344440','#586761');
-  // Frame, rails and boards are all attached to the real walk-blocking tile.
-  for(const xx of [-.44,w-.56])for(const yy of [-.44,h/2-.5,h-.56]){
-   line(P(x+xx,y+yy,1),P(x+xx,y+yy,48),'#536970',2);
-  }
-  const shelfHeights=[12,23,34,42];
-  const rows=7,columns=2,slots=rows*columns;
-  const visible=visibleShelfCount(stock,capacity,slots);
-  for(let tier=0;tier<shelfHeights.length;tier++){
-   const base=shelfHeights[tier];
-   surface(x,y,w,h,base,'#b8c3b8','#556967');
-   if(tier===shelfHeights.length-1)break;
-   // Repeat only real game-inventory objects. Two neatly arranged product
-   // lanes fill each shelf tier; drawing density changes with stock.
-   for(let slot=0;slot<visible;slot++){
-    const row=Math.floor(slot/columns),lane=slot%columns;
-    const px=x-.18+lane*.38;
-    const py=y-.29+(row+.5)*(h-.36)/rows;
-    const id=departmentItem(dept,row+lane+tier*2);
-    drawItem(id,px,py,base+5,.52);
+ // Chunky, easily distinguishable merchandise displays. These are shelf
+ // graphics, not tiny physical copies of inventory objects. All four colors
+ // for a department remain distinct when viewed at normal game zoom.
+ const shelfSchemes={
+  PAINT:      {accent:'#cf6b53',light:'#f3ddaa',dark:'#6b5964',packs:['#bf6659','#e1bb67','#75a9c0','#b7b5ac']},
+  TOOLS:      {accent:'#d7a44e',light:'#eed8a1',dark:'#3c4852',packs:['#434f5a','#d1a54c','#5e6d72','#be7450']},
+  ELECTRICAL: {accent:'#e1bd65',light:'#e9edda',dark:'#344e61',packs:['#618cac','#d8b25d','#426c83','#b0d2d9']},
+  PLUMBING:   {accent:'#78b7d0',light:'#e7eeeb',dark:'#3f646f',packs:['#5596b5','#9dc0cb','#d5dfe0','#608c93']},
+  HARDWARE:   {accent:'#b9bd7a',light:'#e2dfc3',dark:'#4d6765',packs:['#819a91','#bea871','#607c7b','#b4c3b7']}
+ };
+ function productScheme(dept){return shelfSchemes[dept]||shelfSchemes.HARDWARE}
+ function merchandiseFace(axis,fixed,start,end,bottom,top,dept,index){
+  const scheme=productScheme(dept);
+  const point=(along,z)=>axis==='x'?P(fixed,along,z):P(along,fixed,z);
+  const a=point(start,bottom),b=point(end,bottom),c=point(end,top),d=point(start,top);
+  // Full-height illustrated packaging covers most of the shelf opening.
+  const shade=scheme.packs[index%scheme.packs.length];
+  poly([d,c,b,a],shade,scheme.dark,.7);
+  const stripe=point(start,top-2),stripeEnd=point(end,top-2);
+  line(stripe,stripeEnd,scheme.light,1.15);
+  const middle=(start+end)/2,centerZ=(bottom+top)/2;
+  const p=point(middle,centerZ);
+  if(dept==='PAINT'){
+   // Giant tin labels and a reflective metal lid read clearly in silhouette.
+   const canTop=point(middle,top-1),canBottom=point(middle,bottom+1);
+   ellipse(canTop.x,canTop.y,5.7,2.2,'#d7ded9','#697575');
+   const labelA=point(start+.09,centerZ+1.5),labelB=point(end-.09,centerZ+1.5);
+   line(labelA,labelB,'#f6eacb',2.6);
+   ellipse(canBottom.x,canBottom.y,4.9,1.5,'#4e6666');
+  }else if(dept==='TOOLS'){
+   const left=point(start+.12,centerZ),right=point(end-.12,centerZ);
+   line(left,right,scheme.accent,3);
+   // Oversized tool case handle.
+   line(point(middle-.12,top-1),point(middle+.12,top-1),'#e8ddd0',2.2);
+   ellipse(p.x,p.y,2.2,1.9,'#cbd7cf');
+  }else if(dept==='ELECTRICAL'){
+   const high=point(middle,top-2),low=point(middle,bottom+2);
+   line(high,low,'#e4e5cf',1.6);
+   line(point(start+.07,centerZ),point(end-.07,centerZ),scheme.accent,2.5);
+   ellipse(p.x,p.y,2,2,'#fff3bf','#839c9f');
+  }else if(dept==='PLUMBING'){
+   // White pipe elbows and round chrome fittings on blue packaging.
+   const left=point(start+.12,centerZ-1.5),right=point(end-.12,centerZ+1.5);
+   line(left,right,'#e1e9e5',3.5);
+   ellipse(p.x,p.y,3.2,2.4,'#bfd0ce','#447e9a');
+  }else{
+   // Large sectional fastener bins with prominent yellow bin labels.
+   const left=point(start+.08,centerZ-2),right=point(end-.08,centerZ-2);
+   line(left,right,'#3d5d5e',3);
+   line(point(start+.15,centerZ+1),point(end-.15,centerZ+1),scheme.accent,2);
+   for(const t of [-.08,.09]){
+    const q=point(middle+t,bottom+1.8);
+    ellipse(q.x,q.y,1.7,1.5,'#e0d7a9');
    }
   }
+ }
+ function shelfBand(axis,fixed,start,end,z,dept){
+  const scheme=productScheme(dept);
+  const point=along=>axis==='x'?P(fixed,along,z):P(along,fixed,z);
+  // Color-coded trim is more visible than micro-text on moving shelves.
+  line(point(start),point(end),scheme.accent,3);
+  line(axis==='x'?P(fixed,start,z-2):P(start,fixed,z-2),
+       axis==='x'?P(fixed,end,z-2):P(end,fixed,z-2),'#cfd6d0',.8);
+ }
+ function rack(x,y,w,h,dept,stock,capacity=12){
+  shadow(x,y,w,h,1.12);
+  const scheme=productScheme(dept),shelfHeights=[9,21,33,45];
+  // Real-sized shelving with a continuous back panel: the product graphics
+  // sit on the exposed aisle face, not on a tiny camera-facing billboard.
+  solid(x,y,w,h,46,'#71817e','#506266','#637676');
+  const nearX=x-.505,frontStart=y-.44,frontEnd=y+h-.57;
+  const bayCount=Math.round(h*1.4);
+  const baysVisible=visibleShelfCount(stock,capacity,bayCount);
+  for(let tier=0;tier<3;tier++){
+   const bottom=shelfHeights[tier],top=shelfHeights[tier+1]-2;
+   for(let i=0;i<baysVisible;i++){
+    const step=(frontEnd-frontStart)/bayCount;
+    const start=frontStart+i*step+.04,end=frontStart+(i+1)*step-.04;
+    merchandiseFace('x',nearX,start,end,bottom+1,top,dept,i+tier*2);
+   }
+   shelfBand('x',nearX-.009,frontStart,frontEnd,bottom,dept);
+   // Shelf lip and shelf depth are emphasized at zoomed-out scale.
+   const p1=P(x-.52,y-.48,bottom),p2=P(x+.49,y-.48,bottom);
+   line(p1,p2,'#c2c9bf',2.2);
+  }
+  for(const sy of [frontStart,frontStart+(frontEnd-frontStart)/2,frontEnd]){
+   line(P(nearX-.02,sy,2),P(nearX-.02,sy,47),'#2f5056',3.4);
+   line(P(nearX-.02,sy,46),P(nearX-.02,sy,48),scheme.accent,2.6);
+  }
+  const topLeft=P(x-.52,y-.49,49),topRight=P(x-.52,y+h-.51,49);
+  line(topLeft,topRight,scheme.accent,4.1);
+ }
+ function endcapDisplay(o){
+  const {x,y,w,h}=o,dept=o.department||'HARDWARE',scheme=productScheme(dept);
+  const capacity=o.capacity||Math.max(1,o.stock||6);
+  shadow(x,y,w,h,1.13);
+  solid(x,y,w,h,41,'#738382','#435861','#5e7270');
+  const faceY=y-.518,left=x-.40,right=x+w-.60;
+  const shelves=[9,19,29];
+  const visible=visibleShelfCount(o.stock,capacity,3);
+  // High-contrast promotional endcap with a broad decorative header.
+  for(let level=0;level<3;level++){
+   const bottom=shelves[level],top=bottom+8.1;
+   for(let j=0;j<visible;j++){
+    const start=left+j*(right-left)/3+.025,end=left+(j+1)*(right-left)/3-.025;
+    merchandiseFace('y',faceY,start,end,bottom+1,top,dept,j+level*2);
+   }
+   shelfBand('y',faceY-.009,left,right,bottom,dept);
+  }
+  const head=[P(left,faceY,33),P(right,faceY,33),P(right,faceY,40),P(left,faceY,40)];
+  poly(head,scheme.dark,scheme.accent,1.15);
+  line(P(left+.05,faceY,36),P(right-.05,faceY,36),scheme.accent,3.1);
+  line(P(left,faceY,7),P(left,faceY,41),'#33565b',3);
+  line(P(right,faceY,7),P(right,faceY,41),'#33565b',3);
+  // A second visible side face gives the one-tile unit physical depth.
+  shelfBand('x',x-.50,y-.45,y+.36,37,dept);
  }
  function checkout(o){
   shadow(o.x,o.y,o.w,o.h);
@@ -359,11 +451,11 @@ export function createArtwork(ctx,project,getZoom){
   }else if(type==='plants'||type==='gardenDesk'){
    solid(x,y,w,h,type==='plants'?9:19,type==='plants'?'#a38b68':'#829784','#615c48');
    plants(x+.17,y+.18,type==='plants'?13:23,Math.min(9,Math.round(w*h*2)+2))
-  }else if(type==='endcap'||type==='hardwareBins'){
-   solid(x,y,w,h,36,'#65757a','#3d555a');for(let i=0;i<Math.min(6,o.stock??6);i++){
-    miniBox(x-.2+(i%2)*.4,y-.12,12+Math.floor(i/2)*10,
-      ['#d6b66c','#6d9da4','#d17b59'][i%3],.30,.26,6)}
-
+  }else if(type==='endcap'){
+   endcapDisplay(o);
+  }else if(type==='hardwareBins'){
+   // Small-parts storage uses the same larger display vocabulary as endcaps.
+   endcapDisplay({...o,department:'HARDWARE'});
   }else if(type==='bucketStack'){
    for(let i=0;i<Math.min(4,o.stock??4);i++)miniCan(x-.18+i%2*.38,y-.18+Math.floor(i/2)*.38,8,'#dadbd0',7)
   }else if(type==='lumberRack'){
