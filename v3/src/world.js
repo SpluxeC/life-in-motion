@@ -65,7 +65,7 @@ export function createHardwareStore(){
  fixture('paintMixer',7,23,2,1,{department:'PAINT',facing:'south'});
  fixture('keyCutter',31,23,2,1,{department:'HARDWARE',facing:'south'});
  fixture('wireCutter',19,23,2,1,{department:'ELECTRICAL',facing:'south'});
- fixture('saw',6,35,1,1);fixture('pallet',11,35,2,1);fixture('workbench',17,35,2,1);
+ fixture('saw',6,35,2,1,{department:'LUMBER',facing:'south'});fixture('pallet',11,35,2,1);fixture('workbench',17,35,2,1);
  // Keep 25..32, 35..39 clear for unobstructed receiving circulation.
  fixture('lockers',43,13,2,1,{facing:'south'});fixture('office',40,13,1,1,{facing:'west'});
  fixture('vending',45,18,1,1,{facing:'west'});fixture('table',41,19,2,1,{facing:'south'});fixture('sink',44,24,1,1,{facing:'west'});fixture('restroom',41,24,1,1,{facing:'west'});
@@ -107,7 +107,7 @@ export function createHardwareStore(){
  for(let x of [4,12,20,28,36,44,52,60])props.push({id:'shrub-'+x,type:'shrub',x,y:1});
  for(let y of [12,20,28,37,45])props.push({id:'tree-'+y,type:'tree',x:60,y});
  for(let x of [51,57])for(let y of [13,25,38])props.push({id:'shrub-'+x+'-'+y,type:'shrub',x,y});
- return {id:'hardware-store',title:'Hardware Store',layoutVersion:10,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
+ return {id:'hardware-store',title:'Hardware Store',layoutVersion:11,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
 }
 export const inside=(x,y)=>x>=0&&y>=0&&x<WIDTH&&y<HEIGHT;
 export function fixtureAt(world,x,y){return world.fixtures.find(o=>x>=o.x&&x<o.x+o.w&&y>=o.y&&y<o.y+o.h)}
