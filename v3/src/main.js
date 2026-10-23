@@ -249,7 +249,9 @@ function inspectAtScreen(sx,sy){
   const hit=boxHit(d,10,5);
   if(hit!==null)add(d,hit,4);
  }
- hits.sort((a,b)=>a.d-b.d||a.priority-b.priority);
+ // If an NPC and a tall fixture overlap on screen, favor the nearby NPC.
+ // This makes tapping a person reliably open their overview/follow mode.
+ hits.sort((a,b)=>(a.priority===0?0:1)-(b.priority===0?0:1)||a.d-b.d||a.priority-b.priority);
  const tile=unproject(sx,sy);
  if(pendingPower){
   const power=POWER_LIST.find(p=>p.id===pendingPower);
