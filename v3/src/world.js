@@ -59,7 +59,7 @@ export function createHardwareStore(){
   const start=band===0?18:27;
   fixture('shelf',x,start,1,5,{department:['PAINT','TOOLS','ELECTRICAL','PLUMBING','HARDWARE'][(x-5)/6],stock:11,capacity:12});
  }
- for(let x of [8,14,25])fixture('checkout',x,13,2,1);
+ for(let x of [8,14,25])fixture('checkout',x,13,2,1,{staffSide:'south',customerSide:'north',monitorFaces:'south'});
  fixture('serviceDesk',31,13,2,1);
  fixture('paintMixer',5,15,1,1);fixture('keyCutter',15,15,1,1);
  fixture('saw',6,35,1,1);fixture('pallet',11,35,2,1);fixture('workbench',17,35,2,1);
