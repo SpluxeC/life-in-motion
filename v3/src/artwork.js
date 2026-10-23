@@ -147,7 +147,6 @@ export function createArtwork(ctx,project,getZoom){
    line(P(o.x-.35,o.y-.5,27),P(o.x+.33,o.y-.5,27),'#cbdad3',1);
    line(P(o.x-.24,o.y-.5,39),P(o.x+.16,o.y-.5,16),'#d9edf044',2)
   }
-  if(o.y===10&&o.x===13&&axis==='x')label(o.x+.1,o.y-.49,46,'NORTHLINE','#f3ecdc','#a3453a',64)
  }
  function drawDoor(d){
   const axis=d.axis||([36,38].includes(d.x)?'y':'x'),open=Math.max(0,Math.min(1,d.open||0));
@@ -202,7 +201,6 @@ export function createArtwork(ctx,project,getZoom){
   line(P(start.x,start.y,17),P(ex,ey,17),'#d8c5a4',1);
   const handle=P(start.x+(ex-start.x)*.8,start.y+(ey-start.y)*.8,19);
   ellipse(handle.x,handle.y,2.3,1.7,'#edd5a0','#71593d');
-  if(d.label.includes('Restroom'))label((start.x+ex)/2,(start.y+ey)/2,39,'WC','#eff5e8','#43636c',16)
  }
  function rack(x,y,w,h,dept,stock,capacity=12){
   shadow(x,y,w,h,1.12);
@@ -293,7 +291,7 @@ export function createArtwork(ctx,project,getZoom){
    miniBox(x+.3,y+.28,27,'#354e59',.45,.33,7);miniBox(x+1.15,y+.33,27,'#e8dec7',.25,.32,3)
   }else if(type==='paintMixer'){
    solid(x,y,1,1,18,'#bdc5c0','#737e80');miniCan(x+.35,y+.4,24,'#bd4e3c',5);
-   miniBox(x+.25,y+.23,31,'#4d6973',.48,.28,13);label(x+.5,y+.55,47,'COLOR MIX','#f4f4e3','#546e74',49)
+   miniBox(x+.25,y+.23,31,'#4d6973',.48,.28,13)
   }else if(type==='keyCutter'){
    solid(x,y,1,1,19,'#8eab9e','#667a79');
    const p=P(x+.5,y+.46,25);ellipse(p.x,p.y,9,4,'#4e626b');
@@ -337,7 +335,6 @@ export function createArtwork(ctx,project,getZoom){
      ellipse(q.x,q.y,2.5,4,row%2?'#d9bd74':'#a8d3cf');
     }
    }
-   label(x,y,54,type==='vending'?'SNACKS':'DRINKS','#eee5d2',type==='vending'?'#943e38':'#51818b',38)
   }else if(type==='table'){
    solid(x,y,w,h,17,'#aa8968','#6b5949');for(let i=0;i<2;i++)miniCan(x+.4+i*.8,y+.4,21,'#d5d8cb',3);
    for(let i=0;i<2;i++)solid(x+i*1.3,y+.42,.44,.34,10,'#5b6e71')
@@ -365,7 +362,7 @@ export function createArtwork(ctx,project,getZoom){
    for(let i=0;i<3;i++)line(P(x+.13,y+.1+i*.26,22),P(x+1.75,y+.1+i*.26,22),'#d0cbb4',1.5)
 
   }else if(type==='safetyStation'){
-   solid(x,y,w,h,28,'#e6e9dc','#b8c5c0');label(x+.5,y+.3,35,'FIRST AID','#ebfff5','#51866c',42);
+   solid(x,y,w,h,28,'#e6e9dc','#b8c5c0');
    miniCan(x+.52,y+.55,28,'#c94940',4)
   }else if(type==='utilityCart'){
    solid(x,y,w,h,13,'#60878d','#49636a');miniBox(x+.1,y+.12,18,'#b8ae90',.32,.44,5);
@@ -540,31 +537,27 @@ export function createArtwork(ctx,project,getZoom){
  // Overhead department signage is an independent visual layer:
  // signs have no collision footprint and do not block doors or aisles.
  function drawDepartmentSign(x,y,name,accent='#467887'){
-  // Camera-facing sign face: text and colored panel share *screen* coordinates.
-  // The previous isometric parallelogram left half the text off its narrow face.
-  const p=P(x,y,68),z=Z();
-  const title=String(name).toUpperCase();
-  const width=Math.max(86,title.length*9.2+24)*z,height=26*z;
-  const left=p.x-width*.5,top=p.y-height*.5;
-  ctx.save();
-  // Two hanging rods and a slight edge give depth without twisting the lettering.
-  ctx.strokeStyle='#b3bdb6';ctx.lineWidth=Math.max(.7,z*1.5);
-  for(const fraction of [.24,.76]){
-   const sx=left+width*fraction;
-   ctx.beginPath();ctx.moveTo(sx,top-12*z);ctx.lineTo(sx,top);ctx.stroke();
+  // Project the sign in the same isometric plane as the store's shelves.
+  // Text is rotated along the panel's projected top edge, so the lettering
+  // follows the sign's angle instead of floating off a 3-D parallelogram.
+  const title=String(name).toUpperCase(),span=title.length>8?1.95:1.66,z=70;
+  const a=P(x-span,y-.12,z),b=P(x+span,y-.12,z);
+  const c=P(x+span,y-.12,z-24),d=P(x-span,y-.12,z-24);
+  const width=Math.hypot(b.x-a.x,b.y-a.y);
+  const angle=Math.atan2(b.y-a.y,b.x-a.x);
+  for(const t of [.18,.82]){
+   const xx=x-span+2*span*t;
+   line(P(xx,y-.12,z+15),P(xx,y-.12,z),'#9caaa6',1.6);
   }
-  ctx.fillStyle='#526366';
-  ctx.fillRect(left+3*z,top+3*z,width,height);
-  ctx.fillStyle='#e8e8dc';ctx.fillRect(left,top,width,height);
-  ctx.strokeStyle='#425d60';ctx.lineWidth=Math.max(.7,z*1.5);
-  ctx.strokeRect(left,top,width,height);
-  ctx.fillStyle=accent;ctx.fillRect(left+2*z,top+2*z,width-4*z,4*z);
-  const fontSize=Math.min(12*z,Math.max(6,9*z));
-  ctx.font=`700 ${fontSize}px system-ui, sans-serif`;
-  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#263b40';
-  const textX=left+width*.5,textY=top+height*.63;
-  // Always constrain text to the sign's own face, including mobile zoom.
-  ctx.fillText(title,textX,textY,width-12*z);
+  poly([a,b,c,d],'#e9e8db','#455f61',1.6);
+  line(P(x-span+.04,y-.12,z-4),P(x+span-.04,y-.12,z-4),accent,3);
+  const mid=P(x,y-.12,z-14);
+  ctx.save();
+  ctx.translate(mid.x,mid.y);
+  ctx.rotate(angle);
+  ctx.font=`700 ${Math.max(7,10*Z())}px system-ui,sans-serif`;
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#263d41';
+  ctx.fillText(title,0,0,width-15*Z());
   ctx.restore();
  }
  // A-frame warning sign sits at the actual wet-floor tile and persists briefly.
