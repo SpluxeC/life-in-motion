@@ -1021,7 +1021,7 @@ export function createArtwork(ctx,project,getZoom){
    ellipse(rearWheel.x,rearWheel.y,3.2,3.2,'#bfcbca');
    // Rear-facing structural rail is occluded by platform and nearer details.
    // Tall rear upright painted ON TOP of its tire, including the axle area.
-   line(P(side,rear,3),P(side,rear,56),'#506b75',5.5);
+   line(P(side,rear,13),P(side,rear,56),'#506b75',5.5);
    line(P(side,rear,56),P(side,front,56),'#c8d4cf',4.7);
    line(P(side,rear,42),P(side,front,42),'#8ba2a5',3.4);
    line(P(side,rear,25),P(side,front,25),'#8ba2a5',3.4);
@@ -1033,42 +1033,41 @@ export function createArtwork(ctx,project,getZoom){
    const frontWheel=P(x+.35,front,5);
    ellipse(frontWheel.x,frontWheel.y,7.5,7.5,'#253138','#73858a');
    ellipse(frontWheel.x,frontWheel.y,3.2,3.2,'#bfcbca');
-   line(P(side,front,13),P(side,front,56),'#607e87',4.4);
+   // The opposite (front / other) tire must be covered by its full upright.
+   line(P(side,front,3),P(side,front,56),'#607e87',5.5);
    // Axle is confined to the underside, not drawn through the handle.
    line(P(x+.30,rear,5),P(x+.30,front,5),'#60747b',2);
   }else if(type==='forklift'){
    // Painter-ordered industrial forklift. Far wheels and back safety posts
    // first, then body/seat, near wheels, overhead guard and forward mast.
    shadow(x,y,w,h,1.12);
-   // Four wheels share chassis axle coordinates (rather than drifting
-   // independently from the canopy). Far tires draw first.
-   const axleX=[x+.84,x+1.47],farY=y-.25,nearY=y+.25;
-   for(const xx of axleX){
-    const p=P(xx,farY,6);
-    ellipse(p.x,p.y,9,8,'#293238','#60777c');
-    ellipse(p.x,p.y,3.5,3.3,'#b8c6c2');
-   }
-   // Rear roof posts share the exact plan rectangle of the overhead guard.
+   // Passenger-side wheels are fully hidden; only the two driver-side
+   // tires on the near Y face are exposed.
+   const axleX=[x+.84,x+1.47],driverY=y+.36;
+   // Chassis and orange body exactly occupy the cab support footprint.
    const cabLeft=x+.75,cabRight=x+1.57,cabRear=y-.24,cabFront=y+.24;
-   for(const xx of [cabLeft,cabRight])
-    line(P(xx,cabRear,20),P(xx,cabRear,61),'#455b63',4.4);
-   solid(x+.68,y+.02,1.02,.76,18,'#da9538','#84532d','#b77730');
-   solid(x+1.03,y+.10,.62,.62,26,'#e9b34c','#916233','#d8953f');
-   surface(x+1.08,y+.13,.51,.50,27,'#c98a3d','#865a32');
-   // Occupant position sits below roof, fully inside the canopy footprint.
-   solid(x+1.05,y+.06,.28,.29,33,'#34454c','#24343b','#5c7074');
-   line(P(x+.94,y+.26,28),P(x+.90,y+.26,41),'#60747c',3);
-   const steering=P(x+.90,y+.26,41);
+   solid(x+.68,y-.25,1.02,.72,18,'#da9538','#84532d','#b77730');
+   solid(x+1.03,y-.18,.62,.59,26,'#e9b34c','#916233','#d8953f');
+   surface(x+1.08,y-.16,.51,.48,27,'#c98a3d','#865a32');
+   solid(x+1.05,y-.10,.28,.29,33,'#34454c','#24343b','#5c7074');
+   line(P(x+.94,y+.12,28),P(x+.90,y+.12,41),'#60747c',3);
+   const steering=P(x+.90,y+.12,41);
    ellipse(steering.x,steering.y,6,4,'#293941','#acbab6');
-   // Near tires belong to same axles and stay outboard of the body.
+   // Exactly two visible driver-side tires, mounted below the chassis.
    for(const xx of axleX){
-    const p=P(xx,nearY,6);
-    ellipse(p.x,p.y,9,8,'#253138','#61767b');
-    ellipse(p.x,p.y,3.5,3.3,'#b8c6c2');
+    const p=P(xx,driverY,6);
+    ellipse(p.x,p.y,10,9,'#253138','#61767b');
+    ellipse(p.x,p.y,4,3.5,'#b8c6c2');
    }
-   for(const xx of [cabLeft,cabRight])
-    line(P(xx,cabFront,26),P(xx,cabFront,61),'#4d636b',4.5);
-   // Roof corners use the SAME positions as all four cage uprights.
+   // All four cage legs START on the forklift body surface at Z=18.
+   // Roof corners use precisely the same XY points as their feet.
+   for(const xx of [cabLeft,cabRight]){
+    for(const yy of [cabRear,cabFront]){
+     line(P(xx,yy,18),P(xx,yy,62),'#435b65',5);
+     const mount=P(xx,yy,18);
+     ellipse(mount.x,mount.y,3.2,2.3,'#63767c');
+    }
+   }
    surface(cabLeft,cabRear,cabRight-cabLeft,cabFront-cabRear,62,
     '#364e56','#6d8284');
    // The forward mast stays in the foreground and tines emerge at its base.
