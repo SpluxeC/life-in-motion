@@ -10,7 +10,15 @@ function polygonContains(poly,p){
  return inside;
 }
 export function signFace(sign,project){
- const span=sign.name.length>=9?2.28:1.78,x=sign.x,y=sign.y-.12;
+ // Garden signage is mounted along the Y-facing wall above the
+ // glass doors. Its fade footprint follows that same panel orientation.
+ const span=sign.axis==='y'?1.06:(sign.name.length>=9?2.28:1.78);
+ if(sign.axis==='y'){
+  const x=sign.x-.12,y=sign.y;
+  return [project(x,y+span,70),project(x,y-span,70),
+   project(x,y-span,44),project(x,y+span,44)];
+ }
+ const x=sign.x,y=sign.y-.12;
  return [project(x-span,y,70),project(x+span,y,70),
   project(x+span,y,44),project(x-span,y,44)];
 }
