@@ -1,6 +1,7 @@
 // Life in Motion v3 — resolution-independent, built-in isometric environment artwork.
 // Nothing in this module downloads external images. Every object uses the same
 // world-tile footprint and screen projection as collision/pathfinding.
+import {departmentItem,visibleShelfCount} from './merchandise.js?v=stocked-shelves-20261023-1';
 export function createArtwork(ctx,project,getZoom){
  const P=(x,y,h=0)=>project(x,y,h),Z=()=>getZoom();
  const colorNoise=(x,y)=>{let k=((x*73856093)^(y*19349663))>>>0;return k%7};
@@ -218,27 +219,25 @@ export function createArtwork(ctx,project,getZoom){
  function rack(x,y,w,h,dept,stock,capacity=12){
   shadow(x,y,w,h,1.12);
   solid(x,y,w,h,4,'#465453','#344440','#586761');
-  // Legs occupy the actual collision footprint: never project into an aisle.
+  // Frame, rails and boards are all attached to the real walk-blocking tile.
   for(const xx of [-.44,w-.56])for(const yy of [-.44,h/2-.5,h-.56]){
    line(P(x+xx,y+yy,1),P(x+xx,y+yy,48),'#536970',2);
   }
   const shelfHeights=[12,23,34,42];
-  const ratio=stock===undefined?1:Math.max(0,Math.min(1,stock/Math.max(1,capacity)));
+  const rows=7,columns=2,slots=rows*columns;
+  const visible=visibleShelfCount(stock,capacity,slots);
   for(let tier=0;tier<shelfHeights.length;tier++){
-   const height=shelfHeights[tier];
-   surface(x,y,w,h,height,'#b8c3b8','#556967');
+   const base=shelfHeights[tier];
+   surface(x,y,w,h,base,'#b8c3b8','#556967');
    if(tier===shelfHeights.length-1)break;
-   const slots=Math.min(9,Math.ceil(h*2));
-   const products=Math.round(slots*ratio);
-   for(let i=0;i<products;i++){
-    const py=y-.32+(i+.5)*(h-.34)/slots;
-    const px=x-.2+(i%2)*.37;
-    const z=height+2;
-    if(dept==='PAINT')miniCan(px,py,z,['#b75544','#e3c67b','#7292a6'][i%3],2.3);
-    else if(dept==='TOOLS')miniBox(px,py,z,['#ab543d','#343f49','#a78d5d'][i%3],.27,.30,5);
-    else if(dept==='PLUMBING')bolt(px,py,z,i%2?'#91a7a7':'#d5c8a1');
-    else if(dept==='ELECTRICAL')miniBox(px,py,z,i%2?'#547b90':'#c8b989',.28,.30,6);
-    else miniBox(px,py,z,i%2?'#b8ae93':'#697b78',.29,.30,5);
+   // Repeat only real game-inventory objects. Two neatly arranged product
+   // lanes fill each shelf tier; drawing density changes with stock.
+   for(let slot=0;slot<visible;slot++){
+    const row=Math.floor(slot/columns),lane=slot%columns;
+    const px=x-.18+lane*.38;
+    const py=y-.29+(row+.5)*(h-.36)/rows;
+    const id=departmentItem(dept,row+lane+tier*2);
+    drawItem(id,px,py,base+5,.52);
    }
   }
  }
