@@ -1,5 +1,5 @@
-import {createHardwareStore,nearestOpen,walkable} from './world.js?v=exterior-windows-20261022-1';
-import {rngFor} from './simulation.js?v=exterior-windows-20261022-1';
+import {createHardwareStore,nearestOpen,walkable} from './world.js?v=hud-clock-20261022-1';
+import {rngFor} from './simulation.js?v=hud-clock-20261022-1';
 const SAVE='life-in-motion-v3-round-v1',PROGRESS='life-in-motion-v3-progression-v1';
 export const hasSave=()=>{try{return !!localStorage.getItem(SAVE)}catch{return false}};
 export const getProgress=()=>{try{return JSON.parse(localStorage.getItem(PROGRESS)||'{"unlocked":["hardware-store"]}')}catch{return{unlocked:['hardware-store']}}};
