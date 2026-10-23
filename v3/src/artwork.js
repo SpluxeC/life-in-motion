@@ -338,9 +338,11 @@ export function createArtwork(ctx,project,getZoom){
  }
  function checkout(o){
   const {x,y,w,h}=o;
+  // Swap the physical front/back: employees now operate from north (-Y).
+  const at=(px,py,z=0)=>P(px,2*y-py,z);
   shadow(x,y,w,h,1.05);
-  // Steel register counter aligned with the long X-axis. Shoppers stand
-  // north (-Y); the POS screen, till and keyboard face the cashier south (+Y).
+  // Steel register counter aligned with the long X-axis. Cashiers stand
+  // north (-Y); the POS screen and till face them, while shoppers stand south.
   solid(x,y,w,h,17,'#c3c8c1','#586870','#84928d');
   // Conveyor belt: a broad charcoal rubber band with raised steel rollers
   // instead of a vague dark rectangle.
@@ -348,118 +350,120 @@ export function createArtwork(ctx,project,getZoom){
   surface(x+.16,y+.16,1.01,.60,18.5,'#202d35','#879398');
   for(let i=0;i<5;i++){
    const bx=x-.29+i*.20;
-   line(P(bx,y-.34,18.7),P(bx,y+.24,18.7),'#405158',.95);
+   line(at(bx,y-.34,18.7),at(bx,y+.24,18.7),'#405158',.95);
   }
-  line(P(x-.40,y-.40,19),P(x+.68,y-.40,19),'#e6e4da',2.4);
-  line(P(x-.40,y+.30,19),P(x+.68,y+.30,19),'#8c9b9a',2);
+  line(at(x-.40,y-.40,19),at(x+.68,y-.40,19),'#e6e4da',2.4);
+  line(at(x-.40,y+.30,19),at(x+.68,y+.30,19),'#8c9b9a',2);
   // Thick point-of-sale platform with an inset glass barcode scanner.
   solid(x+1.05,y+.08,.80,.78,20,'#b4c3bf','#576d72','#899b98');
   surface(x+1.02,y+.11,.35,.58,20.5,'#293940','#9ea9a6');
-  line(P(x+.58,y-.27,21),P(x+.87,y+.14,21),'#76c9cc',2.4);
-  line(P(x+.62,y-.22,21.1),P(x+.89,y+.17,21.1),'#d9f6ed',.8);
-  // Employee cash drawer / till handle on the +Y (staff) face.
-  const drawerY=y+.47;
+  line(at(x+.58,y-.27,21),at(x+.87,y+.14,21),'#76c9cc',2.4);
+  line(at(x+.62,y-.22,21.1),at(x+.89,y+.17,21.1),'#d9f6ed',.8);
+  // Employee cash drawer / till handle on the -Y (staff) face.
+  const drawerY=y+.47; // mirrored to -Y
   poly([
-   P(x+.58,drawerY,8),P(x+1.33,drawerY,8),
-   P(x+1.33,drawerY,16),P(x+.58,drawerY,16)
+   at(x+.58,drawerY,8),at(x+1.33,drawerY,8),
+   at(x+1.33,drawerY,16),at(x+.58,drawerY,16)
   ],'#708388','#334a50',1);
-  line(P(x+.85,drawerY+.015,12),P(x+1.10,drawerY+.015,12),'#dfe6de',2.2);
+  line(at(x+.85,drawerY+.015,12),at(x+1.10,drawerY+.015,12),'#dfe6de',2.2);
   // Monitor stand anchored into the POS platform; no floating panels.
-  line(P(x+1.13,y+.28,21),P(x+1.13,y+.28,30),'#455a63',4);
+  line(at(x+1.13,y+.28,21),at(x+1.13,y+.28,30),'#455a63',4);
   surface(x+1.0,y+.26,.29,.29,21.2,'#607479','#344951');
-  // The active terminal display faces +Y, where the cashier stands.
+  // The active terminal display faces -Y, where the cashier stands.
   // The opposite customer side sees the back of the casing.
   const sy=y+.495,left=x+.85,right=x+1.40;
-  const screen=[P(left,sy,29),P(right,sy,29),P(right,sy,43),P(left,sy,43)];
+  const screen=[at(left,sy,29),at(right,sy,29),at(right,sy,43),at(left,sy,43)];
   poly(screen,'#2a404a','#182d36',2.2);
-  const glass=[P(left+.05,sy+.015,31),P(right-.05,sy+.015,31),
-               P(right-.05,sy+.015,40),P(left+.05,sy+.015,40)];
+  const glass=[at(left+.05,sy+.015,31),at(right-.05,sy+.015,31),
+               at(right-.05,sy+.015,40),at(left+.05,sy+.015,40)];
   poly(glass,'#3d7680','#8fb1b4',.65);
-  line(P(left+.10,sy+.02,37),P(right-.10,sy+.02,37),'#b0ead1',1.35);
-  line(P(left+.10,sy+.02,34),P(left+.30,sy+.02,34),'#f2ca8b',1.7);
+  line(at(left+.10,sy+.02,37),at(right-.10,sy+.02,37),'#b0ead1',1.35);
+  line(at(left+.10,sy+.02,34),at(left+.30,sy+.02,34),'#f2ca8b',1.7);
   // Low profile keyboard directly between cashier and screen.
   surface(x+.97,y+.39,.38,.14,22,'#344953','#182c34');
-  for(let i=0;i<3;i++)line(P(x+.78+i*.1,y+.39,22.3),
-                         P(x+.78+i*.1,y+.46,22.3),'#b8c9c5',.7);
-  // Customer-facing card reader, attached to the -Y edge.
-  const cardY=y-.445;
-  const card=[P(x+.72,cardY,22),P(x+1.02,cardY,22),
-              P(x+1.02,cardY,28),P(x+.72,cardY,28)];
+  for(let i=0;i<3;i++)line(at(x+.78+i*.1,y+.39,22.3),
+                         at(x+.78+i*.1,y+.46,22.3),'#b8c9c5',.7);
+  // Customer-facing card reader, attached to the +Y edge.
+  const cardY=y-.445; // mirrored to +Y
+  const card=[at(x+.72,cardY,22),at(x+1.02,cardY,22),
+              at(x+1.02,cardY,28),at(x+.72,cardY,28)];
   poly(card,'#30434d','#172c33',1.3);
-  line(P(x+.77,cardY-.015,25),P(x+.97,cardY-.015,25),'#86cebb',1.9);
+  line(at(x+.77,cardY-.015,25),at(x+.97,cardY-.015,25),'#86cebb',1.9);
   // Small bag holder / receipt printer adjacent to the POS.
   solid(x+1.30,y+.20,.16,.28,24,'#dddcd0','#7b8d91','#9ba7a0');
-  const printer=P(x+1.38,y+.26,26);
+  const printer=at(x+1.38,y+.26,26);
   line({x:printer.x-3*Z(),y:printer.y},{x:printer.x+3*Z(),y:printer.y},
        '#f7f4dc',2.7);
   // Brand-neutral end strip and queue-side bumper.
-  line(P(x-.46,y-.47,14),P(x+1.45,y-.47,14),'#af6b50',3.3);
+  line(at(x-.46,y-.47,14),at(x+1.45,y-.47,14),'#af6b50',3.3);
  }
  function serviceDesk(o){
   const {x,y,w,h}=o;
+  // Swap the physical front/back: employees now operate from north (-Y).
+  const at=(px,py,z=0)=>P(px,2*y-py,z);
   shadow(x,y,w,h,1.08);
   // Three-tile customer-service counter, built into the isometric footprint.
-  // Front (-Y) is the customer return/drop-off side; +Y is the workstation.
+  // Front (+Y) is customer-facing; staff workstation is now north (-Y).
   solid(x,y,w,h,23,'#b8bdb3','#566a6a','#788d89');
   surface(x+.07,y+.07,w-.14,h-.14,24,'#dad8ca','#6e8581');
-  // Customer-side woodgrain front and a protective horizontal bumper.
+  // Customer-side (+Y) woodgrain front and a protective bumper.
   const frontY=y-.505;
-  poly([P(x-.39,frontY,5),P(x+w-.62,frontY,5),
-        P(x+w-.62,frontY,19),P(x-.39,frontY,19)],'#836f61','#536764',1);
-  line(P(x-.42,frontY-.012,19),P(x+w-.59,frontY-.012,19),'#dbb990',2.1);
-  line(P(x-.42,frontY-.012,7),P(x+w-.59,frontY-.012,7),'#52696b',1.8);
+  poly([at(x-.39,frontY,5),at(x+w-.62,frontY,5),
+        at(x+w-.62,frontY,19),at(x-.39,frontY,19)],'#836f61','#536764',1);
+  line(at(x-.42,frontY-.012,19),at(x+w-.59,frontY-.012,19),'#dbb990',2.1);
+  line(at(x-.42,frontY-.012,7),at(x+w-.59,frontY-.012,7),'#52696b',1.8);
   for(let i=1;i<3;i++){
    const sx=x-.5+i;
-   line(P(sx,frontY-.01,6),P(sx,frontY-.01,18),'#9e8874',1.05);
+   line(at(sx,frontY-.01,6),at(sx,frontY-.01,18),'#9e8874',1.05);
   }
-  // Staff-facing PC: a freestanding base, a real vertical monitor plane,
+  // Staff-facing (-Y) PC: a freestanding base, a vertical monitor plane,
   // dark bezel, accessible keyboard and visible illuminated UI lines.
   const screenX=x+.47,screenY=y+.435;
   surface(screenX-.18,y+.11,.36,.29,24.7,'#465c66','#283d44');
-  line(P(screenX,screenY-.14,24),P(screenX,screenY-.14,34),'#53686d',3.6);
-  poly([P(screenX-.32,screenY,32),P(screenX+.32,screenY,32),
-        P(screenX+.32,screenY,48),P(screenX-.32,screenY,48)],'#253740','#192d34',2);
-  poly([P(screenX-.27,screenY+.01,34),P(screenX+.27,screenY+.01,34),
-        P(screenX+.27,screenY+.01,45),P(screenX-.27,screenY+.01,45)],'#387a84','#81acae',.9);
-  line(P(screenX-.22,screenY+.02,41),P(screenX+.17,screenY+.02,41),'#b9e9d7',1.45);
-  line(P(screenX-.22,screenY+.02,38),P(screenX+.08,screenY+.02,38),'#f6d28d',1.25);
+  line(at(screenX,screenY-.14,24),at(screenX,screenY-.14,34),'#53686d',3.6);
+  poly([at(screenX-.32,screenY,32),at(screenX+.32,screenY,32),
+        at(screenX+.32,screenY,48),at(screenX-.32,screenY,48)],'#253740','#192d34',2);
+  poly([at(screenX-.27,screenY+.01,34),at(screenX+.27,screenY+.01,34),
+        at(screenX+.27,screenY+.01,45),at(screenX-.27,screenY+.01,45)],'#387a84','#81acae',.9);
+  line(at(screenX-.22,screenY+.02,41),at(screenX+.17,screenY+.02,41),'#b9e9d7',1.45);
+  line(at(screenX-.22,screenY+.02,38),at(screenX+.08,screenY+.02,38),'#f6d28d',1.25);
   // Keyboard / mouse physically rest on the countertop on the employee side.
-  poly([P(x+.13,y+.32,24.7),P(x+.65,y+.32,24.7),
-        P(x+.65,y+.47,24.7),P(x+.13,y+.47,24.7)],'#394d54','#263b41',1);
+  poly([at(x+.13,y+.32,24.7),at(x+.65,y+.32,24.7),
+        at(x+.65,y+.47,24.7),at(x+.13,y+.47,24.7)],'#394d54','#263b41',1);
   for(let k=0;k<4;k++){
    const u=x+.18+k*.105;
-   line(P(u,y+.35,25),P(u,y+.43,25),'#acc8c0',.65);
+   line(at(u,y+.35,25),at(u,y+.43,25),'#acc8c0',.65);
   }
-  const mouse=P(x+.80,y+.39,25);
+  const mouse=at(x+.80,y+.39,25);
   ellipse(mouse.x,mouse.y,2.8,1.6,'#4b6470','#213941');
   // Center section: layered paper forms, document tray and clip binder.
-  poly([P(x+1.08,y-.30,24.6),P(x+1.94,y-.30,24.6),
-        P(x+1.94,y+.22,24.6),P(x+1.08,y+.22,24.6)],'#617b7e','#39585e',1);
+  poly([at(x+1.08,y-.30,24.6),at(x+1.94,y-.30,24.6),
+        at(x+1.94,y+.22,24.6),at(x+1.08,y+.22,24.6)],'#617b7e','#39585e',1);
   for(let layer=0;layer<4;layer++){
    const z=25+layer*1.1,dx=layer*.017;
-   poly([P(x+1.17+dx,y-.24,z),P(x+1.84+dx,y-.24,z),
-         P(x+1.84+dx,y+.16,z),P(x+1.17+dx,y+.16,z)],layer%2?'#f8f6ed':'#e3e8e1','#a0a9a5',.6);
+   poly([at(x+1.17+dx,y-.24,z),at(x+1.84+dx,y-.24,z),
+         at(x+1.84+dx,y+.16,z),at(x+1.17+dx,y+.16,z)],layer%2?'#f8f6ed':'#e3e8e1','#a0a9a5',.6);
   }
   for(let k=0;k<3;k++){
-   line(P(x+1.27,y-.16+k*.10,29.7),
-        P(x+1.75-(k%2)*.12,y-.16+k*.10,29.7),'#8c9a98',.7);
+   line(at(x+1.27,y-.16+k*.10,29.7),
+        at(x+1.75-(k%2)*.12,y-.16+k*.10,29.7),'#8c9a98',.7);
   }
-  const binder=P(x+1.24,y-.24,30);
+  const binder=at(x+1.24,y-.24,30);
   ellipse(binder.x,binder.y,2.3,1.3,'#354f59');
   // Right-hand realistic desktop printer: rectangular casing, paper feeder,
   // printed output sheet and dark control/status panel.
   miniBox(x+2.12,y+.11,24.5,'#c4c9c3',.67,.59,9);
-  poly([P(x+1.67,y-.31,34),P(x+2.29,y-.31,34),
-        P(x+2.29,y+.21,34),P(x+1.67,y+.21,34)],'#d6dbd4','#74898a',1);
-  poly([P(x+1.75,y-.25,34.5),P(x+2.11,y-.25,34.5),
-        P(x+2.11,y+.09,34.5),P(x+1.75,y+.09,34.5)],'#3f555b','#51646a',.7);
+  poly([at(x+1.67,y-.31,34),at(x+2.29,y-.31,34),
+        at(x+2.29,y+.21,34),at(x+1.67,y+.21,34)],'#d6dbd4','#74898a',1);
+  poly([at(x+1.75,y-.25,34.5),at(x+2.11,y-.25,34.5),
+        at(x+2.11,y+.09,34.5),at(x+1.75,y+.09,34.5)],'#3f555b','#51646a',.7);
   // Paper going into the back feeder, vertical and rigid.
-  poly([P(x+1.77,y-.20,34),P(x+2.13,y-.20,34),
-        P(x+2.13,y-.20,42),P(x+1.77,y-.20,42)],'#f6f4e9','#a3b7b6',.8);
+  poly([at(x+1.77,y-.20,34),at(x+2.13,y-.20,34),
+        at(x+2.13,y-.20,42),at(x+1.77,y-.20,42)],'#f6f4e9','#a3b7b6',.8);
   // Output tray projects toward the staff, resting above the counter.
-  poly([P(x+1.83,y+.12,32),P(x+2.20,y+.12,32),
-        P(x+2.20,y+.37,30),P(x+1.83,y+.37,30)],'#e8e9e0','#79898b',.7);
-  line(P(x+2.14,y+.325,35),P(x+2.21,y+.325,35),'#7bc9a8',1.8);
+  poly([at(x+1.83,y+.12,32),at(x+2.20,y+.12,32),
+        at(x+2.20,y+.37,30),at(x+1.83,y+.37,30)],'#e8e9e0','#79898b',.7);
+  line(at(x+2.14,y+.325,35),at(x+2.21,y+.325,35),'#7bc9a8',1.8);
  }
  function safetyStation(o){
   const {x,y}=o;
