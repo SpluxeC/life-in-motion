@@ -336,6 +336,72 @@ export function createArtwork(ctx,project,getZoom){
   // A second visible side face gives the one-tile unit physical depth.
   shelfBand('x',x-.50,y-.45,y+.36,37,dept);
  }
+ // Shelves mounted against the east wall face WEST into the aisle.
+ // The visible merchandise and shelf lips occupy the x-negative plane.
+ function westWallDisplay(o){
+  const {x,y,h}=o,dept=o.department==='FASTENERS'?'HARDWARE':o.department||'HARDWARE';
+  const scheme=productScheme(dept),faceX=x-.52;
+  shadow(x,y,1,h,1.1);
+  solid(x,y,1,h,41,'#768782','#435b60','#607678');
+  const start=y-.44,end=y+h-.55,bays=Math.max(3,h*3),visible=visibleShelfCount(o.stock,o.capacity||8,bays);
+  for(let tier=0;tier<3;tier++){
+   const bottom=8+tier*10,top=bottom+8;
+   for(let i=0;i<visible;i++){
+    const a=start+(end-start)*i/bays+.015,b=start+(end-start)*(i+1)/bays-.015;
+    merchandiseFace('x',faceX,a,b,bottom+1,top,dept,i+tier*3);
+   }
+   shelfBand('x',faceX-.01,start,end,bottom,dept);
+  }
+  for(const yy of [start,end]){
+   line(P(faceX-.02,yy,4),P(faceX-.02,yy,41),'#38565e',3);
+  }
+  line(P(faceX-.02,start,40),P(faceX-.02,end,40),scheme.accent,4);
+ }
+ // Cylindrical paint pails stacked in offset tiers on a low timber pallet.
+ function paintBucketStack(o){
+  const {x,y}=o;
+  shadow(x,y,1,1,1.04);
+  solid(x,y,1,1,4,'#bda579','#79634a','#99805a');
+  const colors=['#ddddd4','#dce2dc','#d4d9d8','#e6e0d2','#d8dfd6','#dbd7ce'];
+  for(let tier=0;tier<2;tier++)for(let i=0;i<3;i++){
+   const bx=x-.23+i*.25+(tier?.09:0),by=y-.19+(i%2)*.12,z=5+tier*13;
+   const pt=P(bx,by,z);
+   ctx.fillStyle=colors[(i+tier*3)%colors.length];
+   ctx.fillRect(pt.x-5.7*Z(),pt.y-9*Z(),11.4*Z(),9*Z());
+   ellipse(pt.x,pt.y-9*Z(),5.9,2.7,'#f4f4eb','#727f7d');
+   ellipse(pt.x,pt.y,5.6,2.2,'#9aa6a2','#687876');
+   line({x:pt.x-5.6*Z(),y:pt.y-5*Z()},{x:pt.x+5.6*Z(),y:pt.y-5*Z()},
+    ['#b45f54','#729eb0','#ceaa5f'][i%3],3.1);
+   ctx.beginPath();ctx.arc(pt.x,pt.y-6*Z(),5*Z(),.05,Math.PI-.05);
+   ctx.strokeStyle='#637775';ctx.lineWidth=1.3*Z();ctx.stroke();
+  }
+ }
+ function utilityServiceCart(o){
+  const {x,y}=o;
+  shadow(x,y,1,1,.95);
+  // Open steel rolling stock cart: separate bottom and upper trays.
+  for(const z of [8,23]){
+   solid(x+.12,y+.13,.72,.61,2+z,'#9eada8','#527279','#71878a');
+   surface(x+.15,y+.15,.65,.53,z+2.5,'#c0cac1','#576d70');
+  }
+  for(const px of [x-.29,x+.29])for(const py of [y-.26,y+.25]){
+   line(P(px,py,6),P(px,py,34),'#455f66',3);
+  }
+  // Real rear push handle and four low-profile swiveling casters.
+  line(P(x-.30,y+.35,34),P(x+.30,y+.35,34),'#aec5c0',4);
+  for(const px of [x-.26,x+.29])for(const py of [y-.25,y+.27]){
+   const c=P(px,py,3);
+   ellipse(c.x,c.y,3.5,3,'#293b41','#7b9294');
+  }
+  // Cleaning and stocking supplies physically sit on the trays.
+  miniBox(x+.24,y+.25,26,'#d2c4a4',.28,.28,7);
+  for(let i=0;i<2;i++){
+   const c=P(x-.22+i*.26,y-.18,34);
+   ellipse(c.x,c.y,4.1,2.5,i?'#8bc2b7':'#d5a866','#596f70');
+   line({x:c.x-3*Z(),y:c.y},{x:c.x+3*Z(),y:c.y},'#e7e7dc',1.4);
+  }
+  line(P(x-.28,y-.16,35),P(x-.33,y-.16,46),'#8ba6a7',2.4);
+ }
  function checkout(o){
   const {x,y,w,h}=o;
   // Swap the physical front/back: employees now operate from north (-Y).
@@ -793,12 +859,11 @@ export function createArtwork(ctx,project,getZoom){
    solid(x,y,w,h,type==='plants'?9:19,type==='plants'?'#a38b68':'#829784','#615c48');
    plants(x+.17,y+.18,type==='plants'?13:23,Math.min(9,Math.round(w*h*2)+2))
   }else if(type==='endcap'){
-   endcapDisplay(o);
+   o.facing==='west'?westWallDisplay(o):endcapDisplay(o);
   }else if(type==='hardwareBins'){
-   // Small-parts storage uses the same larger display vocabulary as endcaps.
-   endcapDisplay({...o,department:'HARDWARE'});
+   o.facing==='west'?westWallDisplay(o):endcapDisplay({...o,department:'HARDWARE'});
   }else if(type==='bucketStack'){
-   for(let i=0;i<Math.min(4,o.stock??4);i++)miniCan(x-.18+i%2*.38,y-.18+Math.floor(i/2)*.38,8,'#dadbd0',7)
+   paintBucketStack(o);
   }else if(type==='lumberRack'){
    solid(x,y,w,h,8,'#837866','#565447');for(let i=0;i<6;i++){
     solid(x+.12,y+.1+i*.13,w-.25,.12,12+i*3,'#c09e6c','#8a684c')}
@@ -809,8 +874,7 @@ export function createArtwork(ctx,project,getZoom){
   }else if(type==='safetyStation'){
    safetyStation(o);
   }else if(type==='utilityCart'){
-   solid(x,y,w,h,13,'#60878d','#49636a');miniBox(x+.1,y+.12,18,'#b8ae90',.32,.44,5);
-   const p=P(x+.7,y+.7);ellipse(p.x,p.y,4,4,'#26373d')
+   utilityServiceCart(o);
   }else if(type==='palletStack'||type==='boxStack'){
    // Stacked shipping loads sit square on timber skids; no floating boxes.
    const pallet=type==='palletStack';
