@@ -883,19 +883,51 @@ export function createArtwork(ctx,project,getZoom){
    // Separate push stick and timber supports remain inside actual footprint.
    line(P(x+.13,y-.30,35),P(x+.45,y-.10,35),'#d8a76c',4);
    line(P(x-.34,y+.36,11),P(x+1.35,y+.36,11),'#536f72',4);
+  }else if(type==='gardenToolsRack'){
+   // Wall-mounted, two-tile garden hardware rail. Every shaft, hook,
+   // shovel blade and rake tine shares the store's Y-oriented wall plane.
+   // No crates, boxes or bags: customers see hanging tools from the aisle.
+   const back=x+.39,toolX=x+.13,left=y-.46,right=y+1.46;
+   poly([P(back,left,9),P(back,right,9),P(back,right,54),P(back,left,54)],
+    '#627768','#354a47',1.2);
+   for(const z of [12,34,51]){
+    line(P(back-.005,left,z),P(back-.005,right,z),'#9b7854',4.8);
+    line(P(back-.03,left,z+1.3),P(back-.03,right,z+1.3),'#d3b18a',1.15);
+   }
+   for(const yy of [left,right])line(P(back,yy,8),P(back,yy,54),'#465957',4.2);
+   for(let i=0;i<6;i++){
+    const yy=y-.25+i*.31,shovel=i%2===0,metal=shovel?'#82989b':'#9cafb1';
+    // Steel pegs stick out from the wall to hold natural wooden handles.
+    line(P(back,yy,46),P(toolX,yy,46),'#d0d8cc',2.9);
+    line(P(toolX,yy,47),P(toolX,yy,44),'#c2c6b8',2.3);
+    line(P(toolX,yy,17),P(toolX,yy,43),'#a77647',4.2);
+    line(P(toolX-.016,yy,18),P(toolX-.016,yy,42),'#d4ae74',1.3);
+    // D-grips on the shovels, plain capped handles on the rakes.
+    if(shovel){
+     line(P(toolX,yy,43),P(toolX,yy,48),'#5b493a',2.5);
+     const handleTop=P(toolX,yy,48);
+     ellipse(handleTop.x,handleTop.y,2.5,3.4,'#b88b59','#594938');
+     // Spade follows the vertical wall rather than a camera-facing icon.
+     poly([P(toolX-.03,yy-.10,15),P(toolX-.03,yy+.10,15),
+      P(toolX-.03,yy+.105,9),P(toolX-.03,yy,4.5),
+      P(toolX-.03,yy-.105,9)],metal,'#425b5d',1.25);
+     line(P(toolX-.045,yy,14),P(toolX-.045,yy,6),'#d6e1db',1);
+    }else{
+     const baseZ=16;
+     line(P(toolX-.025,yy-.14,baseZ),P(toolX-.025,yy+.14,baseZ),
+      '#71868c',5.3);
+     for(let t=-2;t<=2;t++){
+      const ty=yy+t*.061;
+      line(P(toolX-.035,ty,baseZ),P(toolX-.035,ty,7.5),metal,1.8);
+     }
+     const top=P(toolX,yy,44);
+     ellipse(top.x,top.y,2,1.45,'#394c47');
+    }
+   }
   }else if(type==='pallet'||type==='bagPallet'){
    solid(x,y,w,h,5,'#b79566','#8a6545','#a47e58');
-   if(type==='bagPallet'&&h>w){
-    // Garden stock is rotated 90 degrees to sit wholly inside the
-    // narrow, two-tile wall-side footprint beside the garden doors.
-    for(let i=0;i<6;i++){
-     const bx=x-.33+(i%2)*.36,by=y-.36+Math.floor(i/2)*.56;
-     miniBox(bx,by,13+i%2*5,'#d8cab1',.29,.43,10);
-    }
-   }else{
-    for(let i=0;i<6;i++)miniBox(x+.08+i%3*.56,y+.12+Math.floor(i/3)*.36,13+i%2*5,
+   for(let i=0;i<6;i++)miniBox(x+.08+i%3*.56,y+.12+Math.floor(i/3)*.36,13+i%2*5,
      type==='bagPallet'?'#d8cab1':['#a9936b','#b7a383','#989b89'][i%3],.48,.32,10);
-   }
   }else if(type==='workbench'||type==='office'){
    solid(x,y,w,h,19,'#b9946b','#776049','#8f7255');
    if(type==='office'){miniBox(x+.07,y+.3,26,'#465860',.45,.3,8);miniBox(x+.57,y+.3,23,'#d7d7ca',.24,.28,2)}
