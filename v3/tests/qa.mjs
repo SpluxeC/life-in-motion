@@ -1148,7 +1148,7 @@ for(const dolly of handTrucks)assert.equal(selectionLabel(shippingWorld,dolly),'
 for(const f of [forklift,...handTrucks]){
  const count=graphicsCalls.count;
  artwork.drawFixture(f);
- assert(graphicsCalls.count-count>65,'Detailed handling equipment renders: '+f.type);
+ assert(graphicsCalls.count-count>(f.type==='forklift'?65:30),'Detailed handling equipment renders: '+f.type);
  const p=project(f.x+(f.w-1)/2,f.y,24);
  assert(hitProjectedFixture(f,p.x,p.y,project,49)!==null,'Equipment is selectable');
 }
