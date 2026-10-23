@@ -6,6 +6,7 @@ import {departmentProducts,departmentItem,visibleShelfCount,DEPARTMENT_PRODUCTS}
 import {saveGame,loadGame} from '../src/persistence.js';
 import {createArtwork} from '../src/artwork.js';
 import {renderDepth,compareRenderDepth} from '../src/render-depth.js';
+import {signOpacity,signCoversNpc} from '../src/sign-visibility.js';
 import {hitProjectedFixture,isGroundTileTap,selectionLabel} from '../src/selection.js';
 import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness,HAIR_COLORS,HAIR_STYLES} from '../src/hud.js';
 import {readFileSync} from 'node:fs';
@@ -358,7 +359,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===4,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===5,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(migrated.world.fixtures.some(f=>f.type==='flowerBed')&&
@@ -631,4 +632,63 @@ assert(visualSource.includes("merchandiseFace('y',faceY"),
  'Endcap merchandise faces outward to the aisle, not toward the camera');
 assert(visualSource.includes("shelfBand('x',x-.50"),
  'Each endcap has a colored physical side panel');
+// Rendering and game geometry: one wide receiving shutter, a real sliding
+// garden entrance, and left/right facing helmets and hair.
+const remodeled=createHardwareStore();
+const shutter=doorAt(remodeled,28,39),otherHalf=doorAt(remodeled,29,39);
+assert(shutter&&shutter===otherHalf,'Both receiving tiles share one shutter object');
+assert.equal(shutter.type,'rollup');assert.equal(shutter.axis,'x');
+assert.equal(shutter.w,2);assert.equal(shutter.h,1);
+assert.equal(remodeled.doors.filter(d=>d.type==='rollup').length,1,
+ 'Exactly one receiving roll-up door is drawn, without a center seam');
+const gardenSlider=doorAt(remodeled,36,30);
+assert.equal(gardenSlider.type,'sliding','Garden center has a sliding door');
+assert.equal(gardenSlider.axis,'y','Garden door slides along the wall on Y');
+assert.equal(gardenSlider.auto,true);
+assert(!remodeled.walls.has('36,30'),'Garden sliding door remains an opening');
+assert(pathTo(remodeled,{x:35,y:30},{x:39,y:30}).some(p=>p.x===36&&p.y===30),
+ 'NPCs can navigate through the garden slider');
+assert(pathTo(remodeled,{x:29,y:42},{x:29,y:37}).some(p=>p.x===29&&p.y===39),
+ 'NPCs can enter through the second tile of the double receiving door');
+const doorGame=makeGame(remodeled,{seed:142,staff:4,customers:2});
+doorGame.npcs.forEach((n,i)=>{
+ n.x=n.rx=i===0?29:55;n.y=n.ry=i===0?40:44;
+ n.task=null;n.path=[];n.think=99999;
+});
+const doorwayWalker=doorGame.npcs[0];
+doorwayWalker.path=pathTo(remodeled,{x:29,y:40},{x:29,y:37});
+let didOpenWide=false;
+for(let i=0;i<160;i++){updateGame(doorGame,.05);if(shutter.open>.65)didOpenWide=true}
+assert(didOpenWide&&doorwayWalker.ry<=38,
+ 'Wide shutter opens from either half and allows full traversal');
+doorwayWalker.path=[];doorwayWalker.rx=doorwayWalker.x=24;doorwayWalker.ry=doorwayWalker.y=24;
+doorwayWalker.facing='left';doorwayWalker.path=[{x:25,y:24}];doorwayWalker.think=99999;
+updateGame(doorGame,.05);assert.equal(doorwayWalker.facing,'right','Heading right turns hat and hair right');
+doorwayWalker.path=[{x:24,y:24}];updateGame(doorGame,.05);
+assert.equal(doorwayWalker.facing,'left','Heading left turns hat and hair left');
+doorwayWalker.path=[];doorGame.paused=true;const pausedHeading=doorwayWalker.facing;
+updateGame(doorGame,1);assert.equal(doorwayWalker.facing,pausedHeading,
+ 'Pause freezes facing/headwear direction');
+const signProjection=(x,y,z=0)=>({x:(x-y)*24,y:-(x+y)*12-z});
+const signTest={x:11.5,y:16.5,name:'TOOLS'};
+const hiddenPerson={rx:13.5,ry:18.5,alive:true,unconscious:0};
+assert(signCoversNpc(signTest,hiddenPerson,signProjection,1),
+ 'Projected sign overlaps a character directly behind it');
+assert.equal(signOpacity(signTest,[hiddenPerson],signProjection,1,signTest.x+signTest.y,
+ n=>n.rx+n.ry-2.75),.26,'Obstructing signs fade to reveal NPC');
+assert.equal(signOpacity(signTest,[{...hiddenPerson,rx:30,ry:30}],signProjection,1,
+ signTest.x+signTest.y,n=>n.rx+n.ry-2.75),1,
+ 'Signs remain solid when NPCs are elsewhere');
+assert.equal(signOpacity(signTest,[{...hiddenPerson,alive:false}],signProjection,1,
+ signTest.x+signTest.y,n=>n.rx+n.ry-2.75),1,'Dead NPCs do not fade signs');
+const directionClient=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+assert(directionClient.includes('ctx.scale(dir,1)'),
+ 'World headwear is drawn facing left or right');
+assert(directionClient.includes("n.facing==='left'?'translate(100 0) scale(-1 1)'"),
+ 'Portrait headwear follows NPC facing');
+assert(directionClient.includes('ctx.globalAlpha=opacity'),
+ 'Overhead signs use temporary contextual transparency');
+const doorArt=readFileSync(new URL('../src/artwork.js',import.meta.url),'utf8');
+assert(doorArt.includes('const span=axis===\'x\'?(d.w||1):(d.h||1)'),
+ 'Roll-up artwork renders both door tiles as one full-width panel');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
