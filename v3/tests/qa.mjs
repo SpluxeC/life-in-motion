@@ -362,7 +362,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===10,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===11,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(migrated.world.fixtures.some(f=>f.type==='flowerBed')&&
@@ -1078,4 +1078,18 @@ const artStyleCode=readFileSync(new URL('../src/artwork.js',import.meta.url),'ut
 assert(artStyleCode.includes("Prominent west-facing display fascia")&&
  artStyleCode.includes("Tall back frame and visually larger side basket"),
  'Visible wall display fronts and utility-cart silhouette have explicit details');
+const twoTileSaw=world.fixtures.find(f=>f.type==='saw');
+assert.deepEqual([twoTileSaw.x,twoTileSaw.y,twoTileSaw.w,twoTileSaw.h],[6,35,2,1],
+ 'Lumber saw has a two-tile footprint');
+assert.equal(selectionLabel(world,world.fixtures.find(f=>f.type==='bucketStack')),'Paint Buckets');
+for(const position of [{x:6,y:34},{x:7,y:34},{x:8,y:35},{x:6,y:36},{x:7,y:36}]){
+ assert(walkable(world,position.x,position.y),'Lumber saw clearance');
+ assert(pathTo(world,{x:20,y:12},position).length>0,'Lumber saw access');
+}
+const sawCenter=project(twoTileSaw.x+.5,twoTileSaw.y,30);
+assert(hitProjectedFixture(twoTileSaw,sawCenter.x,sawCenter.y,project,49)!==null,
+ 'Saw remains tappable across the enlarged bed');
+const prevSawCount=graphicsCalls.count;
+artwork.drawFixture(twoTileSaw);
+assert(graphicsCalls.count-prevSawCount>65,'Two-tile table saw draws guard, fence, blade and controls');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
