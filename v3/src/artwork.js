@@ -337,15 +337,63 @@ export function createArtwork(ctx,project,getZoom){
   shelfBand('x',x-.50,y-.45,y+.36,37,dept);
  }
  function checkout(o){
-  shadow(o.x,o.y,o.w,o.h);
-  solid(o.x,o.y,o.w,o.h,18,'#afa48b','#675e50','#8b7b64');
-  surface(o.x+.12,o.y+.14,o.w*.46,o.h*.6,18.3,'#2b3034','#111c20');
-  // Till, monitor, barcode scanner, receipt spool & card machine.
-  solid(o.x+1.05,o.y+.15,.42,.37,7,'#a5b1ab','#66787b');
-  const screen=P(o.x+1.28,o.y+.23,36);
-  ctx.fillStyle='#263f44';ctx.fillRect(screen.x-8*Z(),screen.y-9*Z(),16*Z(),12*Z());
-  ctx.fillStyle='#77c8a3';ctx.fillRect(screen.x-5*Z(),screen.y-6*Z(),10*Z(),2.5*Z());
-  miniBox(o.x+1.48,o.y+.49,21,'#d8dbcf',.19,.23,3);
+  const {x,y,w,h}=o;
+  shadow(x,y,w,h,1.05);
+  // Steel register counter aligned with the long X-axis. Shoppers stand
+  // north (-Y); the POS screen, till and keyboard face the cashier south (+Y).
+  solid(x,y,w,h,17,'#c3c8c1','#586870','#84928d');
+  // Conveyor belt: a broad charcoal rubber band with raised steel rollers
+  // instead of a vague dark rectangle.
+  surface(x+.12,y+.1,1.10,.73,18.1,'#333d45','#58696e');
+  surface(x+.16,y+.16,1.01,.60,18.5,'#202d35','#879398');
+  for(let i=0;i<5;i++){
+   const bx=x-.29+i*.20;
+   line(P(bx,y-.34,18.7),P(bx,y+.24,18.7),'#405158',.95);
+  }
+  line(P(x-.40,y-.40,19),P(x+.68,y-.40,19),'#e6e4da',2.4);
+  line(P(x-.40,y+.30,19),P(x+.68,y+.30,19),'#8c9b9a',2);
+  // Thick point-of-sale platform with an inset glass barcode scanner.
+  solid(x+1.05,y+.08,.80,.78,20,'#b4c3bf','#576d72','#899b98');
+  surface(x+1.02,y+.11,.35,.58,20.5,'#293940','#9ea9a6');
+  line(P(x+.58,y-.27,21),P(x+.87,y+.14,21),'#76c9cc',2.4);
+  line(P(x+.62,y-.22,21.1),P(x+.89,y+.17,21.1),'#d9f6ed',.8);
+  // Employee cash drawer / till handle on the +Y (staff) face.
+  const drawerY=y+.47;
+  poly([
+   P(x+.58,drawerY,8),P(x+1.33,drawerY,8),
+   P(x+1.33,drawerY,16),P(x+.58,drawerY,16)
+  ],'#708388','#334a50',1);
+  line(P(x+.85,drawerY+.015,12),P(x+1.10,drawerY+.015,12),'#dfe6de',2.2);
+  // Monitor stand anchored into the POS platform; no floating panels.
+  line(P(x+1.13,y+.28,21),P(x+1.13,y+.28,30),'#455a63',4);
+  surface(x+1.0,y+.26,.29,.29,21.2,'#607479','#344951');
+  // The active terminal display faces +Y, where the cashier stands.
+  // The opposite customer side sees the back of the casing.
+  const sy=y+.495,left=x+.85,right=x+1.40;
+  const screen=[P(left,sy,29),P(right,sy,29),P(right,sy,43),P(left,sy,43)];
+  poly(screen,'#2a404a','#182d36',2.2);
+  const glass=[P(left+.05,sy+.015,31),P(right-.05,sy+.015,31),
+               P(right-.05,sy+.015,40),P(left+.05,sy+.015,40)];
+  poly(glass,'#3d7680','#8fb1b4',.65);
+  line(P(left+.10,sy+.02,37),P(right-.10,sy+.02,37),'#b0ead1',1.35);
+  line(P(left+.10,sy+.02,34),P(left+.30,sy+.02,34),'#f2ca8b',1.7);
+  // Low profile keyboard directly between cashier and screen.
+  surface(x+.97,y+.39,.38,.14,22,'#344953','#182c34');
+  for(let i=0;i<3;i++)line(P(x+.78+i*.1,y+.39,22.3),
+                         P(x+.78+i*.1,y+.46,22.3),'#b8c9c5',.7);
+  // Customer-facing card reader, attached to the -Y edge.
+  const cardY=y-.445;
+  const card=[P(x+.72,cardY,22),P(x+1.02,cardY,22),
+              P(x+1.02,cardY,28),P(x+.72,cardY,28)];
+  poly(card,'#30434d','#172c33',1.3);
+  line(P(x+.77,cardY-.015,25),P(x+.97,cardY-.015,25),'#86cebb',1.9);
+  // Small bag holder / receipt printer adjacent to the POS.
+  solid(x+1.30,y+.20,.16,.28,24,'#dddcd0','#7b8d91','#9ba7a0');
+  const printer=P(x+1.38,y+.26,26);
+  line({x:printer.x-3*Z(),y:printer.y},{x:printer.x+3*Z(),y:printer.y},
+       '#f7f4dc',2.7);
+  // Brand-neutral end strip and queue-side bumper.
+  line(P(x-.46,y-.47,14),P(x+1.45,y-.47,14),'#af6b50',3.3);
  }
  function drawItem(id,x,y,z=5,scale=1){
   const p=P(x,y,z),s=Z()*scale,at=(dx,dy)=>({x:p.x+dx*s,y:p.y+dy*s});
