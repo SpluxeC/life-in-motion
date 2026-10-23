@@ -1156,4 +1156,22 @@ for(const q of [{x:32,y:37},{x:33,y:36},{x:34,y:36},{x:35,y:37},{x:33,y:38}]){
  assert(walkable(shippingWorld,q.x,q.y),'Forklift access lane open');
  assert(pathTo(shippingWorld,{x:28,y:38},q).length>0);
 }
+// Painter order regression: the hand truck rear wheel must be behind its
+// platform and front rail. Forklift far tires precede chassis; near tires,
+// roof and forward mast follow the chassis.
+const handlingArt=readFileSync(new URL('../src/artwork.js',import.meta.url),'utf8');
+const truckSection=handlingArt.slice(handlingArt.indexOf("}else if(type==='handTruck')"),
+ handlingArt.indexOf("}else if(type==='forklift')"));
+const liftSection=handlingArt.slice(handlingArt.indexOf("}else if(type==='forklift')"),
+ handlingArt.indexOf("}else if(type==='filingCabinet'"));
+assert(truckSection.indexOf('rearWheel=P')<truckSection.indexOf('surface(x-.31'),
+ 'Rear dolly wheel painted before loading plate');
+assert(truckSection.indexOf('frontWheel=P')<truckSection.lastIndexOf('line(P(side,front,13)'),
+ 'Near dolly rail painted in front of front wheel');
+assert(liftSection.indexOf('Far-side tires')<liftSection.indexOf('Counterweight'),
+ 'Far tires painted behind forklift body');
+assert(liftSection.indexOf('Near tires layer')>liftSection.indexOf('Counterweight'),
+ 'Near tires painted after chassis');
+assert(liftSection.indexOf('The forward mast stays')>liftSection.indexOf('Open safety cage'),
+ 'Front mast painted after forklift roll cage');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
