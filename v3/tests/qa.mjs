@@ -805,7 +805,7 @@ assert(safetyArtV6.includes("function serviceDesk(o)")&&safetyArtV6.includes("fu
 for(const role of ['employee','customer','police','firefighter','paramedic']){
  const npc={id:'walk-'+role,role,alive:true,unconscious:0,facing:'right',
   path:[{x:18,y:20}],action:'walk',actionPhase:0};
- const p0=npcLimbPose(npc,.35),p1=npcLimbPose(npc,.6);
+ const p0=npcLimbPose({...npc,walkDistance:.35},.35),p1=npcLimbPose({...npc,walkDistance:.60},.6);
  assert(p0.active&&p0.legs.length===2&&p0.arms.length===2,
   'Every '+role+' gets two articulated legs and arms');
  for(const leg of p0.legs){
@@ -823,7 +823,7 @@ for(const role of ['employee','customer','police','firefighter','paramedic']){
   p0.legs[0].foot.x!==p0.legs[1].foot.x,'Feet alternate in gait');
  const stopped=npcLimbPose({...npc,path:[]},.35),still=npcLimbPose({...npc,path:[]},37);
  assert.deepEqual(stopped,still,'Idle limbs do not randomly animate');
- const reversed=npcLimbPose({...npc,facing:'left'},.35);
+ const reversed=npcLimbPose({...npc,walkDistance:.35,facing:'left'},.35);
  assert.notDeepEqual(p0.legs.map(l=>l.foot.x),reversed.legs.map(l=>l.foot.x),
   'Left and right movement mirror the stride');
 }
@@ -831,8 +831,8 @@ const updatedMain=readFileSync(new URL('../src/main.js',import.meta.url),'utf8')
 assert(updatedMain.includes('limb(leg.hip,leg.knee,leg.foot)')&&
  updatedMain.includes('limb(arm.shoulder,arm.elbow,arm.wrist)'),
  'Canvas draws knee and elbow segments for every character');
-assert(updatedMain.includes("x:18.5,y:16.5,name:'CHECKOUT'")&&
- updatedMain.includes("x:34.5,y:16,name:'SERVICE'"),
+assert(updatedMain.includes("x:16,y:11,name:'CHECKOUT'")&&
+ updatedMain.includes("x:34,y:11,name:'SERVICE'"),
  'Overhead checkout/service signs move off the counters');
 const noOverlapSign=(sign,fixture)=>{
  const point=(x,y,z=0)=>({x:(x-y)*24,y:-(x+y)*12-z});
@@ -848,9 +848,9 @@ const noOverlapSign=(sign,fixture)=>{
  const a=extent(p),b=extent(q);
  return a.maxX<b.minX||a.minX>b.maxX||a.maxY<b.minY||a.minY>b.maxY;
 };
-assert(checkoutCounters.every(c=>noOverlapSign({x:18.5,y:16.5,name:'CHECKOUT'},c)),
+assert(checkoutCounters.every(c=>noOverlapSign({x:16,y:11,name:'CHECKOUT'},c)),
  'Checkout sign clears all three registers in projected geometry');
-assert(noOverlapSign({x:34.5,y:16,name:'SERVICE'},serviceDeskV6),
+assert(noOverlapSign({x:34,y:11,name:'SERVICE'},serviceDeskV6),
  'Service sign clears the longer service desk in projected geometry');
 for(const counter of [...checkoutCounters,serviceDeskV6]){
  assert.equal(counter.staffSide,'north');
@@ -861,4 +861,71 @@ for(const counter of [...checkoutCounters,serviceDeskV6]){
  assert(walkable(laneWorld,customer.x,customer.y));
  assert(staff.y<counter.y&&customer.y>counter.y,'The staff and customer roles swap sides');
 }
+
+// Regression: signs must clear BOTH the adjacent department panels and doors,
+// not merely the counters. The earlier Checkout placement coincided with
+// ELECTRICAL and Service covered the staff entry door.
+const projectedSignBounds=sign=>{
+ const P=(x,y,z=0)=>({x:(x-y)*24,y:-(x+y)*12-z});
+ const span=sign.name.length>=9?2.28:1.78;
+ const points=[P(sign.x-span,sign.y-.12,70),P(sign.x+span,sign.y-.12,70),
+  P(sign.x+span,sign.y-.12,44),P(sign.x-span,sign.y-.12,44)];
+ return {l:Math.min(...points.map(p=>p.x)),r:Math.max(...points.map(p=>p.x)),
+  t:Math.min(...points.map(p=>p.y)),b:Math.max(...points.map(p=>p.y))};
+};
+const projectedDoorBounds=door=>{
+ const P=(x,y,z=0)=>({x:(x-y)*24,y:-(x+y)*12-z});
+ const points=[];
+ for(const x of [door.x-.5,door.x+(door.w||1)-.5])
+  for(const y of [door.y-.5,door.y+(door.h||1)-.5])
+   for(const z of [0,43])points.push(P(x,y,z));
+ return {l:Math.min(...points.map(p=>p.x)),r:Math.max(...points.map(p=>p.x)),
+  t:Math.min(...points.map(p=>p.y)),b:Math.max(...points.map(p=>p.y))};
+};
+const separated=(a,b)=>a.r<=b.l||a.l>=b.r||a.b<=b.t||a.t>=b.b;
+const checkoutPanel={name:'CHECKOUT',x:16,y:11};
+const electricalPanel={name:'ELECTRICAL',x:17.5,y:16.5};
+const servicePanel={name:'SERVICE',x:34,y:11};
+const hardwarePanel={name:'HARDWARE',x:29.5,y:16.5};
+assert(separated(projectedSignBounds(checkoutPanel),projectedSignBounds(electricalPanel)),
+ 'Checkout sign is visually distinct from Electrical sign');
+assert(separated(projectedSignBounds(servicePanel),projectedSignBounds(hardwarePanel)),
+ 'Service sign is visually distinct from Hardware sign');
+for(const entry of serviceWorldV6.doors.filter(d=>d.label==='Employee access'||d.label==='Main entrance')){
+ assert(separated(projectedSignBounds(servicePanel),projectedDoorBounds(entry)),
+  'Service sign does not obscure '+entry.label+' doorway');
+ assert(separated(projectedSignBounds(checkoutPanel),projectedDoorBounds(entry)),
+  'Checkout sign does not obscure '+entry.label+' doorway');
+}
+// A fixed simulation clock alone never moves elbows or ankles; traveling
+// physically over ground does, proportionally to distance, for every role.
+const pacedWalker={id:'stride-test',role:'customer',alive:true,unconscious:0,
+ facing:'right',path:[{x:4,y:4}],action:'walk',walkDistance:.7};
+const poseBefore=npcLimbPose(pacedWalker,2),poseSameDistance=npcLimbPose(pacedWalker,200);
+assert.deepEqual(poseBefore,poseSameDistance,
+ 'Walking pose stays still if the NPC does not travel, even as frames pass');
+const poseAfter=npcLimbPose({...pacedWalker,walkDistance:1.0},2);
+assert.notDeepEqual(poseBefore.legs,poseAfter.legs,
+ 'Legs advance when the NPC actually changes position');
+for(const arm of poseBefore.arms){
+ assert(arm.elbow.y>arm.shoulder.y&&arm.wrist.y>arm.elbow.y,
+  'Walking elbow and wrist hang down below the shoulder');
+ assert(arm.wrist.y>-11&&arm.wrist.y<-7,
+  'Walking hands remain close to the hips');
+ assert(Math.abs(arm.wrist.x)<11,
+  'Arm swing stays close to NPC sides, without raising hands');
+}
+const simulatedWalkerGame=makeGame(createHardwareStore(),{seed:311,staff:4,customers:1});
+const simulatedWalker=simulatedWalkerGame.npcs[0];
+simulatedWalker.x=simulatedWalker.rx=22;simulatedWalker.y=simulatedWalker.ry=15;
+simulatedWalker.path=[{x:23,y:15}];simulatedWalker.think=999999;
+const initialStride=simulatedWalker.walkDistance||0;
+updateGame(simulatedWalkerGame,.1);
+assert(simulatedWalker.walkDistance>initialStride,
+ 'Movement accumulates real walked distance for gait animation');
+const walked=simulatedWalker.walkDistance;
+simulatedWalkerGame.paused=true;
+updateGame(simulatedWalkerGame,1);
+assert.equal(simulatedWalker.walkDistance,walked,
+ 'Pausing stops the travel-driven arm and leg animation');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
