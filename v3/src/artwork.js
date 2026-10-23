@@ -508,6 +508,128 @@ export function createArtwork(ctx,project,getZoom){
   line(P(ex-.10,ey-.11,27),P(ex+.14,ey-.11,27),'#303e43',2.3);
   line(P(ex-.04,ey-.13,14),P(ex+.08,ey-.13,14),'#f0dbc0',1.8);
  }
+ // The Paint department's two-tile mixing/tinting counter is a genuine
+ // floor-mounted workstation: cabinet, dispensing head, cradled can, touchscreen,
+ // mixing clamp and a practical set of paint swatches.
+ function paintMixingDesk(o){
+  const {x,y,w,h}=o;
+  shadow(x,y,w,h,1.1);
+  solid(x,y,w,h,23,'#cfd7d0','#688482','#8ea19c');
+  surface(x+.04,y+.04,w-.08,h-.08,24.1,'#e5e8df','#687c79');
+  // Counter front: pair of closed cabinets with handles, a baseboard,
+  // and color sample edging (all aligned along the real south face).
+  const front=y+.505;
+  for(let bay=0;bay<2;bay++){
+   const left=x-.39+bay*.94,right=left+.84;
+   poly([P(left,front,3),P(right,front,3),P(right,front,20),P(left,front,20)],
+    bay===0?'#7e9795':'#879b98','#475e62',1);
+   line(P(left+.52,front+.012,14),P(left+.66,front+.012,14),'#e9ece0',2);
+  }
+  line(P(x-.43,front+.01,3),P(x+w-.54,front+.01,3),'#415c5d',2);
+  // Tall industrial tinted-paint dispenser, with an overhanging housing and
+  // downward nozzle (not a small generic carton).
+  miniBox(x+.23,y+.05,25,'#d8d9cf',.70,.65,12);
+  solid(x+.27,y-.13,.46,.38,51,'#e0e2d9','#5a7778','#91aaa7');
+  surface(x+.33,y-.06,.35,.22,52,'#4a686e','#58757a');
+  const nozzle=P(x+.45,y+.24,38);
+  line(P(x+.45,y+.19,46),P(x+.45,y+.19,33),'#52666b',3.5);
+  ellipse(nozzle.x,nozzle.y,3.7,2.2,'#556e70','#c2d1ca');
+  // Can nest and steel retaining brackets directly below dispenser.
+  solid(x+.31,y+.28,.34,.28,25,'#697f80','#50666a','#96a7a1');
+  const paint=P(x+.47,y+.43,33);
+  ellipse(paint.x,paint.y,7,3.4,'#d4dbd6','#5f7577');
+  poly([P(x+.31,y+.44,27),P(x+.63,y+.44,27),P(x+.63,y+.44,33),P(x+.31,y+.44,33)],
+   '#d7d6ca','#738886',.9);
+  line(P(x+.30,y+.45,30),P(x+.63,y+.45,30),'#b76d5d',2.8);
+  // Screen and physical control buttons on the service side of the desk.
+  const sx=x+1.16,sy=y+.33;
+  line(P(sx,sy,24),P(sx,sy,32),'#475a5f',3);
+  poly([P(sx-.31,sy,30),P(sx+.30,sy,30),P(sx+.30,sy,45),P(sx-.31,sy,45)],
+   '#283e47','#152d33',2);
+  poly([P(sx-.25,sy+.008,33),P(sx+.24,sy+.008,33),
+        P(sx+.24,sy+.008,42),P(sx-.25,sy+.008,42)],
+   '#4c8791','#8db4b2',.9);
+  for(let row=0;row<2;row++)
+   line(P(sx-.17,sy+.012,39-row*3),P(sx+.17,sy+.012,39-row*3),
+     row?'#c6edcf':'#f3d58b',1.25);
+  for(let i=0;i<3;i++){
+   const dot=P(x+1.43+i*.12,y+.30,25);
+   ellipse(dot.x,dot.y,2.5,1.6,['#dd755a','#81b7b7','#e6c47b'][i]);
+  }
+  // A proper rotating paint-can shaker with safety strap on the right end.
+  solid(x+1.58,y-.11,.30,.60,29,'#7d9999','#465f65','#9caca4');
+  line(P(x+1.72,y-.04,29),P(x+1.72,y-.04,42),'#4a626b',2.7);
+  line(P(x+1.60,y+.40,42),P(x+1.85,y+.40,42),'#d1d9d0',3.3);
+  const shaker=P(x+1.73,y+.18,31);
+  ellipse(shaker.x,shaker.y,5.8,2.6,'#ccd4ce','#647776');
+  // Large fan of color swatches taped to the customer-facing counter.
+  for(let i=0;i<5;i++){
+   const c=['#b96859','#d7b05f','#82a5a5','#6882a2','#a48eaf'][i];
+   const px=x+.91+i*.12;
+   const q=P(px,y-.37,24.9);
+   ellipse(q.x,q.y,2.3,1.7,c);
+  }
+ }
+ // Heavy-duty industrial duplicate-key cutter on a steel, two-tile hardware
+ // workbench. Distinct grinding wheel, guard, twin key jaws, controller,
+ // chip tray and organized blanks ensure it reads as a real machine.
+ function keyCuttingBench(o){
+  const {x,y,w,h}=o;
+  shadow(x,y,w,h,1.08);
+  solid(x,y,w,h,22,'#afbcb7','#51696b','#82938f');
+  surface(x+.04,y+.04,w-.08,h-.08,23.6,'#d0d5cf','#6a7d7b');
+  for(let k=0;k<2;k++){
+   const yy=y+.506,left=x-.39+k*.95,right=left+.83;
+   poly([P(left,yy,4),P(right,yy,4),P(right,yy,19),P(left,yy,19)],
+    k===0?'#526d70':'#677f80','#2f4c52',.9);
+   line(P(left+.31,yy+.01,12),P(left+.52,yy+.01,12),'#d4dfd7',2);
+  }
+  // Metal cutting-machine housing anchored to the benchtop.
+  solid(x+.30,y-.14,.90,.69,30,'#465d63','#2d4149','#71878b');
+  miniBox(x+.45,y-.12,31,'#8fa3a0',.57,.48,15);
+  // Hardened blade spindle and enclosed rotating cutting wheel.
+  const rotor=P(x+.72,y+.16,49);
+  ellipse(rotor.x,rotor.y,10,10,'#9caeb2','#3f575f');
+  ellipse(rotor.x,rotor.y,6.8,6.8,'#cbd3cf','#596d73');
+  ellipse(rotor.x,rotor.y,2.7,2.7,'#3c5660','#dce5dc');
+  // Wheel shroud / safety cover: a protective metal lip above the blade.
+  line(P(x+.42,y-.09,52),P(x+1.02,y-.09,52),'#425c65',5);
+  line(P(x+1.02,y-.09,52),P(x+1.05,y+.05,46),'#56727b',3);
+  // Two vise clamps hold the customer key and duplicate blank side by side.
+  for(let i=0;i<2;i++){
+   const cx=x+.40+i*.34,cy=y+.40;
+   solid(cx,cy,.23,.21,29,'#4f6970','#344f56','#6d8587');
+   line(P(cx+.02,cy+.08,31),P(cx+.26,cy+.08,31),'#c4d1c7',2.5);
+   line(P(cx+.16,cy+.08,31),P(cx+.35,cy+.08,31),'#d4b477',1.7);
+   const knob=P(cx+.19,cy+.11,32);
+   ellipse(knob.x,knob.y,2.2,1.7,'#e9ddbf','#546b71');
+  }
+  // Control station with glowing buttons and warning-colored stop switch.
+  miniBox(x+1.36,y+.10,27,'#d1d6cf',.47,.53,11);
+  poly([P(x+1.44,y+.39,32),P(x+1.79,y+.39,32),
+        P(x+1.79,y+.39,40),P(x+1.44,y+.39,40)],
+   '#274754','#193339',1.2);
+  line(P(x+1.51,y+.40,37),P(x+1.68,y+.40,37),'#a8dcba',1.4);
+  for(let j=0;j<3;j++){
+   const p=P(x+1.42+j*.15,y+.50,30);
+   ellipse(p.x,p.y,2.3,1.6,['#bb4c49','#dfba58','#8eafab'][j]);
+  }
+  // Key blanks organized on rear rack, with an open nickel tray and spare
+  // brass keys resting on the real horizontal bench surface.
+  line(P(x+1.15,y-.30,30),P(x+1.15,y-.30,44),'#687f82',2);
+  line(P(x+1.08,y-.31,43),P(x+1.67,y-.31,43),'#a7b8b1',3);
+  for(let i=0;i<4;i++){
+   const kx=x+1.16+i*.15;
+   line(P(kx,y-.32,41),P(kx,y-.32,35-i%2*3),'#dbc896',1.7);
+   const key=P(kx,y-.32,40);
+   ellipse(key.x,key.y,1.8,1.5,'#f0dda1','#71817c');
+  }
+  surface(x+1.06,y+.12,.28,.28,24.6,'#667f83','#3a535c');
+  for(let i=0;i<3;i++){
+   const p=P(x+1.16+i*.07,y+.25,26);
+   ellipse(p.x,p.y,1.6,1.1,'#d0ba84');
+  }
+ }
  function drawItem(id,x,y,z=5,scale=1){
   const p=P(x,y,z),s=Z()*scale,at=(dx,dy)=>({x:p.x+dx*s,y:p.y+dy*s});
   const stroke=(v1,v2,c,w=2)=>line(at(...v1),at(...v2),c,w*scale);
@@ -556,12 +678,9 @@ export function createArtwork(ctx,project,getZoom){
   if(type==='serviceDesk'){
    serviceDesk(o);
   }else if(type==='paintMixer'){
-   solid(x,y,1,1,18,'#bdc5c0','#737e80');miniCan(x+.35,y+.4,24,'#bd4e3c',5);
-   miniBox(x+.25,y+.23,31,'#4d6973',.48,.28,13)
+   paintMixingDesk(o);
   }else if(type==='keyCutter'){
-   solid(x,y,1,1,19,'#8eab9e','#667a79');
-   const p=P(x+.5,y+.46,25);ellipse(p.x,p.y,9,4,'#4e626b');
-   line(P(x+.27,y+.22,31),P(x+.75,y+.67,31),'#d9c3a0',3);miniBox(x+.15,y+.11,34,'#374b53',.3,.36,4)
+   keyCuttingBench(o);
   }else if(type==='saw'){
    solid(x,y,w,h,18,'#bca98b','#665f54');surface(x+.08,y+.06,.87,.87,20,'#a1a9a9');
    const p=P(x+.5,y+.5,27);ellipse(p.x,p.y,12,5,'#c1c7bf','#455255');
