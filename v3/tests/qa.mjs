@@ -362,7 +362,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===9,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===10,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(migrated.world.fixtures.some(f=>f.type==='flowerBed')&&
@@ -1022,4 +1022,47 @@ assert(graphicsCalls.count-wireCountBefore>95,
 assert(improvedArt.includes('function wireCuttingStation(o)')&&
  improvedArt.includes('wireCuttingStation(o);'),
  'Dedicated wire-cutting art is connected to fixture rendering');
+// Safety-wall displays show aisle-facing merchandise rather than flat sides.
+const refreshed=createHardwareStore();
+const sideShelves=refreshed.fixtures.filter(f=>
+ (f.type==='endcap'||f.type==='hardwareBins')&&f.facing==='west');
+assert.equal(sideShelves.length,3,'Three wall displays retain their locations');
+for(const shelf of sideShelves){
+ const before=graphicsCalls.count;
+ artwork.drawFixture(shelf);
+ assert(graphicsCalls.count-before>65,'Wall shelf fronts display substantial merchandise');
+ assert.equal(shelf.x,35,'Wall displays remain beside the safety station');
+}
+const buckets=refreshed.fixtures.find(f=>f.type==='bucketStack');
+const cart=refreshed.fixtures.find(f=>f.type==='utilityCart');
+assert.deepEqual([buckets.x,buckets.y],[5,16]);
+assert.deepEqual([cart.x,cart.y],[4,16]);
+assert.equal(Math.abs(buckets.x-cart.x)+Math.abs(buckets.y-cart.y),1,
+ 'Paint buckets are immediately adjacent to the front utility cart');
+const beforeBuckets=graphicsCalls.count;
+artwork.drawFixture(buckets);
+assert(graphicsCalls.count-beforeBuckets>75,'Paint stack draws multiple round paint pails');
+const beforeCart=graphicsCalls.count;
+artwork.drawFixture(cart);
+assert(graphicsCalls.count-beforeCart>70,'Utility cart draws frame, trays, wheels and supplies');
+for(const pos of [{x:5,y:15},{x:6,y:16},{x:4,y:15},{x:5,y:17}]){
+ assert(walkable(refreshed,pos.x,pos.y),'Cart and pail display have aisle clearance');
+ assert(pathTo(refreshed,{x:20,y:12},pos).length>0);
+}
+const sourceCode=readFileSync(new URL('../src/artwork.js',import.meta.url),'utf8');
+assert(sourceCode.includes("o.facing==='west'?westWallDisplay(o):endcapDisplay(o)"),
+ 'Wall displays rotate their visible merchandising fronts toward the aisle');
+assert(sourceCode.includes("function paintBucketStack(o)")&&
+ sourceCode.includes("function utilityServiceCart(o)"),
+ 'Dedicated bucket and realistic utility-cart art replaces generic boxes');
+const clientCode=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+for(const type of ['paintMixer','keyCutter','wireCutter']){
+ const machine=refreshed.fixtures.find(f=>f.type===type);
+ const projector=(x,y,z=0)=>({x:(x-y)*24,y:-(x+y)*12-z});
+ const center=projector(machine.x+(machine.w-1)/2,machine.y,24);
+ assert(hitProjectedFixture(machine,center.x,center.y,projector,49)!==null,
+  type+' accepts a projected tap on the visible machine');
+ assert(clientCode.includes("'"+type+"'"),
+  type+' participates in the large/tall fixture touch target');
+}
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
