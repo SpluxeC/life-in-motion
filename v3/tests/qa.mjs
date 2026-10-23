@@ -1117,4 +1117,24 @@ assert(sawEnhanced.includes("type==='lumberBundle'"),
  'Timber packs use dedicated fixture rendering');
 const bulk=lumberWorld.fixtures.filter(f=>['palletStack','boxStack'].includes(f.type));
 assert(bulk.every(f=>f.y===42),'Bulk receiving stock is kept in Receiving');
+// Lumber shelf is drawn toward its customer-facing south aisle and the
+// two-tile pallet is flat and empty with separate slats and support blocks.
+const sawStore=createHardwareStore();
+const lumberShelf=sawStore.fixtures.find(f=>f.type==='lumberRack');
+const emptyPallet=sawStore.fixtures.find(f=>f.type==='pallet');
+assert.deepEqual([lumberShelf.x,lumberShelf.y,lumberShelf.w,lumberShelf.h],[14,35,2,1]);
+assert.deepEqual([emptyPallet.x,emptyPallet.y,emptyPallet.w,emptyPallet.h],[11,35,2,1]);
+for(const f of [lumberShelf,emptyPallet]){
+ const countBefore=graphicsCalls.count;
+ artwork.drawFixture(f);
+ assert(graphicsCalls.count-countBefore>70,'Detailed lumber fixture renders: '+f.type);
+ for(let x=f.x;x<f.x+f.w;x++){
+  assert(walkable(sawStore,x,36),'Lumber customer aisle remains clear');
+  assert(pathTo(sawStore,{x:20,y:12},{x,y:36}).length>0);
+ }
+}
+const latestArt=readFileSync(new URL('../src/artwork.js',import.meta.url),'utf8');
+assert(latestArt.includes("Flat, EMPTY shipping pallet")&&
+ latestArt.includes("Exposed south-facing horizontal bays"),
+ 'New lumber artwork has flat pallet slats and aisle-facing rack bays');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
