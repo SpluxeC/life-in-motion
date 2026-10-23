@@ -1164,21 +1164,20 @@ const truckSection=handlingArt.slice(handlingArt.indexOf("}else if(type==='handT
  handlingArt.indexOf("}else if(type==='forklift')"));
 const liftSection=handlingArt.slice(handlingArt.indexOf("}else if(type==='forklift')"),
  handlingArt.indexOf("}else if(type==='filingCabinet'"));
-assert(truckSection.indexOf('rearWheel=P')<truckSection.indexOf('surface(x-.31'),
- 'Rear dolly wheel painted before loading plate');
-assert(truckSection.indexOf('frontWheel=P')<truckSection.lastIndexOf('line(P(side,front,13)'),
- 'Near dolly rail painted in front of front wheel');
-assert(truckSection.includes("line(P(side,rear,3),P(side,rear,56)"),
- 'Rear tall upright now overlaps tire from its axle all the way up');
-assert(liftSection.includes("const axleX=[x+.84,x+1.47],farY=y-.25,nearY=y+.25"),
- 'Forklift wheels use shared near/far axle coordinates');
-assert(liftSection.includes("const cabLeft=x+.75,cabRight=x+1.57,cabRear=y-.24,cabFront=y+.24"),
- 'Cab posts use shared roof rectangle');
-assert(liftSection.indexOf("const axleX=")<liftSection.indexOf("solid(x+.68,y+.02"),
- 'Far wheels must render behind forklift chassis');
-assert(liftSection.indexOf("for(const xx of axleX){",liftSection.indexOf("Occupant position"))>
- liftSection.indexOf("solid(x+.68,y+.02"),'Near wheels render after body');
-assert(liftSection.indexOf("surface(cabLeft,cabRear")<
- liftSection.indexOf("The forward mast stays"),
- 'Aligned canopy precedes foreground mast');
+assert(truckSection.includes("line(P(side,front,3),P(side,front,56)"),
+ 'Opposite hand-truck wheel is covered by tall front rail from axle to handle');
+assert(truckSection.indexOf('frontWheel=P')<
+ truckSection.indexOf('line(P(side,front,3)'),
+ 'Front tire is drawn before its covering metal upright');
+assert(liftSection.includes("const axleX=[x+.84,x+1.47],driverY=y+.36"),
+ 'Forklift displays only two driver-side wheels');
+assert(!liftSection.includes("farY=")&&!liftSection.includes("nearY="),
+ 'Passenger-side wheel loops are absent');
+assert(liftSection.includes("line(P(xx,yy,18),P(xx,yy,62)"),
+ 'Safety-cage posts connect at the chassis top and reach roof height');
+assert(liftSection.includes("surface(cabLeft,cabRear,cabRight-cabLeft,cabFront-cabRear,62"),
+ 'Safety canopy corners share the cage post geometry');
+assert(liftSection.indexOf("Exactly two visible driver-side tires")<
+ liftSection.indexOf("All four cage legs START"),
+ 'Wheel layer is behind full-height cage posts');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
