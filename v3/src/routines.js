@@ -41,10 +41,9 @@ function fixture(g,type,index=0){
 function station(g,n){
  const f=n.duty==='service'?fixture(g,'serviceDesk'):fixture(g,'checkout',n.stationIndex||0);
  if(!f)return {x:20,y:15};
- // Cashiers work behind the POS computer, on the south (+Y) side. Service
- // desk staff retain their existing workstation access.
- return n.duty==='cashier'?checkoutStaffPosition(f):
-  {x:f.x+Math.floor(f.w/2),y:f.y+1};
+ // Cashiers and service workers work from the north (-Y) computer
+ // side. Customers approach the opposite south (+Y) face.
+ return checkoutStaffPosition(f);
 }
 function parking(n){const bays=[10,18,26,34,42,50,58];return {x:bays[(n.parkingIndex||0)%bays.length],y:8}}
 function customerShopTarget(g,n){
