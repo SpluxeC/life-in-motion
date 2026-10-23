@@ -2,6 +2,7 @@ import {createHardwareStore,doorAt,fixtureAt,nearestOpen,walkable,key} from './w
 import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v=receiving-garden-20261022-1';
 import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js?v=receiving-garden-20261022-1';
 import {createArtwork} from './artwork.js?v=receiving-garden-20261022-1';
+import {renderDepth,compareRenderDepth} from './render-depth.js?v=depth-signs-20261022-1';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d');
 let game=null,scene=createHardwareStore(),zoom=.72,offset={x:0,y:0},last=performance.now(),acc=0,lastHud=0,lastSave=0,lastViewport={w:0,h:0},drag=null,selected=null,resultShown=false;
@@ -95,17 +96,17 @@ function render(t){
  ctx.fillStyle='#263b39';ctx.fillRect(0,0,viewport.w,viewport.h);
  artwork.drawFloor(world,viewport);
  const items=[
-  ...world.fixtures.map(o=>({depth:o.x+o.y,fn:()=>artwork.drawFixture(o)})),
-  ...world.doors.map(o=>({depth:o.x+o.y,fn:()=>artwork.drawDoor(o,t)})),
-  ...[...world.walls.values()].map(o=>({depth:o.x+o.y,fn:()=>artwork.drawWall(o,world)})),
-  ...world.props.map(o=>({depth:o.x+o.y,fn:()=>o.type==='wetFloorSign'?artwork.drawWetFloorSign(o.x,o.y):artwork.drawVehicle(o,t)})),
-  ...(world.drops||[]).map(o=>({depth:o.x+o.y,fn:()=>artwork.drawDrop(o)})),
-  ...departmentSigns.map(o=>({depth:o.x+o.y+.1,fn:()=>artwork.drawDepartmentSign(o.x,o.y,o.name,o.accent)})),
-  ...world.hazards.filter(h=>h.kind==='spill'&&h.beingCleaned&&h.life>0).map(h=>({depth:h.x+h.y+.2,fn:()=>artwork.drawWetFloorSign(h.x,h.y)})),
-  ...(game?game.npcs.map(o=>({depth:o.rx+o.ry,fn:()=>stick(o,t)})):[]),
-  ...world.hazards.map(o=>({depth:o.x+o.y,fn:()=>drawHazard(o,t)}))
+  ...world.fixtures.map(o=>({kind:'fixture',depth:renderDepth('fixture',o),fn:()=>artwork.drawFixture(o)})),
+  ...world.doors.map(o=>({kind:'door',depth:renderDepth('door',o),fn:()=>artwork.drawDoor(o,t)})),
+  ...[...world.walls.values()].map(o=>({kind:'wall',depth:renderDepth('wall',o),fn:()=>artwork.drawWall(o,world)})),
+  ...world.props.map(o=>({kind:'vehicle',depth:renderDepth('vehicle',o),fn:()=>o.type==='wetFloorSign'?artwork.drawWetFloorSign(o.x,o.y):artwork.drawVehicle(o,t)})),
+  ...(world.drops||[]).map(o=>({kind:'item',depth:renderDepth('item',o),fn:()=>artwork.drawDrop(o)})),
+  ...departmentSigns.map(o=>({kind:'sign',depth:renderDepth('sign',o)+.1,fn:()=>artwork.drawDepartmentSign(o.x,o.y,o.name,o.accent)})),
+  ...world.hazards.filter(h=>h.kind==='spill'&&h.beingCleaned&&h.life>0).map(h=>({kind:'sign',depth:renderDepth('sign',h)+.2,fn:()=>artwork.drawWetFloorSign(h.x,h.y)})),
+  ...(game?game.npcs.map(o=>({kind:'npc',depth:renderDepth('npc',o),fn:()=>stick(o,t)})):[]),
+  ...world.hazards.map(o=>({kind:'hazard',depth:renderDepth('hazard',o),fn:()=>drawHazard(o,t)}))
  ];
- items.sort((a,b)=>b.depth-a.depth);for(const item of items)item.fn();
+ items.sort(compareRenderDepth);for(const item of items)item.fn();
  if(selected){const p=project(selected.x,selected.y);ctx.strokeStyle='#ffe69c';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,9*zoom,5*zoom,0,0,Math.PI*2);ctx.stroke()}
 }
 function inspect(x,y){if(!game)return;let w=game.world;let n=[...game.npcs].filter(n=>Math.hypot(n.rx-x,n.ry-y)<2).sort((a,b)=>Math.hypot(a.rx-x,a.ry-y)-Math.hypot(b.rx-x,b.ry-y))[0];
