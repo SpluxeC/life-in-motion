@@ -5,6 +5,7 @@ import {createArtwork} from './artwork.js?v=aisle-endcap-redesign-20261023-1';
 import {renderDepth,compareRenderDepth} from './render-depth.js?v=stocked-shelves-receiving-20261023-1';
 import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness} from './hud.js?v=stocked-shelves-receiving-20261023-1';
 import {hitProjectedFixture,isGroundTileTap,selectionLabel} from './selection.js?v=stocked-shelves-receiving-20261023-1';
+import {signOpacity} from './sign-visibility.js?v=direction-headwear-20261023-1';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d');
 let game=null,scene=createHardwareStore(),zoom=.72,offset={x:0,y:0},last=performance.now(),acc=0,lastHud=0,lastSave=0,lastViewport={w:0,h:0},drag=null,selected=null,resultShown=false,activeTab='world',selectedPowerId='whisper',pendingPower=null,feedback='';
@@ -138,7 +139,15 @@ function render(t){
   ...[...world.walls.values()].map(o=>({kind:'wall',depth:renderDepth('wall',o),fn:()=>artwork.drawWall(o,world)})),
   ...world.props.map(o=>({kind:'vehicle',depth:renderDepth('vehicle',o),fn:()=>o.type==='wetFloorSign'?artwork.drawWetFloorSign(o.x,o.y):artwork.drawVehicle(o,t)})),
   ...(world.drops||[]).map(o=>({kind:'item',depth:renderDepth('item',o),fn:()=>artwork.drawDrop(o)})),
-  ...departmentSigns.map(o=>({kind:'sign',depth:o.name==='RECEIVING'?-1000:renderDepth('sign',o)+.1,fn:()=>artwork.drawDepartmentSign(o.x,o.y,o.name,o.accent)})),
+  ...departmentSigns.map(o=>{
+    const depth=o.name==='RECEIVING'?-1000:renderDepth('sign',o)+.1;
+    return {kind:'sign',depth,fn:()=>{
+      const opacity=signOpacity(o,game?.npcs||[],project,zoom,depth,n=>renderDepth('npc',n));
+      ctx.save();ctx.globalAlpha=opacity;
+      artwork.drawDepartmentSign(o.x,o.y,o.name,o.accent);
+      ctx.restore();
+    }};
+  }),
   ...world.hazards.filter(h=>h.kind==='spill'&&h.beingCleaned&&h.life>0).map(h=>({kind:'sign',depth:renderDepth('sign',h)+.2,fn:()=>artwork.drawWetFloorSign(h.x,h.y)})),
   ...(game?game.npcs.map(o=>({kind:'npc',depth:renderDepth('npc',o),fn:()=>stick(o,t)})):[]),
   ...world.hazards.map(o=>({kind:'hazard',depth:renderDepth('hazard',o),fn:()=>drawHazard(o,t)}))
