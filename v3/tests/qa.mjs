@@ -4,6 +4,7 @@ import {makeGame,applyPower,updateGame,addHazard,POWER_LIST,ITEMS} from '../src/
 import {updateRoutine} from '../src/routines.js';
 import {departmentProducts,departmentItem,visibleShelfCount,DEPARTMENT_PRODUCTS} from '../src/merchandise.js';
 import {checkoutStaffPosition,checkoutCustomerPosition,checkoutFacingIsCorrect} from '../src/checkout-layout.js';
+import {npcLimbPose} from '../src/npc-pose.js';
 import {chooseRoutine} from '../src/routines.js';
 import {saveGame,loadGame} from '../src/persistence.js';
 import {createArtwork} from '../src/artwork.js';
@@ -361,7 +362,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===6,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===7,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(migrated.world.fixtures.some(f=>f.type==='flowerBed')&&
@@ -700,9 +701,9 @@ assert.equal(checkoutCounters.length,3,'Existing three checkout positions are pr
 for(const counter of checkoutCounters){
  const staff=checkoutStaffPosition(counter),customer=checkoutCustomerPosition(counter);
  assert(checkoutFacingIsCorrect(counter,staff,customer),'Staff and customer use opposite sides');
- assert.equal(counter.monitorFaces,'south');
- assert.equal(counter.staffSide,'south');
- assert.equal(counter.customerSide,'north');
+ assert.equal(counter.monitorFaces,'north');
+ assert.equal(counter.staffSide,'north');
+ assert.equal(counter.customerSide,'south');
  assert(walkable(laneWorld,staff.x,staff.y),'Cashier lane remains walkable');
  assert(walkable(laneWorld,customer.x,customer.y),'Shopper lane remains walkable');
  assert(pathTo(laneWorld,{x:20,y:12},staff).length>0,'Cashier can reach the POS side');
@@ -735,9 +736,9 @@ for(const ink of ['#202d35','#2a404a','#3d7680','#30434d','#708388']){
 }
 const regScreen=registerFills.find(d=>d.ink==='#2a404a');
 assert(regScreen.points.length===4,'The POS monitor is a vertical quadrilateral');
-const expectedMonitor=project(checkoutCounters[0].x+.85,checkoutCounters[0].y+.495,29);
+const expectedMonitor=project(checkoutCounters[0].x+.85,checkoutCounters[0].y-.495,29);
 assert(regScreen.points.some(p=>Math.hypot(p[0]-expectedMonitor.x,p[1]-expectedMonitor.y)<.01),
- 'Monitor is mounted on the south/employee side of the physical counter');
+ 'Monitor is mounted on the north/employee side of the physical counter');
 const newHairCode=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
 assert(newHairCode.includes('oval(-8,-2,3.6,4,color)'),
  'World ponytails trail behind NPCs rather than pointing into movement');
@@ -752,7 +753,7 @@ const serviceDeskV6=serviceWorldV6.fixtures.find(f=>f.type==='serviceDesk');
 const safetyV6=serviceWorldV6.fixtures.find(f=>f.type==='safetyStation');
 assert.deepEqual([serviceDeskV6.x,serviceDeskV6.y,serviceDeskV6.w,serviceDeskV6.h],
  [31,13,3,1],'Service desk spans three tiles along the customer-facing front');
-assert.equal(serviceDeskV6.monitorFaces,'south');
+assert.equal(serviceDeskV6.monitorFaces,'north');
 assert.deepEqual([safetyV6.x,safetyV6.y,safetyV6.w,safetyV6.h],[35,12,1,1],
  'Wall-mounted emergency station is relocated away from staff entry');
 assert.equal(safetyV6.facing,'west','Safety cabinet doors face the open aisle');
@@ -770,7 +771,7 @@ const serviceNpcGameV6=makeGame(serviceWorldV6,{staff:4,customers:1,seed:94});
 const serviceNpcV6=serviceNpcGameV6.npcs.find(n=>n.duty==='service');
 serviceNpcV6.task=null;serviceNpcV6.path=[];serviceNpcV6.think=0;
 assert(chooseRoutine(serviceNpcGameV6,serviceNpcV6),'Service associate finds the longer desk');
-assert.deepEqual(serviceNpcV6.task.position,{x:32,y:14},
+assert.deepEqual(serviceNpcV6.task.position,{x:32,y:12},
  'Service associate works next to the computer on the staff side');
 const deskDrawFillsV6=[];let deskPolygonV6=[];
 const deskCtxV6={
@@ -788,9 +789,9 @@ for(const color of ['#253740','#387a84','#f8f6ed','#c4c9c3','#836f61']){
 }
 const pcFaceV6=deskDrawFillsV6.find(a=>a.color==='#253740');
 assert(pcFaceV6.vertices.length===4,'Service desk screen is a real vertical face');
-const pcMonitorV6=project(serviceDeskV6.x+.15,serviceDeskV6.y+.435,32);
+const pcMonitorV6=project(serviceDeskV6.x+.15,serviceDeskV6.y-.435,32);
 assert(pcFaceV6.vertices.some(pt=>Math.hypot(pt[0]-pcMonitorV6.x,pt[1]-pcMonitorV6.y)<.001),
- 'The PC monitor faces south where its employee stands');
+ 'The PC monitor faces north where its employee stands');
 deskDrawFillsV6.length=0;
 deskArtV6.drawFixture(safetyV6);
 for(const color of ['#eaf1ea','#a0c8cabb','#bf4f50','#c84340']){
@@ -800,4 +801,64 @@ for(const color of ['#eaf1ea','#a0c8cabb','#bf4f50','#c84340']){
 const safetyArtV6=readFileSync(new URL('../src/artwork.js',import.meta.url),'utf8');
 assert(safetyArtV6.includes("function serviceDesk(o)")&&safetyArtV6.includes("function safetyStation(o)"),
  'Both service and safety fixtures have dedicated real-world art renderers');
+// Articulated two-segment limbs replace straight scissor-animation arms/legs.
+for(const role of ['employee','customer','police','firefighter','paramedic']){
+ const npc={id:'walk-'+role,role,alive:true,unconscious:0,facing:'right',
+  path:[{x:18,y:20}],action:'walk',actionPhase:0};
+ const p0=npcLimbPose(npc,.35),p1=npcLimbPose(npc,.6);
+ assert(p0.active&&p0.legs.length===2&&p0.arms.length===2,
+  'Every '+role+' gets two articulated legs and arms');
+ for(const leg of p0.legs){
+  assert([leg.hip,leg.knee,leg.foot].every(p=>Number.isFinite(p.x)&&Number.isFinite(p.y)),
+   'Knee and ankle coordinates stay finite');
+  assert.notDeepEqual(leg.hip,leg.knee,'Knees are distinct from hips');
+ }
+ for(const arm of p0.arms){
+  assert.notDeepEqual(arm.shoulder,arm.elbow,'Elbows are distinct from shoulders');
+  assert.notDeepEqual(arm.elbow,arm.wrist,'Forearms are visible');
+ }
+ assert.notDeepEqual(p0.legs.map(l=>l.foot),p1.legs.map(l=>l.foot),
+  'Walking drives visible stride changes');
+ assert(p0.legs[0].foot.y!==p0.legs[1].foot.y ||
+  p0.legs[0].foot.x!==p0.legs[1].foot.x,'Feet alternate in gait');
+ const stopped=npcLimbPose({...npc,path:[]},.35),still=npcLimbPose({...npc,path:[]},37);
+ assert.deepEqual(stopped,still,'Idle limbs do not randomly animate');
+ const reversed=npcLimbPose({...npc,facing:'left'},.35);
+ assert.notDeepEqual(p0.legs.map(l=>l.foot.x),reversed.legs.map(l=>l.foot.x),
+  'Left and right movement mirror the stride');
+}
+const updatedMain=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+assert(updatedMain.includes('limb(leg.hip,leg.knee,leg.foot)')&&
+ updatedMain.includes('limb(arm.shoulder,arm.elbow,arm.wrist)'),
+ 'Canvas draws knee and elbow segments for every character');
+assert(updatedMain.includes("x:18.5,y:16.5,name:'CHECKOUT'")&&
+ updatedMain.includes("x:34.5,y:16,name:'SERVICE'"),
+ 'Overhead checkout/service signs move off the counters');
+const noOverlapSign=(sign,fixture)=>{
+ const point=(x,y,z=0)=>({x:(x-y)*24,y:-(x+y)*12-z});
+ const span=sign.name.length>=9?2.28:1.78;
+ const p=[point(sign.x-span,sign.y-.12,70),point(sign.x+span,sign.y-.12,70),
+  point(sign.x+span,sign.y-.12,44),point(sign.x-span,sign.y-.12,44)];
+ const q=[];
+ for(const x of [fixture.x-.5,fixture.x+fixture.w-.5])
+  for(const y of [fixture.y-.5,fixture.y+fixture.h-.5])
+   for(const z of [0,fixture.type==='checkout'?43:48])q.push(point(x,y,z));
+ const extent=a=>({minX:Math.min(...a.map(p=>p.x)),maxX:Math.max(...a.map(p=>p.x)),
+   minY:Math.min(...a.map(p=>p.y)),maxY:Math.max(...a.map(p=>p.y))});
+ const a=extent(p),b=extent(q);
+ return a.maxX<b.minX||a.minX>b.maxX||a.maxY<b.minY||a.minY>b.maxY;
+};
+assert(checkoutCounters.every(c=>noOverlapSign({x:18.5,y:16.5,name:'CHECKOUT'},c)),
+ 'Checkout sign clears all three registers in projected geometry');
+assert(noOverlapSign({x:34.5,y:16,name:'SERVICE'},serviceDeskV6),
+ 'Service sign clears the longer service desk in projected geometry');
+for(const counter of [...checkoutCounters,serviceDeskV6]){
+ assert.equal(counter.staffSide,'north');
+ assert.equal(counter.customerSide,'south');
+ assert.equal(counter.monitorFaces,'north');
+ const staff=checkoutStaffPosition(counter),customer=checkoutCustomerPosition(counter);
+ assert(walkable(laneWorld,staff.x,staff.y));
+ assert(walkable(laneWorld,customer.x,customer.y));
+ assert(staff.y<counter.y&&customer.y>counter.y,'The staff and customer roles swap sides');
+}
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
