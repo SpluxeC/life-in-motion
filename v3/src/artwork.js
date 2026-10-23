@@ -138,17 +138,14 @@ export function createArtwork(ctx,project,getZoom){
   // overwrote a wall leg, creating holes; drawing duplicate end caps instead
   // made the opposite corners look thicker than the rest of the building.
   for(const axis of dirs){
-   const p=P(o.x-.5,o.y-.5),q=axis==='y'?P(o.x-.5,o.y+.5):P(o.x+.5,o.y-.5);
+   // Slightly overlap neighboring fills to prevent antialiased pixel seams.
+   const p=P(o.x-.52,o.y-.52),q=axis==='y'?P(o.x-.52,o.y+.52):P(o.x+.52,o.y-.52);
    const top={x:p.x,y:p.y-z},end={x:q.x,y:q.y-z};
    const shade=axis==='y'?'#a6b7b0':'#c0c6ba';
    poly([{x:p.x+3*Z(),y:p.y+5*Z()},{x:q.x+3*Z(),y:q.y+5*Z()},
      {x:q.x+4*Z(),y:q.y-20*Z()},{x:p.x+4*Z(),y:p.y-20*Z()}],'#1a252a27');
-   poly([p,q,end,top],shade,'#536563',1);
+   poly([p,q,end,top],shade);
    line(top,end,o.section==='staff'?'#ede9dc':'#e7e5d5',3);
-   line(P(o.x-.5,o.y-.5,6),axis==='y'?P(o.x-.5,o.y+.5,6):P(o.x+.5,o.y-.5,6),'#657773',1);
-   if((o.x*7+o.y)%5===0){
-    line({x:p.x,y:p.y-z*.45},{x:q.x,y:q.y-z*.45},'#d4d5c949',.8)
-   }
    // North elevation faces the parking lot. Glass and mullions stay inside
    // the physical wall segment; no window occupies either main entry tile.
    if(o.window==='storefront'&&o.y===10&&axis==='x'){
@@ -162,12 +159,6 @@ export function createArtwork(ctx,project,getZoom){
     line(P(left,front,29),P(right,front,29),'#c7d5d2',.9);
     line(P(left+.10,front,40),P(left+.46,front,17),'#e6eff055',1.8);
    }
-  }
-  // A single narrow joint finishes the intersection without extending a
-  // second full-height panel beyond the true footprint of the corner.
-  if(dirs.includes('x')&&dirs.includes('y')){
-   const bottom=P(o.x-.5,o.y-.5),top=P(o.x-.5,o.y-.5,height);
-   line(bottom,top,'#82968f',2.3);
   }
  }
  function drawDoor(d){
@@ -559,27 +550,34 @@ export function createArtwork(ctx,project,getZoom){
  // Overhead department signage is an independent visual layer:
  // signs have no collision footprint and do not block doors or aisles.
  function drawDepartmentSign(x,y,name,accent='#467887'){
-  // Project the sign in the same isometric plane as the store's shelves.
-  // Text is rotated along the panel's projected top edge, so the lettering
-  // follows the sign's angle instead of floating off a 3-D parallelogram.
-  const title=String(name).toUpperCase(),span=title.length>8?1.95:1.66,z=70;
-  const a=P(x-span,y-.12,z),b=P(x+span,y-.12,z);
-  const c=P(x+span,y-.12,z-24),d=P(x-span,y-.12,z-24);
-  const width=Math.hypot(b.x-a.x,b.y-a.y);
-  const angle=Math.atan2(b.y-a.y,b.x-a.x);
+  // The board is a true vertical isometric plane (local X runs along the
+  // projected shelf axis, local Y runs straight down from the ceiling).
+  // Text receives that same *affine* projection, not only a rotation;
+  // this keeps every glyph on the painted face instead of hovering outside.
+  const title=String(name).toUpperCase(),span=title.length>=9?2.28:1.78,z=70;
+  const a=P(x-span,y-.12,z),b=P(x+span,y-.12,z),
+        c=P(x+span,y-.12,z-26),d=P(x-span,y-.12,z-26);
+  const width=Math.hypot(b.x-a.x,b.y-a.y),angle=Math.atan2(b.y-a.y,b.x-a.x);
   for(const t of [.18,.82]){
    const xx=x-span+2*span*t;
-   line(P(xx,y-.12,z+15),P(xx,y-.12,z),'#9caaa6',1.6);
+   line(P(xx,y-.12,z+14),P(xx,y-.12,z),'#b4bdb1',1.6);
   }
-  poly([a,b,c,d],'#e9e8db','#455f61',1.6);
-  line(P(x-span+.04,y-.12,z-4),P(x+span-.04,y-.12,z-4),accent,3);
-  const mid=P(x,y-.12,z-14);
+  // A narrow, offset backing makes the sign visibly three-dimensional.
+  poly([P(x-span,y-.15,z-2),P(x+span,y-.15,z-2),P(x+span,y-.15,z-28),P(x-span,y-.15,z-28)],'#516567');
+  poly([a,b,c,d],'#e8e7d9','#4c6568',1.2);
+  line(P(x-span+.06,y-.12,z-3),P(x+span-.06,y-.12,z-3),accent,2.8);
+  const mid={x:(a.x+b.x+c.x+d.x)/4,y:(a.y+b.y+c.y+d.y)/4};
   ctx.save();
-  ctx.translate(mid.x,mid.y);
-  ctx.rotate(angle);
-  ctx.font=`700 ${Math.max(7,10*Z())}px system-ui,sans-serif`;
-  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#263d41';
-  ctx.fillText(title,0,0,width-15*Z());
+  // Clip to the panel so long labels cannot run across the surrounding wall.
+  ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
+  ctx.lineTo(c.x,c.y);ctx.lineTo(d.x,d.y);ctx.closePath();ctx.clip();
+  ctx.translate(mid.x,mid.y);ctx.rotate(angle);
+  // Counter-rotate the local vertical basis so the lettering follows the
+  // sign's sloping top edge AND its vertical face, unlike plain rotated text.
+  ctx.transform(1,0,Math.sin(angle),Math.cos(angle),0,0);
+  ctx.font=`700 ${Math.max(6.5,10.5*Z())}px system-ui,sans-serif`;
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#273f41';
+  ctx.fillText(title,0,0,width-17*Z());
   ctx.restore();
  }
  // A-frame warning sign sits at the actual wet-floor tile and persists briefly.
