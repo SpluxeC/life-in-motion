@@ -254,4 +254,19 @@ assert.equal(loadedSchedules.npcs[0].duty,'cashier','Assigned cashier role survi
 assert.equal(loadedSchedules.npcs[1].duty,'service','Assigned service role survives save');
 assert(loadedSchedules.npcs.every(n=>Array.isArray(n.path)),'Saved routine paths survive');
 for(let i=0;i<15;i++)updateGame(loadedSchedules,.1);
+// A separate floor associate replenishes real low-stock shelf inventory.
+const restockWorld=createHardwareStore();
+const nearlyEmpty=restockWorld.fixtures.find(f=>f.type==='shelf');
+nearlyEmpty.stock=0;
+const restockGame=makeGame(restockWorld,{staff:4,customers:1,seed:21});
+const stocker=restockGame.npcs.filter(n=>n.duty==='floor')[1];
+stocker.x=stocker.rx=nearlyEmpty.x+2;stocker.y=stocker.ry=nearlyEmpty.y+2;
+stocker.think=.01;
+let doingRestock=false;
+for(let i=0;i<240;i++){
+ updateGame(restockGame,.1);
+ if(stocker.task?.kind==='restock')doingRestock=true;
+}
+assert(doingRestock,'Floor associate receives a stock replenishment assignment');
+assert(nearlyEmpty.stock>=5,'Completing a restock adds actual merchandise to the shelf');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
