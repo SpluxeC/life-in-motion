@@ -179,7 +179,7 @@ function portraitHTML(n){
   '<g fill="#18252a">'+eyes+'</g><path d="'+brow+'" stroke="#283032" stroke-width="3.5" fill="none"/>'+
   '<path d="'+mouth+'" stroke="#4b292c" stroke-width="3.2" fill="none"/>'+extra+
   '<g fill="'+color+'" stroke="'+color+'" stroke-width="2">'+hairShape+'</g>'+helmet+
-  '</svg><div><strong>'+escapeHTML(n.name)+'</strong><span>'+escapeHTML(n.role)+' · '+escapeHTML(mood)+'</span><span>'+escapeHTML(style)+' hair</span></div></div>';
+  '</svg><div><strong>'+escapeHTML(n.name)+'</strong><span>'+escapeHTML(n.role)+' · '+escapeHTML(mood)+'</span></div></div>';
 }
 function powerUsable(p,n=null){
  return !!game&&!game.paused&&game.energy>=p.cost&&!(game.cooldowns[p.id]>game.elapsed)&&(!n||(n.alive&&!n.arrested));
