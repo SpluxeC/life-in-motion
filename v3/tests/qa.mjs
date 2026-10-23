@@ -375,7 +375,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===16,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===17,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(!doorAt(migrated.world,43,39)&&doorAt(migrated.world,36,31)?.type==='sliding',
@@ -397,11 +397,30 @@ for(const original of [
   x:original.x,y:original.y,w:original.w,h:original.h,stock:original.stock});
  store.set(legacyKey,JSON.stringify(shelfSnapshot));
  const gardenMigrated=loadGame();
- const rack=gardenMigrated?.world.fixtures.find(f=>f.type==='gardenToolsRack');
+ const rack=gardenMigrated?.world.fixtures.find(f=>f.id==='gardenToolsRack-35-28');
  assert.deepEqual([rack?.x,rack?.y,rack?.w,rack?.h],[35,28,1,2],
   'Legacy shelf inventory migrates to opposite side of door');
  assert.equal(rack?.stock,original.stock,'Garden Tools keeps v'+original.layoutVersion+' stock');
+ const newRack=gardenMigrated.world.fixtures.find(f=>f.id==='gardenToolsRack-35-26');
+ assert.equal(newRack.stock,9,'New hoe/lopper rack does not duplicate legacy stock');
+ assert(gardenMigrated.world.fixtures.some(f=>f.type==='ridingMower'),
+  'Older saved rounds gain the new riding lawn mower');
 }
+// The map v16 original tool rack migrates independently from the new one.
+const v16Snapshot=JSON.parse(store.get(legacyKey));
+v16Snapshot.world.layoutVersion=16;
+v16Snapshot.world.fixtures=v16Snapshot.world.fixtures.filter(f=>f.type!=='gardenToolsRack');
+v16Snapshot.world.fixtures.push({id:'gardenToolsRack-35-28',
+ type:'gardenToolsRack',x:35,y:28,w:1,h:2,department:'GARDEN',
+ stock:5,toolSet:'shovelsRakes',facing:'west'});
+store.set(legacyKey,JSON.stringify(v16Snapshot));
+const loadedV16=loadGame();
+assert.equal(loadedV16.world.fixtures.find(f=>f.id==='gardenToolsRack-35-28').stock,5,
+ 'Existing shovels/rakes preserve their v16 inventory');
+assert.equal(loadedV16.world.fixtures.find(f=>f.id==='gardenToolsRack-35-26').stock,9,
+ 'New hoe/lopper inventory initializes independently');
+assert(loadedV16.world.fixtures.some(f=>f.type==='ridingMower'),
+ 'v16 save receives the new two-tile mower');
 // Occlusion regression: fixtures occupy large footprints while character
 // torsos rise above the floor; foreground staff should render after counters.
 const order=(object,actor)=>[
@@ -694,7 +713,15 @@ for(const y of [30,31]){
 assert(doorAt(remodeled,20,10)?.slideTo==='end','Main entrance opposing slider remains');
 // Garden Tools hangs opposite its previous position, still inside the shop.
 // A tall Y-oriented panel displays shovels/rakes immediately before the doors.
-const gardenTools=remodeled.fixtures.find(f=>f.type==='gardenToolsRack');
+const gardenTools=remodeled.fixtures.find(f=>f.type==='gardenToolsRack'&&f.toolSet==='shovelsRakes');
+const gardenTools2=remodeled.fixtures.find(f=>f.type==='gardenToolsRack'&&f.toolSet==='hoesLoppers');
+assert.equal(remodeled.fixtures.filter(f=>f.type==='gardenToolsRack').length,2,
+ 'Exactly two adjacent Garden Tools displays exist');
+assert(gardenTools2,'Second Garden Tools rack contains hoes and loppers');
+assert.deepEqual([gardenTools2.x,gardenTools2.y,gardenTools2.w,gardenTools2.h],[35,26,1,2],
+ 'Second Garden Tools rack occupies tiles 35,26 and 35,27');
+assert.equal(gardenTools2.facing,'west');
+assert.equal(selectionLabel(remodeled,gardenTools2),'Garden Tools');
 assert(gardenTools&&gardenTools.department==='GARDEN','Garden Tools rack exists');
 assert.deepEqual([gardenTools.x,gardenTools.y,gardenTools.w,gardenTools.h],[35,28,1,2],
  'Garden Tools now hangs against the opposite interior wall');
@@ -702,7 +729,7 @@ assert.equal(gardenTools.facing,'west');
 assert.equal(selectionLabel(remodeled,gardenTools),'Garden Tools');
 assert(!remodeled.fixtures.some(f=>f.type==='bagPallet'&&f.department==='GARDEN'),
  'No garden bag shelf remains in Receiving or beside the sliders');
-for(const yy of [28,29]){
+for(const yy of [26,27,28,29]){
  assert.equal(remodeled.walls.get('36,'+yy)?.section,'exterior',
   'Rack backs onto the original exterior wall');
  assert(walkable(remodeled,34,yy),'Customer aisle remains clear in front of the rack');
@@ -714,6 +741,36 @@ for(const yy of [30,31]){
  assert(pathTo(remodeled,{x:34,y:yy},{x:39,y:yy}).some(p=>p.x===36&&p.y===yy),
   'Garden Tools does not block either slider');
 }
+// Riding mower is a genuine two-tile footprint, with its hood pointed
+// west into the store and both sliding-door approaches left unobstructed.
+const mower=remodeled.fixtures.find(f=>f.type==='ridingMower');
+assert(mower,'Riding lawn mower exists in the store');
+assert.deepEqual([mower.x,mower.y,mower.w,mower.h],[34,32,2,1],
+ 'Riding mower occupies exactly tiles 34,32 and 35,32');
+assert.equal(mower.facing,'west','Mower hood faces into the store');
+assert.equal(selectionLabel(remodeled,mower),'Riding Lawn Mower');
+assert(remodeled.ground.some(t=>t.x===34&&t.y===32&&t.area==='store'),
+ 'Riding mower is parked on indoor store flooring');
+assert(remodeled.ground.some(t=>t.x===35&&t.y===32&&t.area==='store'));
+for(const pos of [{x:33,y:32},{x:34,y:31},{x:35,y:31},{x:35,y:33}]){
+ assert(walkable(remodeled,pos.x,pos.y),'Clear path around riding mower '+pos.x+','+pos.y);
+ assert(pathTo(remodeled,{x:32,y:31},pos).length>0,'Reachable mower perimeter');
+}
+for(const yy of [30,31]){
+ assert(pathTo(remodeled,{x:34,y:yy},{x:39,y:yy}).some(p=>p.x===36&&p.y===yy),
+  'Mower does not block either garden sliding entrance');
+}
+const hitMower=project(mower.x+.5,mower.y,20);
+assert(hitProjectedFixture(mower,hitMower.x,hitMower.y,project,49)!==null,
+ 'Player can select the mower across its footprint');
+const mowerDrawStart=graphicsCalls.count;
+artwork.drawFixture(mower);
+assert(graphicsCalls.count-mowerDrawStart>70,
+ 'Mower has an integrated deck, hood, steering, seat and four wheels');
+const hoeDrawStart=graphicsCalls.count;
+artwork.drawFixture(gardenTools2);
+assert(graphicsCalls.count-hoeDrawStart>75,
+ 'Second rack renders numerous separate hanging hoes and loppers');
 const gardenRackDraws=graphicsCalls.count;
 artwork.drawFixture(gardenTools);
 assert(graphicsCalls.count-gardenRackDraws>70,
@@ -722,7 +779,15 @@ const gardenRackSource=readFileSync(new URL('../src/artwork.js',import.meta.url)
 assert(gardenRackSource.includes("type==='gardenToolsRack'")&&
  gardenRackSource.includes("const yy=y-.25+i*.31,shovel=i%2===0")&&
  gardenRackSource.includes("P(toolX-.035,ty,7.5)"),
- 'Garden Tools artwork has six hanging shovels/rakes with visible tines');
+ 'Original Garden Tools artwork retains hanging shovels/rakes');
+assert(gardenRackSource.includes("if(o.toolSet==='hoesLoppers')")&&
+ gardenRackSource.includes("Loppers: two long separated handles")&&
+ gardenRackSource.includes("Hoe: long single wooden shaft"),
+ 'Second matching display draws clearly different hoes and loppers');
+assert(gardenRackSource.includes("type==='ridingMower'")&&
+ gardenRackSource.includes("toward the shop interior (negative X)")&&
+ gardenRackSource.includes("The two near-side wheels"),
+ 'Riding mower has inward-facing engine hood, deck, seat, steering and aligned tires');
 const gardenSignClient=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
 assert(gardenSignClient.includes("x:35.2,y:30.5,name:'GARDEN',accent:'#63905b',axis:'y'"),
  'GARDEN overhead sign is centered inside the two garden doors');
