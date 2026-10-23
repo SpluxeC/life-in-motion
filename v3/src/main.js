@@ -177,8 +177,8 @@ const departmentSigns=[
  {x:17.5,y:16.5,name:'ELECTRICAL',accent:'#c9a946'},
  {x:23.5,y:16.5,name:'PLUMBING',accent:'#5e90b0'},
  {x:29.5,y:16.5,name:'HARDWARE',accent:'#688779'},
- {x:18.5,y:16.5,name:'CHECKOUT',accent:'#b75e4f'},
- {x:34.5,y:16,name:'SERVICE',accent:'#558c9a'},
+ {x:16,y:11,name:'CHECKOUT',accent:'#b75e4f'},
+ {x:34,y:11,name:'SERVICE',accent:'#558c9a'},
  {x:14,y:34,name:'LUMBER',accent:'#b58a5b'},
  {x:28.5,y:36.4,name:'RECEIVING',accent:'#c08b55'},
  {x:42.7,y:29,name:'GARDEN',accent:'#63905b'}
