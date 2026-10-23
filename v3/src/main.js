@@ -128,27 +128,78 @@ function render(t){
 function inspect(x,y){if(!game)return;let w=game.world;let n=[...game.npcs].filter(n=>Math.hypot(n.rx-x,n.ry-y)<2).sort((a,b)=>Math.hypot(a.rx-x,a.ry-y)-Math.hypot(b.rx-x,b.ry-y))[0];
  let d=doorAt(w,x,y),f=fixtureAt(w,x,y),prop=w.props.filter(o=>Math.abs(o.x-x)<=Math.max(1,o.w||1)&&Math.abs(o.y-y)<=Math.max(1,o.h||1)).sort((a,b)=>Math.hypot(a.x-x,a.y-y)-Math.hypot(b.x-x,b.y-y))[0];let target=n||d||f||prop||{id:'tile-'+x+'-'+y,x,y,type:'tile'};selected=target;refreshHud()}
 function portraitHTML(n){let angry=n.emotion.anger>=55,afraid=n.emotion.fear>=55,injured=n.health<35,mood=!n.alive?'Deceased':n.unconscious>0?'Unconscious':angry?'Angry':afraid?'Afraid':injured?'In pain':n.emotion.anger>25?'Irritated':'Calm';let brow=angry?'M24 39l11 5 M65 44l11-5':afraid?'M23 40l12-4 M65 36l12 4':'M24 38h12 M64 38h12';let mouth=angry?'M37 69q13-8 26 0':afraid?'M41 64q9-14 18 0':mood==='Calm'?'M39 61q11 10 22 0':'M39 66h22';let headwear=n.role==='police'?'<path d="M23 22h54v9H23z" fill="#203d65" stroke="#111"/><path d="M30 16h40v10H30z" fill="#203d65" stroke="#111"/>':n.role==='firefighter'?'<path d="M23 27q3-28 27-28t27 28z" fill="#e1bd53" stroke="#111"/><path d="M16 25h68v8H16z" fill="#c99b38" stroke="#111"/>':n.role==='paramedic'?'<path d="M22 22q28-29 56 0v10H22z" fill="#f7f9f6" stroke="#111"/><path d="M45 8h10v19H45z M39 14h22v7H39z" fill="#b5343b"/>':n.role==='employee'?'<path d="M27 22q22-22 46 0l-4 7H31z" fill="#262d33"/>':'<path d="M27 21q20-21 46 0l-3 6H30z" fill="#1d2429"/>';let vest=n.role==='employee'?'<path d="M23 96L16 118h68L77 96l-15-8H38z" fill="#d7353b" stroke="#111" stroke-width="3"/>':'';return '<div class="npcPortrait"><svg viewBox="0 0 100 125" role="img" aria-label="Portrait expressing '+mood+'"><path d="M22 123l8-30 20-7 20 7 8 30" fill="#15191d" stroke="#090d0f" stroke-width="4"/>'+vest+'<ellipse cx="50" cy="48" rx="31" ry="37" fill="#fff" stroke="#111" stroke-width="3"/><path d="'+brow+'" stroke="#111" stroke-width="3" fill="none"/><circle cx="32" cy="50" r="3" fill="#111"/><circle cx="68" cy="50" r="3" fill="#111"/><path d="'+mouth+'" stroke="#111" stroke-width="3" fill="none"/>'+headwear+'</svg><div><strong>'+escapeHTML(n.name)+'</strong><span>'+escapeHTML(n.role)+' · '+mood+'</span></div></div>'}
-function refreshHud(){if(!game)return;const g=game,alive=g.npcs.filter(n=>n.alive).length;
- $('worldStatus').textContent='Living '+alive+'/'+g.npcs.length+' · God Energy '+Math.floor(g.energy)+' · '+(g.paused?'Paused':g.speed+'×')+' · '+Math.floor(g.elapsed)+'s';
- const panel=$('inspect');let html='<div class="tag">GOD ENERGY '+Math.floor(g.energy)+' · ALIVE '+alive+'</div>';
- if(selected){let n=g.npcs.find(o=>o.id===selected.id),f=g.world.fixtures.find(o=>o.id===selected.id),d=g.world.doors.find(o=>o.id===selected.id),prop=g.world.props.find(o=>o.id===selected.id);
- html+='<h3>'+escapeHTML(n?.name||f?.type||d?.label||prop?.type||'World tile')+'</h3>';
- if(n){html+=portraitHTML(n);html+='<p>'+escapeHTML(n.role)+' · '+(n.alive?(n.arrested?'Detained':n.unconscious>0?'Unconscious':escapeHTML(n.activity)):'Deceased')+'<br>Health '+Math.round(n.health)+' · Pain '+Math.round(n.pain)+' · Anger '+Math.round(n.emotion.anger)+' · Fear '+Math.round(n.emotion.fear)+'</p><p>Traits: '+Object.entries(n.traits).map(([k,v])=>k+' '+v).join(' · ')+'</p><p>Inventory: '+(n.inventory.map(id=>ITEMS.find(i=>i.id===id)?.name||id).join(', ')||'Empty')+'</p><p>Memory: '+escapeHTML(n.memory.slice(0,3).map(m=>m.text).join(' · ')||'None')+'</p>'}
- if(n&&n.duty){
-  const job=n.duty==='cashier'?'Cashier':n.duty==='service'?'Customer service':n.duty==='floor'?'Floor associate':'Shopper';
-  const routine=n.task?.kind||'Waiting for next task';
-  const seconds=n.task?.phase==='working'?Math.max(0,Math.ceil((n.task.until||0)-g.elapsed)):null;
-  html+='<p><strong>Assigned role:</strong> '+escapeHTML(job)+'<br><strong>Current task:</strong> '+escapeHTML(n.activity||routine)+
-    (seconds!==null?' · '+seconds+'s remaining':'')+
-    (n.role==='employee'&&n.breakAt?'<br><strong>Next break:</strong> '+Math.max(0,Math.ceil(n.breakAt-g.elapsed))+'s':'')+'</p>';
+function powerUsable(p,n=null){
+ return !!game&&!game.paused&&game.energy>=p.cost&&!(game.cooldowns[p.id]>game.elapsed)&&(!n||(n.alive&&!n.arrested));
+}
+function refreshHud(){
+ if(!game)return;
+ const g=game,alive=g.npcs.filter(n=>n.alive).length;
+ $('gameClock').textContent=formatGameTime(g);
+ $('pause').textContent=g.paused?'Resume':'Pause';
+ $('worldStatus').textContent='Living '+alive+'/'+g.npcs.length+' · God Energy '+Math.floor(g.energy)+' · '+(g.paused?'Paused':g.speed+'×')+(pendingPower?' · Tap a target for '+POWER_LIST.find(p=>p.id===pendingPower)?.name:'');
+ $('stopFollow').classList.toggle('hidden',!g.npcs.some(n=>n.id===selected?.id));
+ $('settingsFeedback').textContent=feedback;
+ $('worldEvents').innerHTML=g.log.slice(0,12).map(e=>'<p class="personFacts">'+escapeHTML(e.text)+'</p>').join('')||'<p>No events yet.</p>';
+ const parent=$('gamePanel'),previousScroll=parent.scrollTop;
+ const people=$('peopleContent');
+ const n=g.npcs.find(o=>o.id===selected?.id);
+ if(n){
+  const job=n.duty==='cashier'?'Cashier':n.duty==='service'?'Customer service':n.duty==='floor'?'Floor associate':n.role==='customer'?'Customer':n.role;
+  let html='<div class="personHeader"><h3>Person Overview</h3><button id="backPeople">← All People</button></div>';
+  html+=portraitHTML(n);
+  html+='<div class="personFacts"><p><strong>Emotion:</strong> '+escapeHTML(emotionState(n))+
+   '<br>Anger '+Math.round(n.emotion.anger)+' · Fear '+Math.round(n.emotion.fear)+' · Stress '+Math.round(n.emotion.stress)+
+   '</p><p><strong>Currently:</strong> '+escapeHTML(n.alive?n.activity:'Deceased')+
+   '<br><strong>Role:</strong> '+escapeHTML(job)+
+   '<br><strong>Health:</strong> '+Math.round(n.health)+' · Pain '+Math.round(n.pain)+
+   '</p><p><strong>Traits:</strong> '+escapeHTML(Object.entries(n.traits).map(([k,v])=>k+' '+v).join(' · '))+
+   '</p><p><strong>Inventory:</strong> '+escapeHTML((n.inventory||[]).map(id=>ITEMS.find(i=>i.id===id)?.name||id).join(', ')||'Empty')+
+   '</p><p><strong>Recent memory:</strong> '+escapeHTML((n.memory||[]).slice(0,3).map(m=>m.text).join(' · ')||'None')+'</p></div>';
+  html+='<h3>God Powers</h3><div class="personPowers">'+POWER_LIST.filter(p=>p.targets.includes('npc')).map(p=>
+   '<button data-npc-power="'+p.id+'" '+(powerUsable(p,n)?'':'disabled')+'>'+escapeHTML(p.name)+' · '+p.cost+' Energy</button>').join('')+'</div>';
+  html+='<button id="clearPerson" class="actionWide">Stop Following / Unselect</button>';
+  if(feedback)html+='<p class="gameMessage">'+escapeHTML(feedback)+'</p>';
+  people.innerHTML=html;
+  people.querySelector('#backPeople').onclick=clearSelection;
+  people.querySelector('#clearPerson').onclick=clearSelection;
+  people.querySelectorAll('[data-npc-power]').forEach(b=>b.onclick=()=>{
+   const out=applyPower(g,b.dataset.npcPower,n);feedback=out.message;refreshHud();
+  });
+ }else{
+  if(selected)selected=null;
+  people.innerHTML='<h3>People · '+g.npcs.length+' in this round</h3>'+
+   g.npcs.map(p=>'<button class="personRow" data-person="'+escapeHTML(p.id)+'">'+
+    '<strong>'+escapeHTML(p.name)+'</strong><small>'+
+    escapeHTML(p.role)+' · '+escapeHTML(emotionState(p))+
+    '<br>'+escapeHTML(p.alive?p.activity:'Deceased')+'</small></button>').join('')+
+   (feedback?'<p class="gameMessage">'+escapeHTML(feedback)+'</p>':'');
+  people.querySelectorAll('[data-person]').forEach(b=>b.onclick=()=>{
+   const person=g.npcs.find(p=>p.id===b.dataset.person);if(person)selectTarget(person);
+  });
  }
- if(d)html+='<p>Animated '+d.type+' door · '+Math.round(d.open*100)+'% open</p>';
- if(f)html+='<p>'+escapeHTML(f.department||'Interactable fixture')+' · '+(f.damaged?'Damaged':'Functional')+'</p>';if(prop)html+='<p>'+escapeHTML(prop.type==='car'?'Vehicle — parked or responding':'Landscaping')+' · Ground position '+Math.round(prop.x)+', '+Math.round(prop.y)+'</p>';
- let type=n?'npc':f?'fixture':'tile';html+='<h3>God Powers</h3>';
- for(let power of POWER_LIST.filter(p=>p.targets.includes(type))){let disabled=g.energy<power.cost||!n?.alive&&!!n||g.paused||g.cooldowns[power.id]>g.elapsed;html+='<button style="display:block;width:100%;margin:5px 0" data-power="'+power.id+'" '+(disabled?'disabled':'')+'>'+escapeHTML(power.name)+' · '+power.cost+' energy</button>'}
- }
- html+='<h3>World Events</h3>'+g.log.slice(0,7).map(e=>'<p style="font-size:12px">'+escapeHTML(e.text)+'</p>').join('');
- panel.innerHTML=html;panel.querySelectorAll('[data-power]').forEach(b=>b.onclick=()=>{let out=applyPower(g,b.dataset.power,selected);$('worldStatus').textContent=out.message;refreshHud()});
+ const powers=$('powersContent');
+ powers.innerHTML='<h3>God Energy: '+Math.floor(g.energy)+'</h3>'+
+  POWER_LIST.map(p=>'<button class="powerRow '+(selectedPowerId===p.id?'active':'')+'" data-select-power="'+p.id+'"><span>'+
+   escapeHTML(p.name)+'</span><strong>'+p.cost+' Energy</strong></button>').join('')+
+  (()=>{
+   const p=POWER_LIST.find(p=>p.id===selectedPowerId)||POWER_LIST[0];
+   const details=POWER_HELP[p.id]||['Influence the world.','Tap a valid target.'];
+   return '<div class="powerDescription"><strong>'+escapeHTML(p.name)+'</strong>'+
+     '<p>'+escapeHTML(details[0])+'</p><p>'+escapeHTML(details[1])+'</p>'+
+     (g.cooldowns[p.id]>g.elapsed?'<p>Cooldown: '+Math.ceil(g.cooldowns[p.id]-g.elapsed)+'s</p>':'')+
+     '<button id="armPower" class="actionWide" '+(powerUsable(p)?'':'disabled')+'>'+
+     (pendingPower===p.id?'Cancel Power':'Use Power · Tap Target')+'</button></div>';
+  })()+
+  (feedback?'<p class="gameMessage">'+escapeHTML(feedback)+'</p>':'');
+ powers.querySelectorAll('[data-select-power]').forEach(b=>b.onclick=()=>{
+  selectedPowerId=b.dataset.selectPower;pendingPower=null;feedback='';refreshHud();
+ });
+ powers.querySelector('#armPower').onclick=()=>{
+  pendingPower=pendingPower===selectedPowerId?null:selectedPowerId;
+  feedback=pendingPower?'Power ready. Tap a valid target in the world.':'Power cancelled.';
+  refreshHud();
+ };
+ parent.scrollTop=previousScroll;
  if(g.completed&&!resultShown){resultShown=true;showVictory()}
 }
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
