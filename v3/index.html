@@ -24,6 +24,17 @@
 .powerDescription p{font-size:12px;line-height:1.5}
 .gameMessage{font-size:12px;color:#f7df97;margin-top:9px}
 @media(max-width:800px){.gameHeader{padding:7px 10px}.brandLine{gap:6px}.victoryBoard{font-size:9px;padding:5px 6px}.controls{gap:4px}.controls button{padding:7px}.worldInfo{left:8px;top:8px}.followStop{top:8px;right:8px;font-size:12px}.stage{height:58dvh}}
+
+.npcPortrait{transition:background-color .2s,border-color .2s}
+.npcPortrait.mood-terrified,.npcPortrait.mood-nervous{background:#243d53;border-color:#77a9cb}
+.npcPortrait.mood-furious,.npcPortrait.mood-irritated{background:#56343b;border-color:#c06a66}
+.npcPortrait.mood-stressed,.npcPortrait.mood-uneasy{background:#484254;border-color:#a699bd}
+.npcPortrait.mood-calm{background:#24443e;border-color:#78a995}
+.npcPortrait.mood-deceased,.npcPortrait.mood-unconscious{background:#29323b;border-color:#74848d}
+.npcPortrait svg{filter:drop-shadow(0 4px 4px #07171a75)}
+.powerDescription{margin:0 0 12px;border-top-left-radius:0;border-top-right-radius:0;border-top:0;background:#1e3d47}
+.powerRow[aria-expanded="true"]{margin-bottom:0;border-bottom-left-radius:0;border-bottom-right-radius:0}
+.personRow small strong{color:#efd9a3}
 </style></head><body>
 <div id="mainMenu" class="screen"><div class="menuPanel">
 <div class="menuMark" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M8 28 32 8l24 20v29H8Z" fill="#407b7d" stroke="#d7ece9" stroke-width="3"/><path d="M24 57V36h16v21" fill="#173843" stroke="#d7ece9" stroke-width="2"/><path d="M14 36h7v10h-7zm29 0h7v10h-7z" fill="#ebcf84"/><path d="M18 26h28" stroke="#d9e7dd" stroke-width="2"/></svg></div>
