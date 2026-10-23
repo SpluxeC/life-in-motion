@@ -49,6 +49,7 @@ export function selectionLabel(world,selected){
  if(person)return person.name;
  if(selected.name)return selected.name;
  if(selected.label)return selected.label;
+ if(selected.type==='bagPallet'&&selected.department==='GARDEN')return 'Garden Shelf';
  if(selected.department)return displayName(selected.department)+' Shelf';
  return displayName(selected.type||'Selection');
 }
