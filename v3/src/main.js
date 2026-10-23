@@ -4,6 +4,7 @@ import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js?v=random-moo
 import {createArtwork} from './artwork.js?v=random-moods-tooltip-20261023-1';
 import {renderDepth,compareRenderDepth} from './render-depth.js?v=random-moods-tooltip-20261023-1';
 import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness} from './hud.js?v=random-moods-tooltip-20261023-1';
+import {hitProjectedFixture,isGroundTileTap,selectionLabel} from './selection.js?v=map-selection-20261023-1';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d');
 let game=null,scene=createHardwareStore(),zoom=.72,offset={x:0,y:0},last=performance.now(),acc=0,lastHud=0,lastSave=0,lastViewport={w:0,h:0},drag=null,selected=null,resultShown=false,activeTab='world',selectedPowerId='whisper',pendingPower=null,feedback='';
@@ -123,6 +124,7 @@ const departmentSigns=[
  {x:10,y:12.3,name:'CHECKOUT',accent:'#b75e4f'},
  {x:31.5,y:12.3,name:'SERVICE',accent:'#558c9a'},
  {x:14,y:34,name:'LUMBER',accent:'#b58a5b'},
+ {x:28.5,y:38.2,name:'RECEIVING',accent:'#c08b55'},
  {x:42.7,y:29,name:'GARDEN',accent:'#63905b'}
 ];
 function render(t){
@@ -144,8 +146,12 @@ function render(t){
  items.sort(compareRenderDepth);for(const item of items)item.fn();
  if(selected){const p=project(selected.x,selected.y);ctx.strokeStyle='#ffe69c';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,9*zoom,5*zoom,0,0,Math.PI*2);ctx.stroke()}
 }
-function inspect(x,y){if(!game)return;let w=game.world;let n=[...game.npcs].filter(n=>Math.hypot(n.rx-x,n.ry-y)<2).sort((a,b)=>Math.hypot(a.rx-x,a.ry-y)-Math.hypot(b.rx-x,b.ry-y))[0];
- let d=doorAt(w,x,y),f=fixtureAt(w,x,y),prop=w.props.filter(o=>Math.abs(o.x-x)<=Math.max(1,o.w||1)&&Math.abs(o.y-y)<=Math.max(1,o.h||1)).sort((a,b)=>Math.hypot(a.x-x,a.y-y)-Math.hypot(b.x-x,b.y-y))[0];let target=n||d||f||prop||{id:'tile-'+x+'-'+y,x,y,type:'tile'};selectTarget(target)}
+function inspect(x,y){
+ if(!game)return;
+ // Explicit ground fallback: a floor tap never silently selects a nearby
+ // shelf or NPC simply because its model occupies a tall bounding box.
+ selectTarget({id:'tile-'+x+'-'+y,x,y,type:'tile'});
+}
 function portraitHTML(n){
  const mood=emotionState(n),{color,style}=hairAppearance(n);
  const angry=['Furious','Irritated'].includes(mood),fear=['Terrified','Nervous'].includes(mood);
@@ -187,6 +193,8 @@ function powerUsable(p,n=null){
 function refreshHud(){
  if(!game)return;
  const g=game,alive=g.npcs.filter(n=>n.alive).length;
+ $('selectedLabel').textContent=selected?(g.npcs.find(n=>n.id===selected.id)?.name||selectionLabel(g.world,selected)):'';
+ $('selectedLabel').classList.toggle('hidden',!selected);
  $('gameClock').textContent=formatGameTime(g);
  $('pause').textContent=g.paused?'Resume':'Pause';
  $('worldStatus').textContent='Living '+alive+'/'+g.npcs.length+' · God Energy '+Math.floor(g.energy)+' · '+(g.paused?'Paused':g.speed+'×')+(pendingPower?' · Tap a target for '+POWER_LIST.find(p=>p.id===pendingPower)?.name:'');
@@ -219,7 +227,6 @@ function refreshHud(){
    const out=applyPower(g,b.dataset.npcPower,n);feedback=out.message;refreshHud();
   });
  }else{
-  if(selected)selected=null;
   people.innerHTML='<h3>People · '+g.npcs.length+' in this round</h3>'+
    g.npcs.map(p=>'<button class="personRow" data-person="'+escapeHTML(p.id)+'">'+
     '<strong>'+escapeHTML(p.name)+'</strong><small>'+
@@ -269,19 +276,8 @@ function inspectAtScreen(sx,sy){
  const add=(target,d,priority)=>hits.push({target,d,priority});
  // Select the actual rendered object footprint, including tall/long shelving,
  // instead of rounding the click to a single ground tile.
- function boxHit(o,height=35,padding=5){
-  const x=o.x,y=o.y,w=o.w||1,h=o.h||1;
-  const pts=[
-   project(x-.5,y-.5,0),project(x+w-.5,y-.5,0),
-   project(x+w-.5,y+h-.5,0),project(x-.5,y+h-.5,0),
-   project(x-.5,y-.5,height),project(x+w-.5,y-.5,height),
-   project(x+w-.5,y+h-.5,height),project(x-.5,y+h-.5,height)
-  ];
-  const xs=pts.map(p=>p.x),ys=pts.map(p=>p.y),pad=padding*zoom;
-  const inBox=sx>=Math.min(...xs)-pad&&sx<=Math.max(...xs)+pad&&sy>=Math.min(...ys)-pad&&sy<=Math.max(...ys)+pad;
-  if(!inBox)return null;
-  const middle=project(x+(w-1)*.5,y+(h-1)*.5,height*.5);
-  return Math.hypot(sx-middle.x,sy-middle.y)/Math.max(1,(w+h)*zoom);
+ function boxHit(o,height=35){
+  return hitProjectedFixture(o,sx,sy,project,height);
  }
  for(const n of world?game.npcs:[]){
   const p=project(n.rx,n.ry,19),d=Math.hypot(sx-p.x,sy-p.y);
@@ -322,6 +318,12 @@ function inspectAtScreen(sx,sy){
   if(out.ok)pendingPower=null;
   refreshHud();
   return;
+ }
+ // Open floor tiles win over the projected *upper part* of adjacent shelves.
+ // Actual NPC taps are still first priority, so selection/follow feels natural.
+ if(!hits.some(hit=>hit.priority===0)&&
+    isGroundTileTap(world,tile.x,tile.y,sx,sy,project,zoom)){
+  inspect(tile.x,tile.y);return;
  }
  if(hits.length){selectTarget(hits[0].target);return}
  inspect(tile.x,tile.y)
