@@ -362,7 +362,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===8,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===9,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(migrated.world.fixtures.some(f=>f.type==='flowerBed')&&
@@ -940,7 +940,7 @@ assert.deepEqual([remodelPaint.x,remodelPaint.y,remodelPaint.w,remodelPaint.h],[
  'Larger paint workstation occupies center of Paint department');
 assert.deepEqual([remodelKey.x,remodelKey.y,remodelKey.w,remodelKey.h],[31,23,2,1],
  'Key cutter sits at center of Hardware department');
-assert.deepEqual([remodelTools.x,remodelTools.y],[34,23],
+assert.deepEqual([remodelTools.x,remodelTools.y],[35,21],
  'Small Tools endcap moved out of Tools aisle to Hardware right side');
 assert.deepEqual([remodelSafety.x,remodelSafety.y],[35,19],
  'Safety cabinet is on the south side of employee door');
@@ -991,4 +991,35 @@ assert(improvedArt.includes('function paintMixingDesk(o)')&&improvedArt.includes
  'Both machines have dedicated artwork matched to their full physical footprint');
 assert(improvedArt.includes("paintMixingDesk(o);")&&improvedArt.includes("keyCuttingBench(o);"),
  'Fixture dispatcher uses the new workstation renderers');
+// Three aisle displays line the same wall as the safety cabinet, facing west.
+const wallTools=remodeledHardware.fixtures.find(f=>f.type==='endcap'&&f.department==='TOOLS');
+const wallHardware=remodeledHardware.fixtures.find(f=>f.type==='endcap'&&f.department==='HARDWARE');
+const wallFasteners=remodeledHardware.fixtures.find(f=>f.type==='hardwareBins');
+const wallSafety=remodeledHardware.fixtures.find(f=>f.type==='safetyStation');
+assert.deepEqual([wallTools.x,wallTools.y],[35,21]);
+assert.deepEqual([wallHardware.x,wallHardware.y],[35,22]);
+assert.deepEqual([wallFasteners.x,wallFasteners.y,wallFasteners.w,wallFasteners.h],[35,23,1,2]);
+for(const item of [wallTools,wallHardware,wallFasteners]){
+ assert.equal(item.x,wallSafety.x,'All small displays share the safety wall');
+ assert.equal(item.facing,'west','All small displays face the west aisle');
+ assert(item.y>wallSafety.y,'Display must be below the safety station');
+ for(let y=item.y;y<item.y+item.h;y++){
+  assert(walkable(remodeledHardware,item.x-1,y),'West-side shopping aisle unobstructed');
+  assert(pathTo(remodeledHardware,{x:20,y:12},{x:item.x-1,y}).length>0);
+ }
+}
+const wireCuttingMachine=remodeledHardware.fixtures.find(f=>f.type==='wireCutter');
+assert.deepEqual([wireCuttingMachine.x,wireCuttingMachine.y,wireCuttingMachine.w,wireCuttingMachine.h],
+ [19,23,2,1],'Wire cutter centered inside Electrical department');
+for(const p of [{x:19,y:22},{x:19,y:24},{x:18,y:23},{x:20,y:24}]){
+ assert(walkable(remodeledHardware,p.x,p.y));
+ assert(pathTo(remodeledHardware,{x:20,y:12},p).length>0);
+}
+const wireCountBefore=graphicsCalls.count;
+artwork.drawFixture(wireCuttingMachine);
+assert(graphicsCalls.count-wireCountBefore>95,
+ 'Wire cutter renders detailed jaws, feed rollers, spool, safety shield and control panel');
+assert(improvedArt.includes('function wireCuttingStation(o)')&&
+ improvedArt.includes('wireCuttingStation(o);'),
+ 'Dedicated wire-cutting art is connected to fixture rendering');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
