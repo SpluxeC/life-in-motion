@@ -4,7 +4,7 @@ import {makeGame,applyPower,updateGame,addHazard,POWER_LIST} from '../src/simula
 import {saveGame,loadGame} from '../src/persistence.js';
 import {createArtwork} from '../src/artwork.js';
 import {renderDepth,compareRenderDepth} from '../src/render-depth.js';
-import {formatGameTime,emotionState,POWER_HELP} from '../src/hud.js';
+import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness,HAIR_COLORS,HAIR_STYLES} from '../src/hud.js';
 import {readFileSync} from 'node:fs';
 const store=new Map();
 globalThis.localStorage={getItem:key=>store.get(key)||null,setItem:(key,value)=>store.set(key,value)};
@@ -465,4 +465,22 @@ assert(client.includes("activateTab('people')"),'Tapping an NPC opens overview')
 assert(client.includes('selectTarget(person)'),'People list can select an NPC');
 assert(client.includes('clearSelection()'),'People can unselect an NPC');
 assert(client.includes('POWER_HELP[p.id]'),'Power guidance appears for every power');
+// NPC appearance is persistent, natural-looking and consistent across views.
+const appearanceGame=makeGame(createHardwareStore(),{seed:447,staff:4,customers:10});
+assert(HAIR_COLORS.length>=10&&HAIR_STYLES.length>=9,'Varied natural hair colors and styles');
+for(const n of appearanceGame.npcs){
+ const a=hairAppearance(n);
+ assert(HAIR_COLORS.includes(a.color)&&HAIR_STYLES.includes(a.style),'NPC hair uses approved look');
+ assert(typeof npcWeakness(n)==='string'&&npcWeakness(n).length>3,'Person has readable weakness');
+}
+assert(saveGame(appearanceGame),'Save appearance');
+const recovered=loadGame();
+assert.equal(recovered.npcs[0].hairColor,appearanceGame.npcs[0].hairColor,'Hair color persists');
+assert.equal(recovered.npcs[0].hairStyle,appearanceGame.npcs[0].hairStyle,'Hair style persists');
+const currentClient=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+assert(currentClient.includes("'<br><strong>Weakness:</strong> '"),'People list shows weakness before task');
+assert(currentClient.indexOf("'<br><strong>Weakness:</strong> '")<currentClient.indexOf("escapeHTML(p.alive?p.activity:'Deceased')"),'Weakness displayed above activity');
+assert(currentClient.includes("POWER_LIST.map(p=>{")&&currentClient.includes("open?'<div class=\"powerDescription\""),'Power explanations appear inline under selected power');
+assert(currentClient.includes("const activate=powers.querySelector('#armPower')"),'Expand/collapse power guidance keeps usable action');
+assert(currentClient.includes("hairAppearance(n)")&&currentClient.includes("emotionState(n)"),'NPC portrait reads same hair and emotion state');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
