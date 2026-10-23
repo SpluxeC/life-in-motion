@@ -314,10 +314,13 @@ export function createArtwork(ctx,project,getZoom){
    solid(x,y,w,h,48,'#91a5ac','#667b80','#81979a');
    // Tall double-bank doors follow the cabinet plane, not the camera.
    for(let i=0;i<4;i++){
-    const py=y-.40+(i+.5)*.20,px=x-.48;
-    const a=P(px,py,6),b=P(px,py+.15,6),c=P(px,py+.15,43),d=P(px,py,43);
+    // The bank spans two X tiles, so put four full door fronts on the
+    // long accessible aisle face rather than its narrow end.
+    const frontY=y-.49,slot=x-.39+(i+.5)*(w-.20)/4,half=(w-.24)/8;
+    const a=P(slot-half,frontY,6),b=P(slot+half,frontY,6),
+     c=P(slot+half,frontY,43),d=P(slot-half,frontY,43);
     poly([a,b,c,d],i%2?'#748b90':'#8da4a9','#4d676a',1);
-    line(P(px,py+.10,22),P(px,py+.10,28),'#e0ebe5',1.6);
+    line(P(slot+half*.55,frontY,22),P(slot+half*.55,frontY,28),'#e0ebe5',1.6);
    }
   }else if(type==='vending'||type==='drinkCooler'){
    solid(x,y,w,h,49,type==='vending'?'#ad5445':'#d2dad6','#56686d','#859395');
