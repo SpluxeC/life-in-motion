@@ -60,7 +60,7 @@ export function createHardwareStore(){
   fixture('shelf',x,start,1,5,{department:['PAINT','TOOLS','ELECTRICAL','PLUMBING','HARDWARE'][(x-5)/6],stock:11,capacity:12});
  }
  for(let x of [8,14,25])fixture('checkout',x,13,2,1,{staffSide:'south',customerSide:'north',monitorFaces:'south'});
- fixture('serviceDesk',31,13,2,1);
+ fixture('serviceDesk',31,13,3,1,{staffSide:'south',customerSide:'north',monitorFaces:'south'});
  fixture('paintMixer',5,15,1,1);fixture('keyCutter',15,15,1,1);
  fixture('saw',6,35,1,1);fixture('pallet',11,35,2,1);fixture('workbench',17,35,2,1);
  // Keep 25..32, 35..39 clear for unobstructed receiving circulation.
@@ -75,7 +75,8 @@ export function createHardwareStore(){
  fixture('toolCabinet',21,35,2,1,{department:'TOOLS',stock:8});
  fixture('bagPallet',32,35,2,1,{department:'GARDEN',stock:9});
  fixture('drinkCooler',43,19,1,1,{department:'REFRESHMENTS',stock:8});
- fixture('safetyStation',34,17,1,1);fixture('utilityCart',4,16,1,1,{stock:4});
+ // Wall-backed safety equipment is close to the front service area, not the staff doorway.
+ fixture('safetyStation',35,12,1,1,{facing:'west'});fixture('utilityCart',4,16,1,1,{stock:4});
  fixture('hardwareBins',34,26,1,2,{department:'FASTENERS',stock:8});
  // Working receiving area: keep x=27..30 and y=35..43 free for hand trucks and NPCs.
  fixture('receivingDesk',23,37,2,1,{facing:'south'});
@@ -102,7 +103,7 @@ export function createHardwareStore(){
  for(let x of [4,12,20,28,36,44,52,60])props.push({id:'shrub-'+x,type:'shrub',x,y:1});
  for(let y of [12,20,28,37,45])props.push({id:'tree-'+y,type:'tree',x:60,y});
  for(let x of [51,57])for(let y of [13,25,38])props.push({id:'shrub-'+x+'-'+y,type:'shrub',x,y});
- return {id:'hardware-store',title:'Hardware Store',layoutVersion:5,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
+ return {id:'hardware-store',title:'Hardware Store',layoutVersion:6,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
 }
 export const inside=(x,y)=>x>=0&&y>=0&&x<WIDTH&&y<HEIGHT;
 export function fixtureAt(world,x,y){return world.fixtures.find(o=>x>=o.x&&x<o.x+o.w&&y>=o.y&&y<o.y+o.h)}
