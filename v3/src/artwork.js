@@ -1,6 +1,6 @@
 // Life in Motion v3 — resolution-independent, built-in isometric environment artwork.
-// Nothing in this module downloads external images. Every object uses the same
-// world-tile footprint and screen projection as collision/pathfinding.
+// Hand trucks and forklifts are complete local SVG sprites rendered in one
+// drawImage call; all collision and selection footprints stay in world tiles.
 import {departmentItem,visibleShelfCount} from './merchandise.js?v=driver-side-forklift-wheels-20261023-1';
 export function createArtwork(ctx,project,getZoom){
  const P=(x,y,h=0)=>project(x,y,h),Z=()=>getZoom();
@@ -32,6 +32,29 @@ export function createArtwork(ctx,project,getZoom){
  }
  function shadow(x,y,w,h,scale=1){
   const p=P(x+(w-1)*.5,y+(h-1)*.5);ellipse(p.x+4*Z(),p.y+6*Z(),Math.max(8,(w+h)*11*scale),Math.max(3,(w+h)*4*scale),'#111e203b')
+ }
+ // Handling equipment uses one registered isometric image per fixture, not
+ // separately projected tires / posts / chassis that can drift apart.
+ // SVG assets are local to the game; their transparent shadows are included.
+ const handlingSpecs={
+  handTruck:{url:new URL('../assets/hand-truck.svg',import.meta.url).href,width:58,height:79,anchorX:.58,anchorY:.96,groundX:.14,groundY:.12},
+  forklift:{url:new URL('../assets/forklift.svg',import.meta.url).href,width:128,height:99,anchorX:.54,anchorY:.94,groundX:.50,groundY:.14}
+ };
+ const handlingSprites=Object.create(null);
+ function drawHandlingSprite(o){
+  const spec=handlingSpecs[o.type];
+  let sprite=handlingSprites[o.type];
+  if(!sprite){
+   if(typeof Image==='undefined')return;
+   sprite=new Image();
+   handlingSprites[o.type]=sprite;
+   sprite.src=spec.url;
+  }
+  // The animation loop paints again after the local sprite finishes loading.
+  if(!sprite.complete||!sprite.naturalWidth)return;
+  const foot=P(o.x+spec.groundX,o.y+spec.groundY,0),z=Z();
+  ctx.drawImage(sprite,foot.x-spec.width*spec.anchorX*z,
+   foot.y-spec.height*spec.anchorY*z,spec.width*z,spec.height*z);
  }
  function label(x,y,z,text,ink='#f4eee2',bg='#344951',width=46){
   const p=P(x,y,z),s=Z();ctx.fillStyle=bg;ctx.fillRect(p.x-width*s*.5,p.y-7*s,width*s,11*s);
@@ -818,7 +841,9 @@ export function createArtwork(ctx,project,getZoom){
   }else{ellipse(p.x,p.y,4*scale,3*scale,'#c8a273','#3a464a')}
  }
  function drawFixture(o){
-  const {x,y,w,h,type}=o;shadow(x,y,w,h,1.1);
+  const {x,y,w,h,type}=o;
+  if(type==='forklift'||type==='handTruck'){drawHandlingSprite(o);return}
+  shadow(x,y,w,h,1.1);
   if(type==='shelf'){rack(x,y,w,h,o.department,o.stock,o.capacity||12);return}
   if(type==='pallet'){
    // Flat, EMPTY shipping pallet: separated top deck boards, visible gaps,
@@ -1011,78 +1036,6 @@ export function createArtwork(ctx,project,getZoom){
    miniBox(x-.29,y-.15,24,'#c9d2ca',.4,.30,2);
    for(let i=0;i<4;i++)line(P(x+.2+i*.17,y-.23,26),P(x+.2+i*.17,y+.10,26),'#586a6d',.8);
    const p=P(x+1.05,y-.15,33);ellipse(p.x,p.y,4,3,'#384f5a');
-  }else if(type==='handTruck'){
-   // Hand dolly depth order: far tire and rear rail first, platform and
-   // braces next, and near tire / near rail last. No wheel crosses a rail.
-   shadow(x,y,1,1,.75);
-   const rear=y-.25,front=y+.24,side=x+.34;
-   const rearWheel=P(x+.35,rear,5);
-   ellipse(rearWheel.x,rearWheel.y,7.5,7.5,'#253138','#73858a');
-   ellipse(rearWheel.x,rearWheel.y,3.2,3.2,'#bfcbca');
-   // Rear-facing structural rail is occluded by platform and nearer details.
-   // Tall rear upright painted ON TOP of its tire, including the axle area.
-   line(P(side,rear,13),P(side,rear,56),'#506b75',5.5);
-   line(P(side,rear,56),P(side,front,56),'#c8d4cf',4.7);
-   line(P(side,rear,42),P(side,front,42),'#8ba2a5',3.4);
-   line(P(side,rear,25),P(side,front,25),'#8ba2a5',3.4);
-   line(P(side,rear,10),P(side,front,10),'#83999d',3);
-   // Low loading lip projects forward and is visibly grounded.
-   surface(x-.31,y-.14,.55,.42,5,'#a8b9b8','#526a72');
-   line(P(x-.34,y+.28,5),P(x+.22,y+.28,5),'#d0dcd6',4);
-   // Front wheel sits offset from the near rail, behind its bottom section.
-   const frontWheel=P(x+.35,front,5);
-   ellipse(frontWheel.x,frontWheel.y,7.5,7.5,'#253138','#73858a');
-   ellipse(frontWheel.x,frontWheel.y,3.2,3.2,'#bfcbca');
-   // The opposite (front / other) tire must be covered by its full upright.
-   line(P(side,front,3),P(side,front,56),'#607e87',5.5);
-   // Axle is confined to the underside, not drawn through the handle.
-   line(P(x+.30,rear,5),P(x+.30,front,5),'#60747b',2);
-  }else if(type==='forklift'){
-   // Painter-ordered industrial forklift. Far wheels and back safety posts
-   // first, then body/seat, near wheels, overhead guard and forward mast.
-   shadow(x,y,w,h,1.12);
-   // Passenger-side wheels are fully hidden; only the two driver-side
-   // tires on the near Y face are exposed.
-   const axleX=[x+.84,x+1.47],driverY=y+.36;
-   // Chassis and orange body exactly occupy the cab support footprint.
-   const cabLeft=x+.75,cabRight=x+1.57,cabRear=y-.24,cabFront=y+.24;
-   solid(x+.68,y-.25,1.02,.72,18,'#da9538','#84532d','#b77730');
-   solid(x+1.03,y-.18,.62,.59,26,'#e9b34c','#916233','#d8953f');
-   surface(x+1.08,y-.16,.51,.48,27,'#c98a3d','#865a32');
-   solid(x+1.05,y-.10,.28,.29,33,'#34454c','#24343b','#5c7074');
-   line(P(x+.94,y+.12,28),P(x+.90,y+.12,41),'#60747c',3);
-   const steering=P(x+.90,y+.12,41);
-   ellipse(steering.x,steering.y,6,4,'#293941','#acbab6');
-   // Exactly two visible driver-side tires, mounted below the chassis.
-   for(const xx of axleX){
-    const p=P(xx,driverY,6);
-    ellipse(p.x,p.y,10,9,'#253138','#61767b');
-    ellipse(p.x,p.y,4,3.5,'#b8c6c2');
-   }
-   // All four cage legs START on the forklift body surface at Z=18.
-   // Roof corners use precisely the same XY points as their feet.
-   for(const xx of [cabLeft,cabRight]){
-    for(const yy of [cabRear,cabFront]){
-     line(P(xx,yy,18),P(xx,yy,62),'#435b65',5);
-     const mount=P(xx,yy,18);
-     ellipse(mount.x,mount.y,3.2,2.3,'#63767c');
-    }
-   }
-   surface(cabLeft,cabRear,cabRight-cabLeft,cabFront-cabRear,62,
-    '#364e56','#6d8284');
-   // The forward mast stays in the foreground and tines emerge at its base.
-   for(const yy of [y-.26,y+.28])
-    line(P(x+.29,yy,7),P(x+.29,yy,78),'#2c434d',6.8);
-   for(const z of [19,43,76])
-    line(P(x+.29,y-.26,z),P(x+.29,y+.28,z),'#a1b2b7',3.8);
-   solid(x+.18,y-.12,.22,.53,13,'#556f77','#334b54','#72888c');
-   for(const yy of [y-.20,y+.18]){
-    surface(x-.36,yy,.63,.10,6,'#bac6c4','#485c63');
-    line(P(x-.38,yy+.05,6),P(x+.20,yy+.05,6),'#364c54',3);
-   }
-   // Safety lamp goes on top, not behind the mast.
-   const warning=P(x+1.45,y-.24,67);
-   ellipse(warning.x,warning.y,5,3,'#e8ae45','#a7682f');
   }else if(type==='filingCabinet'||type==='supplyCabinet'||type==='storageShelves'){
    const metal=type==='filingCabinet';
    solid(x,y,w,h,metal?36:40,metal?'#9aa8ae':'#b6bcb1',metal?'#657b82':'#707b75');
