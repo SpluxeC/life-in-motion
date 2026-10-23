@@ -44,18 +44,9 @@ updateGame(saved,.1);assert.equal(saved.completed,true);assert.equal(saved.winne
 const oldLog=saved.log.length;updateGame(saved,.1);assert.equal(saved.log.length,oldLog);
 // Built-in art must render every world asset type without external PNG files.
 const graphicsCalls={count:0};
-const imageDraws=[];
-// Mock browser image readiness so QA verifies that each handling fixture
-// is ONE canvas drawImage instead of dozens of offset geometry primitives.
-globalThis.Image=class {
- constructor(){this.complete=true;this.naturalWidth=220}
- set src(value){this._src=value}
- get src(){return this._src}
-};
 const drawingMethods=new Set(['beginPath','moveTo','lineTo','closePath','fill','stroke','ellipse','fillRect','strokeRect','fillText','arc','save','restore','translate','rotate','transform','clip']);
 const drawingContext=new Proxy({},{
- get:(obj,k)=>k==='drawImage'?(...args)=>{graphicsCalls.count++;imageDraws.push(args)}:
-  drawingMethods.has(k)?()=>{graphicsCalls.count++}:obj[k],
+ get:(obj,k)=>drawingMethods.has(k)?()=>{graphicsCalls.count++}:obj[k],
  set:(obj,k,val)=>{obj[k]=val;return true}
 });
 const project=(x,y,h=0)=>({x:500+(x-y)*17,y:350-(x+y)*8-h*.7});
@@ -309,7 +300,7 @@ for(let i=0;i<240;i++){
 }
 assert(doingRestock,'Floor associate receives a stock replenishment assignment');
 assert(nearlyEmpty.stock>=5,'Completing a restock adds actual merchandise to the shelf');
-// Staff corridor has true end walls; the fence is collision-aware with one gate.
+// Staff corridor keeps its end walls; the outer garden fence has no gate.
 const extended=createHardwareStore();
 assert(extended.walls.has('37,10')&&extended.walls.has('37,27'),
  'Both ends of the employee hallway have solid walls');
@@ -319,12 +310,14 @@ for(const k of ['48,34','44,39','47,28']){
 }
 assert(![...extended.walls.values()].some(w=>w.section==='gardenFence'&&w.x===38),
  'No redundant wooden fencing along the building-side garden boundary');
-const gardenGate=doorAt(extended,43,39);
-assert(gardenGate&&gardenGate.type==='gate','The relocated garden outer gate remains functional');
-assert(!extended.walls.has('43,39'),'Outer garden gate is an unobstructed opening');
+assert(!doorAt(extended,43,39),'The former outer garden gate was removed');
+assert.equal(extended.walls.get('43,39')?.section,'gardenFence',
+ 'The former garden gate tile is now continuous wooden fencing');
+assert(!walkable(extended,43,39),'NPCs cannot walk through the former garden gate');
+assert(!extended.doors.some(d=>d.type==='gate'),'No separate gate remains on the garden fence');
 const gardenRoute=pathTo(extended,{x:35,y:30},{x:43,y:33});
-assert(gardenRoute.some(p=>p.x===38&&p.y===30),
- 'NPC navigation crosses the newly open garden edge without clipping through the building');
+assert(gardenRoute.some(p=>p.x===36&&[30,31].includes(p.y)),
+ 'NPC navigation crosses the store-to-garden double door without clipping through the wall');
 assert(walkable(extended,28,38)&&walkable(extended,28,40),
  'Receiving door and central loading lane remain open');
 assert(pathTo(extended,{x:28,y:42},{x:28,y:37}).some(p=>p.y===39),
@@ -343,21 +336,31 @@ for(const type of ['receivingDesk','palletStack','boxStack','handTruck','forklif
  'birdbath','wateringStation','planter']){
  assert(extended.fixtures.some(f=>f.type===type),'Newly drawn asset present: '+type);
 }
-// Exercise both the fence and animated garden gate with a real NPC crossing.
+// Exercise both sliding leaves with a real NPC entering the garden.
 const gateGame=makeGame(extended,{staff:4,customers:2,seed:23});
 const gateWalker=gateGame.npcs[2];
-gateWalker.x=gateWalker.rx=43;gateWalker.y=gateWalker.ry=41;
-gateWalker.path=pathTo(extended,{x:43,y:40},{x:43,y:37});
+gateWalker.x=gateWalker.rx=35;gateWalker.y=gateWalker.ry=30;
+gateWalker.path=pathTo(extended,{x:35,y:30},{x:39,y:30});
 gateWalker.think=99999;gateWalker.task=null;
 for(const other of gateGame.npcs.filter(n=>n!==gateWalker)){
  other.x=other.rx=11;other.y=other.ry=20;other.think=99999;other.path=[];
 }
-let gateOpened=false;
-for(let i=0;i<120;i++){updateGame(gateGame,.05);if(gardenGate.open>.65)gateOpened=true}
-assert(gateOpened&&gateWalker.y<=38,'NPC opens relocated garden gate and crosses the fence');
+const gardenLeft=doorAt(extended,36,30),gardenRight=doorAt(extended,36,31);
+let bothOpened=false;
+for(let i=0;i<120;i++){
+ updateGame(gateGame,.05);
+ if(gardenLeft.open>.65&&gardenRight.open>.65)bothOpened=true;
+ assert(Math.abs(gardenLeft.open-gardenRight.open)<1e-9,
+  'Garden double-slider leaves stay synchronized');
+}
+assert(bothOpened&&gateWalker.rx>=38,
+ 'NPC opens both garden sliders and walks from the shop into the garden');
 const originalFences=[...extended.walls.values()].filter(w=>w.section==='gardenFence');
 for(const o of originalFences)artwork.drawWall(o,extended);
-for(const fraction of [0,.5,1]){gardenGate.open=fraction;artwork.drawDoor(gardenGate)}
+for(const fraction of [0,.5,1]){
+ gardenLeft.open=gardenRight.open=fraction;
+ artwork.drawDoor(gardenLeft);artwork.drawDoor(gardenRight);
+}
 for(const o of extended.fixtures)artwork.drawFixture(o);
 // Loading previous saved-game data onto the new layout must not discard progress.
 const legacyGame=makeGame(createHardwareStore(),{staff:4,customers:3,seed:112});
@@ -371,9 +374,11 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===13,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===14,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
+assert(!doorAt(migrated.world,43,39)&&doorAt(migrated.world,36,31)?.type==='sliding',
+ 'Save migration applies the sealed fence and new second garden slider');
 assert(migrated.world.fixtures.some(f=>f.type==='flowerBed')&&
  migrated.world.fixtures.some(f=>f.type==='receivingDesk'),
  'Save migration restores new garden and loading props');
@@ -653,13 +658,22 @@ assert.equal(shutter.type,'rollup');assert.equal(shutter.axis,'x');
 assert.equal(shutter.w,2);assert.equal(shutter.h,1);
 assert.equal(remodeled.doors.filter(d=>d.type==='rollup').length,1,
  'Exactly one receiving roll-up door is drawn, without a center seam');
-const gardenSlider=doorAt(remodeled,36,30);
-assert.equal(gardenSlider.type,'sliding','Garden center has a sliding door');
-assert.equal(gardenSlider.axis,'y','Garden door slides along the wall on Y');
-assert.equal(gardenSlider.auto,true);
-assert(!remodeled.walls.has('36,30'),'Garden sliding door remains an opening');
-assert(pathTo(remodeled,{x:35,y:30},{x:39,y:30}).some(p=>p.x===36&&p.y===30),
- 'NPCs can navigate through the garden slider');
+const gardenSlider=doorAt(remodeled,36,30),gardenSlider2=doorAt(remodeled,36,31);
+assert(gardenSlider&&gardenSlider2&&gardenSlider!==gardenSlider2,
+ 'The garden entrance is two adjoining sliding glass leaves');
+assert.equal(gardenSlider.type,'sliding');assert.equal(gardenSlider2.type,'sliding');
+assert.equal(gardenSlider.axis,'y');assert.equal(gardenSlider2.axis,'y');
+assert.equal(gardenSlider.slideTo,'start');assert.equal(gardenSlider2.slideTo,'end');
+assert.equal(gardenSlider.pairId,'garden-double');
+assert.equal(gardenSlider.pairId,gardenSlider2.pairId);
+assert(gardenSlider.auto&&gardenSlider2.auto);
+assert(!remodeled.walls.has('36,30')&&!remodeled.walls.has('36,31'),
+ 'Both garden sliding door tiles remain unobstructed');
+for(const y of [30,31]){
+ assert(pathTo(remodeled,{x:35,y},{x:39,y}).some(p=>p.x===36&&p.y===y),
+  'NPCs can walk through garden entrance at y='+y);
+}
+assert(doorAt(remodeled,20,10)?.slideTo==='end','Main entrance opposing slider remains');
 assert(pathTo(remodeled,{x:29,y:42},{x:29,y:37}).some(p=>p.x===29&&p.y===39),
  'NPCs can enter through the second tile of the double receiving door');
 const doorGame=makeGame(remodeled,{seed:142,staff:4,customers:2});
@@ -1155,13 +1169,9 @@ assert.equal(selectionLabel(shippingWorld,forklift),'Forklift');
 assert.equal(handTrucks.length,2);
 for(const dolly of handTrucks)assert.equal(selectionLabel(shippingWorld,dolly),'Hand Truck');
 for(const f of [forklift,...handTrucks]){
- const count=graphicsCalls.count,spritesBefore=imageDraws.length;
+ const count=graphicsCalls.count;
  artwork.drawFixture(f);
- assert.equal(graphicsCalls.count-count,1,'Handling fixture is a single canvas draw: '+f.type);
- assert.equal(imageDraws.length-spritesBefore,1,'Handling fixture renders one sprite: '+f.type);
- const [sprite,,,width,height]=imageDraws.at(-1);
- assert(sprite.src.endsWith(f.type==='forklift'?'/assets/forklift.svg':'/assets/hand-truck.svg'));
- assert(width>0&&height>0,'Sprite is sized by zoom and grounded in the map');
+ assert(graphicsCalls.count-count>(f.type==='forklift'?65:30),'Detailed handling equipment renders: '+f.type);
  const p=project(f.x+(f.w-1)/2,f.y,24);
  assert(hitProjectedFixture(f,p.x,p.y,project,49)!==null,'Equipment is selectable');
 }
@@ -1169,17 +1179,28 @@ for(const q of [{x:32,y:37},{x:33,y:36},{x:34,y:36},{x:35,y:37},{x:33,y:38}]){
  assert(walkable(shippingWorld,q.x,q.y),'Forklift access lane open');
  assert(pathTo(shippingWorld,{x:28,y:38},q).length>0);
 }
-// The procedural hand truck / forklift painters must never return.
-// Assets contain one permanently aligned body, wheels and frame, while
-// collision/selection remain governed by their original fixture footprints.
+// Painter order regression: the hand truck rear wheel must be behind its
+// platform and front rail. Forklift far tires precede chassis; near tires,
+// roof and forward mast follow the chassis.
 const handlingArt=readFileSync(new URL('../src/artwork.js',import.meta.url),'utf8');
-assert(handlingArt.includes("if(type==='forklift'||type==='handTruck'){drawHandlingSprite(o);return}"));
-assert(!handlingArt.includes("}else if(type==='handTruck')"));
-assert(!handlingArt.includes("}else if(type==='forklift')"));
-const forkliftSvg=readFileSync(new URL('../assets/forklift.svg',import.meta.url),'utf8');
-const handTruckSvg=readFileSync(new URL('../assets/hand-truck.svg',import.meta.url),'utf8');
-assert(forkliftSvg.includes('Exactly two driver-side wheels'));
-assert(forkliftSvg.includes('Every roll-cage leg touches the chassis'));
-assert(handTruckSvg.includes('Front upright is painted over its own wheel'));
-assert(forkliftSvg.includes('<svg ')&&handTruckSvg.includes('<svg '));
+const truckSection=handlingArt.slice(handlingArt.indexOf("}else if(type==='handTruck')"),
+ handlingArt.indexOf("}else if(type==='forklift')"));
+const liftSection=handlingArt.slice(handlingArt.indexOf("}else if(type==='forklift')"),
+ handlingArt.indexOf("}else if(type==='filingCabinet'"));
+assert(truckSection.includes("line(P(side,front,3),P(side,front,56)"),
+ 'Opposite hand-truck wheel is covered by tall front rail from axle to handle');
+assert(truckSection.indexOf('frontWheel=P')<
+ truckSection.indexOf('line(P(side,front,3)'),
+ 'Front tire is drawn before its covering metal upright');
+assert(liftSection.includes("const axleX=[x+.84,x+1.47],driverY=y+.36"),
+ 'Forklift displays only two driver-side wheels');
+assert(!liftSection.includes("farY=")&&!liftSection.includes("nearY="),
+ 'Passenger-side wheel loops are absent');
+assert(liftSection.includes("line(P(xx,yy,18),P(xx,yy,62)"),
+ 'Safety-cage posts connect at the chassis top and reach roof height');
+assert(liftSection.includes("surface(cabLeft,cabRear,cabRight-cabLeft,cabFront-cabRear,62"),
+ 'Safety canopy corners share the cage post geometry');
+assert(liftSection.indexOf("Exactly two visible driver-side tires")<
+ liftSection.indexOf("All four cage legs START"),
+ 'Wheel layer is behind full-height cage posts');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
