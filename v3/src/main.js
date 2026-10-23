@@ -6,6 +6,7 @@ import {renderDepth,compareRenderDepth} from './render-depth.js?v=service-safety
 import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness} from './hud.js?v=service-safety-redesign-20261023-1';
 import {hitProjectedFixture,isGroundTileTap,selectionLabel} from './selection.js?v=service-safety-redesign-20261023-1';
 import {signOpacity} from './sign-visibility.js?v=service-safety-redesign-20261023-1';
+import {npcLimbPose} from './npc-pose.js?v=articulated-gait-20261023-1';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d');
 let game=null,scene=createHardwareStore(),zoom=.72,offset={x:0,y:0},last=performance.now(),acc=0,lastHud=0,lastSave=0,lastViewport={w:0,h:0},drag=null,selected=null,resultShown=false,activeTab='world',selectedPowerId='whisper',pendingPower=null,feedback='';
@@ -115,21 +116,24 @@ function drawHair(n,z,h){
  ctx.restore();
 }
 function stick(n,t){let p=project(n.rx,n.ry),z=zoom*(n.role==='customer'||n.role==='employee'?1:1.07),moving=n.path.length>0,step=moving?Math.sin(t*10+n.id.length):0,h=n.unconscious>0?5:35;ctx.save();ctx.translate(p.x,p.y);ctx.strokeStyle='#121a1c';ctx.lineWidth=2.6*z;ctx.lineCap='round';ctx.fillStyle='#121b2380';ctx.beginPath();ctx.ellipse(0,2*z,10*z,4*z,0,0,7);ctx.fill();if(!n.alive){ctx.rotate(Math.PI/2);ctx.translate(0,9*z)}if(n.unconscious>0){ctx.rotate(1.4);ctx.translate(0,9*z)}
- const leg=h*.45*z;ctx.beginPath();ctx.moveTo(0,-h*z*.56);ctx.lineTo(0,-10*z);ctx.moveTo(0,-10*z);ctx.lineTo((-7+step*4)*z,0);ctx.moveTo(0,-10*z);ctx.lineTo((7-step*4)*z,0);const pose=n.action||'idle',wave=Math.sin((n.actionPhase||0)*7),bob=moving?Math.sin(t*12+n.id.length)*1.4:0;
- ctx.moveTo(0,-h*z*.45);
- if(pose==='offerHelp')ctx.lineTo((-10-2*wave)*z,(-34+3*wave)*z);
- else if(pose==='scan'||pose==='type')ctx.lineTo((-12-2*wave)*z,(-12+3*wave)*z);
- else if(pose==='inspect'||pose==='stock')ctx.lineTo((-13-2*wave)*z,(-20-4*wave)*z);
- else if(pose==='drink')ctx.lineTo(-4*z,-h*z*.66);
- else ctx.lineTo((-10-step*3)*z,(-19+bob)*z);
- ctx.moveTo(0,-h*z*.45);
- if(pose==='offerHelp')ctx.lineTo((10+2*wave)*z,(-23+4*wave)*z);
- else if(pose==='scan')ctx.lineTo((13+3*wave)*z,(-11+4*wave)*z);
- else if(pose==='type')ctx.lineTo((11-2*wave)*z,(-12+2*wave)*z);
- else if(pose==='inspect'||pose==='stock')ctx.lineTo((10+3*wave)*z,(-26+3*wave)*z);
- else if(pose==='talk')ctx.lineTo((10+3*wave)*z,(-18+3*wave)*z);
- else ctx.lineTo((9+step*3)*z,(-19+bob)*z);
- ctx.stroke();ctx.fillStyle='#f8faf7';ctx.strokeStyle='#0c1416';ctx.lineWidth=2*z;ctx.beginPath();ctx.arc(0,-h*z*.82,7*z,0,Math.PI*2);ctx.fill();ctx.stroke();if(n.role==='employee'){
+ const joints=npcLimbPose(n,t),jointScale=h/35;
+ const local=p=>({x:p.x*z*jointScale,y:p.y*z*jointScale});
+ // Separate upper/lower limb segments join at visible elbows and knees.
+ // Opposite leg phases, ground-contact planting and swing-arm counterbalance
+ // make strides read as walking rather than full-length scissor limbs.
+ ctx.strokeStyle='#121a1c';ctx.lineWidth=2.8*z;
+ ctx.beginPath();ctx.moveTo(0,-h*z*.55);ctx.lineTo(0,-10*z);ctx.stroke();
+ const limb=(a,b,c)=>{
+  const aa=local(a),bb=local(b),cc=local(c);
+  ctx.beginPath();ctx.moveTo(aa.x,aa.y);ctx.lineTo(bb.x,bb.y);
+  ctx.lineTo(cc.x,cc.y);ctx.stroke();
+  ctx.beginPath();ctx.arc(bb.x,bb.y,1.7*z,0,Math.PI*2);ctx.fillStyle='#263036';ctx.fill();
+ };
+ for(const leg of joints.legs)limb(leg.hip,leg.knee,leg.foot);
+ for(const arm of joints.arms)limb(arm.shoulder,arm.elbow,arm.wrist);
+ // Ankles are the step's attachment to the floor rather than swinging past it.
+ for(const leg of joints.legs){const q=local(leg.foot);ctx.beginPath();ctx.arc(q.x,q.y,1.5*z,0,Math.PI*2);ctx.fill()}
+ ctx.fillStyle='#f8faf7';ctx.strokeStyle='#0c1416';ctx.lineWidth=2*z;ctx.beginPath();ctx.arc(0,-h*z*.82,7*z,0,Math.PI*2);ctx.fill();ctx.stroke();if(n.role==='employee'){
   // Two tailored red vest panels, shoulder seams, a V-neck and an open black center.
   ctx.lineWidth=1.15*z;ctx.strokeStyle='#171a1c';ctx.fillStyle='#c92f38';
   ctx.beginPath();
@@ -173,8 +177,8 @@ const departmentSigns=[
  {x:17.5,y:16.5,name:'ELECTRICAL',accent:'#c9a946'},
  {x:23.5,y:16.5,name:'PLUMBING',accent:'#5e90b0'},
  {x:29.5,y:16.5,name:'HARDWARE',accent:'#688779'},
- {x:10,y:12.3,name:'CHECKOUT',accent:'#b75e4f'},
- {x:32,y:12.3,name:'SERVICE',accent:'#558c9a'},
+ {x:18.5,y:16.5,name:'CHECKOUT',accent:'#b75e4f'},
+ {x:34.5,y:16,name:'SERVICE',accent:'#558c9a'},
  {x:14,y:34,name:'LUMBER',accent:'#b58a5b'},
  {x:28.5,y:36.4,name:'RECEIVING',accent:'#c08b55'},
  {x:42.7,y:29,name:'GARDEN',accent:'#63905b'}
