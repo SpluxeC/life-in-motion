@@ -367,6 +367,135 @@ export function createArtwork(ctx,project,getZoom){
   }else if(type==='utilityCart'){
    solid(x,y,w,h,13,'#60878d','#49636a');miniBox(x+.1,y+.12,18,'#b8ae90',.32,.44,5);
    const p=P(x+.7,y+.7);ellipse(p.x,p.y,4,4,'#26373d')
+  }else if(type==='palletStack'||type==='boxStack'){
+   // Stacked shipping loads sit square on timber skids; no floating boxes.
+   const pallet=type==='palletStack';
+   solid(x,y,w,h,pallet?6:3,'#b98f5c','#7b593d','#96714b');
+   const cols=w>1?3:2,rows=pallet?2:3;
+   for(let row=0;row<rows;row++)for(let col=0;col<cols;col++){
+    const px=x-.39+col*(w-.22)/cols,py=y-.26+(row%2)*.10;
+    const hBox=pallet?10:12;
+    miniBox(px,py,8+row*hBox,['#c4a77d','#b5956d','#9f927a'][col%3],
+     (w-.18)/cols-.04,.42,hBox-1);
+   }
+   const p=P(x+(w-1)/2,y,25);
+   line({x:p.x-9*Z(),y:p.y},{x:p.x+9*Z(),y:p.y},'#866744',1);
+  }else if(type==='receivingDesk'){
+   solid(x,y,w,h,22,'#b2aa92','#6e746f','#91988e');
+   surface(x+.07,y+.08,w-.14,h-.16,23,'#ddd0b2','#8b8c7a');
+   miniBox(x-.29,y-.15,24,'#c9d2ca',.4,.30,2);
+   for(let i=0;i<4;i++)line(P(x+.2+i*.17,y-.23,26),P(x+.2+i*.17,y+.10,26),'#586a6d',.8);
+   const p=P(x+1.05,y-.15,33);ellipse(p.x,p.y,4,3,'#384f5a');
+  }else if(type==='handTruck'){
+   // Narrow upright steel dolly with rear wheels and an anchored loading lip.
+   solid(x,y,.65,.42,3,'#829397','#586d74');
+   for(const yy of [-.18,.18]){
+    const wheel=P(x-.18,y+yy,3);ellipse(wheel.x,wheel.y,4,3,'#303c3c','#849193');
+   }
+   for(const yy of [-.21,.20]){
+    line(P(x+.18,y+yy,4),P(x+.18,y+yy,38),'#64808b',2.6);
+   }
+   line(P(x+.18,y-.21,38),P(x+.18,y+.20,38),'#64808b',2.5);
+   miniBox(x-.36,y-.29,5,'#baa47f',.5,.4,10);
+  }else if(type==='flatCart'){
+   solid(x,y,w,h,7,'#899a9a','#647a7e','#8d9e9b');
+   for(const pos of [[-.34,-.27],[w-.68,-.27],[-.34,.24],[w-.68,.24]]){
+    const p=P(x+pos[0],y+pos[1]);ellipse(p.x,p.y,3.5,2.4,'#303b3d')
+   }
+   line(P(x-.38,y+.29,7),P(x-.38,y+.29,28),'#b1bdb7',2);
+   line(P(x+w-.66,y+.29,7),P(x+w-.66,y+.29,28),'#b1bdb7',2);
+   line(P(x-.38,y+.29,28),P(x+w-.66,y+.29,28),'#b1bdb7',2);
+   miniBox(x-.2,y-.22,9,'#bca77c',.65,.34,8);
+  }else if(type==='filingCabinet'||type==='supplyCabinet'||type==='storageShelves'){
+   const metal=type==='filingCabinet';
+   solid(x,y,w,h,metal?36:40,metal?'#9aa8ae':'#b6bcb1',metal?'#657b82':'#707b75');
+   cabinetFace(o,metal?36:40);
+   for(let i=0;i<4;i++){
+    const height=7+i*8,ap=o.facing==='east'?P(x+.42,y-.18,height):P(x-.48,y-.18,height),
+      bp=o.facing==='east'?P(x+.42,y+.20,height):P(x-.48,y+.20,height);
+    line(ap,bp,metal?'#c5d0cf':'#5c6e6d',1.8);
+    if(metal)ellipse((ap.x+bp.x)*.5,(ap.y+bp.y)*.5,2,1,'#384d53');
+    else miniBox(x-.2,y-.16,height+1,'#a8a087',.26,.3,4);
+   }
+  }else if(type==='noticeBoard'){
+   // Mounted board on a narrow stand near the office wall.
+   solid(x,y,.4,.3,27,'#777a65','#5b655b');
+   const p=P(x-.27,y-.22,45);
+   ctx.fillStyle='#a77e55';ctx.fillRect(p.x-11*Z(),p.y-7*Z(),23*Z(),16*Z());
+   ctx.strokeStyle='#e0cfaf';ctx.lineWidth=1.4*Z();ctx.strokeRect(p.x-11*Z(),p.y-7*Z(),23*Z(),16*Z());
+   for(let i=0;i<3;i++){
+    ctx.fillStyle=['#c9b876','#ebe7d7','#d0d8c9'][i];
+    ctx.fillRect(p.x+(-8+i*6)*Z(),p.y-4*Z(),5*Z(),8*Z());
+   }
+  }else if(type==='coffeeStation'){
+   solid(x,y,w,h,20,'#a58b6e','#63584e');
+   miniBox(x-.18,y-.24,21,'#343c43',.44,.43,12);
+   const cp=P(x-.10,y-.04,34);ellipse(cp.x,cp.y,5,2,'#c8d8d6');
+   for(let i=0;i<2;i++)miniCan(x+.20,y-.20+i*.3,26,'#e9e9d9',2.3);
+  }else if(type==='coatRack'){
+   line(P(x,y,0),P(x,y,47),'#6d5847',3.5);
+   for(const d of [[-.22,-.20],[.20,-.15],[-.12,.20],[.22,.19]]){
+    line(P(x,y,38),P(x+d[0],y+d[1],42),'#87705c',2);
+   }
+   solid(x-.24,y-.25,.48,.48,3,'#84684c');
+  }else if(type==='flowerBed'||type==='planter'){
+   const pot=type==='planter',height=pot?19:10;
+   solid(x,y,w,h,height,pot?'#a57b55':'#bc996d','#755e49','#8c7053');
+   surface(x+.08,y+.08,w-.16,h-.16,height+.5,'#523e32','#8e6e4c');
+   for(let i=0;i<(pot?4:12);i++){
+    const xx=x-.30+(i%4)*(w-.30)/4,yy=y-.25+Math.floor(i/4)*(h-.12)/3;
+    const q=P(xx,yy,height+9+(i%2)*3);
+    line(P(xx,yy,height+1),q,'#43754e',1.2);
+    for(const k of [0,1,2,3]){
+     const r=k*Math.PI/2;
+     ellipse(q.x+Math.cos(r)*3.5*Z(),q.y+Math.sin(r)*3*Z(),2.7,2.1,
+      ['#e5bb58','#f0a5a6','#e1a6d4','#a7badc'][i%4]);
+    }
+    ellipse(q.x,q.y,1.2,1.1,'#efdc8b');
+   }
+  }else if(type==='seedDisplay'){
+   solid(x,y,w,h,33,'#809781','#526b63');
+   cabinetFace(o,33);
+   for(let i=0;i<9;i++){
+    const q=P(x-.52,y-.29+(i%3)*.24,10+Math.floor(i/3)*9);
+    ctx.fillStyle=['#d6b85d','#9bc283','#b5a4cc'][i%3];
+    ctx.fillRect(q.x-3.5*Z(),q.y-5*Z(),7*Z(),10*Z());
+    ctx.fillStyle='#4d8260';ctx.fillRect(q.x-3.5*Z(),q.y+1*Z(),7*Z(),3*Z());
+   }
+  }else if(type==='pottingBench'){
+   // Wood top, sink tub, plant pots and under-bench shelves.
+   solid(x,y,w,h,20,'#bc9368','#73593c','#956c49');
+   solid(x+.10,y+.13,w-.20,h-.22,6,'#ad855b','#755638');
+   const p=P(x-.13,y-.18,22);ellipse(p.x,p.y,8,4,'#8b9c96','#dddbbf');
+   for(let i=0;i<3;i++){
+    const q=P(x+.4+i*.39,y-.12,25);
+    ellipse(q.x,q.y,6,3,'#a86b50','#58493e');
+    line(q,{x:q.x,y:q.y-8*Z()},'#477949',1.8);
+    ellipse(q.x-2*Z(),q.y-9*Z(),4,2.5,'#5b8d55');
+    ellipse(q.x+3*Z(),q.y-12*Z(),4,2.5,'#6b985e');
+   }
+  }else if(type==='gardenBench'){
+   solid(x,y,w,h,12,'#b49066','#74634d','#926e50');
+   for(let i=0;i<3;i++){
+    line(P(x-.40,y-.34+i*.30,15),P(x-.40,y+.34+i*.30,15),'#cfaa7b',2);
+   }
+   for(const side of [-.3,.3])line(P(x+side,y-.2,13),P(x+side,y-.2,28),'#89633e',3);
+   line(P(x-.35,y-.2,29),P(x+.34,y-.2,29),'#c79a64',4);
+  }else if(type==='birdbath'){
+   const p=P(x,y,22);
+   line(P(x,y,1),p,'#adad9f',5);
+   ellipse(p.x,p.y,13,5,'#c2c5b5','#778783');
+   ellipse(p.x,p.y-1*Z(),9,3,'#7da9ac','#acb5aa');
+   const bird=P(x+.10,y-.03,29);
+   ellipse(bird.x,bird.y,3,3,'#788e82');
+   line(P(x+.12,y-.04,30),P(x+.25,y-.04,31),'#c8bb86',1);
+  }else if(type==='wateringStation'){
+   solid(x,y,w,h,13,'#859b90','#667a73');
+   miniCan(x-.16,y-.08,19,'#9aa8b1',7);
+   const q=P(x+.24,y-.24,18);
+   line(q,P(x+.24,y-.24,39),'#738b85',2.6);
+   line(P(x+.24,y-.24,39),P(x+.38,y-.24,39),'#839f9e',2.5);
+   ellipse(q.x+4*Z(),q.y-1*Z(),4,2,'#b3b5a7');
   }else{solid(x,y,w,h,20,'#a7b4ad','#6a7c7b')}
   if(o.damaged){const p=P(x+w*.5,y+h*.5,52);ellipse(p.x,p.y,5,4,'#edbb5e')}
  }
