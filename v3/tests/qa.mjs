@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import {createHardwareStore,walkable,pathTo,doorAt} from '../src/world.js';
-import {makeGame,applyPower,updateGame,addHazard,POWER_LIST} from '../src/simulation.js';
+import {makeGame,applyPower,updateGame,addHazard,POWER_LIST,ITEMS} from '../src/simulation.js';
+import {updateRoutine} from '../src/routines.js';
+import {departmentProducts,departmentItem,visibleShelfCount,DEPARTMENT_PRODUCTS} from '../src/merchandise.js';
 import {saveGame,loadGame} from '../src/persistence.js';
 import {createArtwork} from '../src/artwork.js';
 import {renderDepth,compareRenderDepth} from '../src/render-depth.js';
@@ -555,4 +557,44 @@ const seamArtwork=createArtwork(seamAuditCtx,selectProject,()=>1);
 seamArtwork.drawWall(selectionWorld.walls.get('6,10'),selectionWorld);
 assert(!seamStrokeColors.includes('#536563')&&!seamStrokeColors.includes('#82968f'),
  'Exterior wall panels have no vertical separator strokes');
+// Stocked departments draw only actual game items, changing with live stock.
+const fullStockWorld=createHardwareStore();
+const gameItemIds=new Set(ITEMS.map(item=>item.id));
+const departments=['PAINT','TOOLS','ELECTRICAL','PLUMBING','HARDWARE'];
+for(const dept of departments){
+ const products=departmentProducts(dept);
+ assert(products.length>=2,'Department has varied merchandise: '+dept);
+ assert(products.every(id=>gameItemIds.has(id)),'Department uses gameplay items: '+dept);
+ const aisles=fullStockWorld.fixtures.filter(o=>o.type==='shelf'&&o.department===dept);
+ assert(aisles.length===2,'Both shelf rows exist for '+dept);
+ assert(aisles.every(o=>o.stock>=11&&o.capacity===12),
+  'New rounds begin with fully merchandised '+dept+' shelves');
+ for(let i=0;i<products.length*3;i++)assert(products.includes(departmentItem(dept,i)));
+}
+assert.equal(visibleShelfCount(0,12,14),0,'Empty shelves hide product models');
+assert.equal(visibleShelfCount(12,12,14),14,'Full shelves display every stock slot');
+assert(visibleShelfCount(11,12,14)>visibleShelfCount(7,12,14),
+ 'New shelves visually contain more items than earlier rounds');
+const densityShelf=fullStockWorld.fixtures.find(f=>f.type==='shelf');
+const beforeEmpty=graphicsCalls.count;artwork.drawFixture({...densityShelf,stock:0});
+const emptyCalls=graphicsCalls.count-beforeEmpty;
+const beforeFull=graphicsCalls.count;artwork.drawFixture({...densityShelf,stock:12});
+const fullCalls=graphicsCalls.count-beforeFull;
+assert(fullCalls>emptyCalls+120,'Real items noticeably fill the shelves');
+const shopperGame=makeGame(createHardwareStore(),{seed:28,staff:4,customers:2});
+const shopper=shopperGame.npcs.find(n=>n.role==='customer');
+for(const dept of departments){
+ const shelf=shopperGame.world.fixtures.find(f=>f.type==='shelf'&&f.department===dept);
+ shelf.stock=11;shopper.inventory=[];shopper.shoppingIndex=2;
+ shopper.task={kind:'browse',phase:'working',until:0,shelfId:shelf.id};
+ const expected=departmentItem(dept,shopper.shoppingIndex+shelf.stock);
+ updateRoutine(shopperGame,shopper,.1);
+ assert(shopper.inventory.includes(expected),'Shopper takes an item shown in '+dept);
+ assert.equal(shelf.stock,10,'Shopping reduces actual '+dept+' stock');
+}
+const receivingSignClient=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+assert(receivingSignClient.includes("y:36.4,name:'RECEIVING'"),
+ 'Receiving sign moved away from the loading wall');
+assert(receivingSignClient.includes("o.name==='RECEIVING'?-1000"),
+ 'Receiving sign is drawn above wall geometry');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
