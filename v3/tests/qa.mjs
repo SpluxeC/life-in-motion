@@ -328,7 +328,7 @@ for(const fixture of extended.fixtures){
    'Decorations cannot overlap another fixture: '+fixture.id);
  }
 }
-for(const type of ['receivingDesk','palletStack','boxStack','handTruck','flatCart',
+for(const type of ['receivingDesk','palletStack','boxStack','handTruck','forklift',
  'filingCabinet','noticeBoard','coffeeStation','coatRack','storageShelves',
  'supplyCabinet','flowerBed','seedDisplay','pottingBench','gardenBench',
  'birdbath','wateringStation','planter']){
@@ -362,7 +362,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===12,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===13,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(migrated.world.fixtures.some(f=>f.type==='flowerBed')&&
@@ -1137,4 +1137,23 @@ const latestArt=readFileSync(new URL('../src/artwork.js',import.meta.url),'utf8'
 assert(latestArt.includes("Flat, EMPTY shipping pallet")&&
  latestArt.includes("Exposed south-facing horizontal bays"),
  'New lumber artwork has flat pallet slats and aisle-facing rack bays');
+const shippingWorld=createHardwareStore();
+const forklift=shippingWorld.fixtures.find(f=>f.type==='forklift');
+const handTrucks=shippingWorld.fixtures.filter(f=>f.type==='handTruck');
+assert.deepEqual([forklift.x,forklift.y,forklift.w,forklift.h],[33,37,2,1]);
+assert(!shippingWorld.fixtures.some(f=>f.type==='flatCart'),'Flat cart replaced by forklift');
+assert.equal(selectionLabel(shippingWorld,forklift),'Forklift');
+assert.equal(handTrucks.length,2);
+for(const dolly of handTrucks)assert.equal(selectionLabel(shippingWorld,dolly),'Hand Truck');
+for(const f of [forklift,...handTrucks]){
+ const count=graphicsCalls.count;
+ artwork.drawFixture(f);
+ assert(graphicsCalls.count-count>65,'Detailed handling equipment renders: '+f.type);
+ const p=project(f.x+(f.w-1)/2,f.y,24);
+ assert(hitProjectedFixture(f,p.x,p.y,project,49)!==null,'Equipment is selectable');
+}
+for(const q of [{x:32,y:37},{x:33,y:36},{x:34,y:36},{x:35,y:37},{x:33,y:38}]){
+ assert(walkable(shippingWorld,q.x,q.y),'Forklift access lane open');
+ assert(pathTo(shippingWorld,{x:28,y:38},q).length>0);
+}
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
