@@ -1168,10 +1168,17 @@ assert(truckSection.indexOf('rearWheel=P')<truckSection.indexOf('surface(x-.31')
  'Rear dolly wheel painted before loading plate');
 assert(truckSection.indexOf('frontWheel=P')<truckSection.lastIndexOf('line(P(side,front,13)'),
  'Near dolly rail painted in front of front wheel');
-assert(liftSection.indexOf('Far-side tires')<liftSection.indexOf('Counterweight'),
- 'Far tires painted behind forklift body');
-assert(liftSection.indexOf('Near tires layer')>liftSection.indexOf('Counterweight'),
- 'Near tires painted after chassis');
-assert(liftSection.indexOf('The forward mast stays')>liftSection.indexOf('Open safety cage'),
- 'Front mast painted after forklift roll cage');
+assert(truckSection.includes("line(P(side,rear,3),P(side,rear,56)"),
+ 'Rear tall upright now overlaps tire from its axle all the way up');
+assert(liftSection.includes("const axleX=[x+.84,x+1.47],farY=y-.25,nearY=y+.25"),
+ 'Forklift wheels use shared near/far axle coordinates');
+assert(liftSection.includes("const cabLeft=x+.75,cabRight=x+1.57,cabRear=y-.24,cabFront=y+.24"),
+ 'Cab posts use shared roof rectangle');
+assert(liftSection.indexOf("const axleX=")<liftSection.indexOf("solid(x+.68,y+.02"),
+ 'Far wheels must render behind forklift chassis');
+assert(liftSection.indexOf("for(const xx of axleX){",liftSection.indexOf("Occupant position"))>
+ liftSection.indexOf("solid(x+.68,y+.02"),'Near wheels render after body');
+assert(liftSection.indexOf("surface(cabLeft,cabRear")<
+ liftSection.indexOf("The forward mast stays"),
+ 'Aligned canopy precedes foreground mast');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
