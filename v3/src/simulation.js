@@ -51,7 +51,7 @@ export function spawnNPC(g,role='customer'){
  else if(moodRoll<.9)emotion={anger:13+moodStrength*15,fear:14+moodVariation*15,stress:63+moodStrength*16}; // Stressed
  else if(moodRoll<.95)emotion={anger:66+moodStrength*16,fear:4+moodVariation*15,stress:30+moodVariation*18}; // Furious
  else emotion={anger:5+moodVariation*17,fear:65+moodStrength*16,stress:39+moodVariation*17}; // Terrified
- const n={hairColor,hairStyle,facing:'right',id:'npc-'+i,name:FIRST[Math.floor(r()*FIRST.length)]+' '+LAST[Math.floor(r()*LAST.length)],role,x:pos.x,y:pos.y,rx:pos.x,ry:pos.y,health:100,bleeding:0,pain:0,unconscious:0,alive:true,arrested:false,detention:0,emotion,traits,relationships:{},memory:[],inventory:r()<.6?[ITEMS[Math.floor(r()*ITEMS.length)].id]:[],path:[],target:null,activity:role==='employee'?'Working':'Browsing',think:1+r()*3,callCooldown:0,recovery:0,panic:0};
+ const n={hairColor,hairStyle,facing:'right',walkDistance:0,id:'npc-'+i,name:FIRST[Math.floor(r()*FIRST.length)]+' '+LAST[Math.floor(r()*LAST.length)],role,x:pos.x,y:pos.y,rx:pos.x,ry:pos.y,health:100,bleeding:0,pain:0,unconscious:0,alive:true,arrested:false,detention:0,emotion,traits,relationships:{},memory:[],inventory:r()<.6?[ITEMS[Math.floor(r()*ITEMS.length)].id]:[],path:[],target:null,activity:role==='employee'?'Working':'Browsing',think:1+r()*3,callCooldown:0,recovery:0,panic:0};
  if(role==='employee'||role==='customer')initializeRoutine(n,role==='employee'?coworkerCount:shopperCount);
  g.npcs.push(n);return n;
 }
@@ -173,7 +173,10 @@ export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
  if(n.bleeding>0){n.health-=n.bleeding*dt*.09;if(n.health<=0){kill(g,n,'untreated injury');continue}}n.pain=clamp(n.pain-dt*.13);if(n.unconscious>0){if(n.cleaningTarget)clearCleanup(g,n);n.unconscious-=dt;continue}
  if(n.arrested){if(n.cleaningTarget)clearCleanup(g,n);n.detention-=dt;if(n.detention<=0){n.arrested=false;n.activity='Released from detention'}continue}
  n.think-=dt;if(n.think<=0){n.think=1.5+g.random()*2;choose(g,n)}
- if(n.path.length){let next=n.path[0],entry=doorAt(g.world,next.x,next.y);if(entry&&entry.open<.65){entry.forceUntil=g.elapsed+2;continue}let p=n.path[0],dx=p.x-n.rx,dy=p.y-n.ry,dist=Math.hypot(dx,dy),speed=(n.panic?3.6:1.65)*(n.health<50?.7:1);if(dist>.001&&Math.abs(dx-dy)>.025)n.facing=dx-dy>0?'right':'left';if(dist<=dt*speed){n.rx=p.x;n.ry=p.y;n.x=p.x;n.y=p.y;n.path.shift()}else{n.rx+=dx/dist*dt*speed;n.ry+=dy/dist*dt*speed}
+ if(n.path.length){let next=n.path[0],entry=doorAt(g.world,next.x,next.y);if(entry&&entry.open<.65){entry.forceUntil=g.elapsed+2;continue}let p=n.path[0],beforeX=n.rx,beforeY=n.ry,dx=p.x-n.rx,dy=p.y-n.ry,dist=Math.hypot(dx,dy),speed=(n.panic?3.6:1.65)*(n.health<50?.7:1);if(dist>.001&&Math.abs(dx-dy)>.025)n.facing=dx-dy>0?'right':'left';if(dist<=dt*speed){n.rx=p.x;n.ry=p.y;n.x=p.x;n.y=p.y;n.path.shift()}else{n.rx+=dx/dist*dt*speed;n.ry+=dy/dist*dt*speed}
+ // Stride phase follows distance covered, not frame time. A slow/injured
+ // walker therefore swings arms more slowly than a panicking runner.
+ n.walkDistance=(n.walkDistance||0)+Math.hypot(n.rx-beforeX,n.ry-beforeY);
  let d=doorAt(g.world,Math.round(n.rx),Math.round(n.ry));if(d)d.forceUntil=g.elapsed+2;
  }else{
  if(n.activity==='Picking up item'&&n.inventory.length<4){let idx=g.world.drops.findIndex(d=>Math.hypot(d.x-n.x,d.y-n.y)<2);if(idx>=0){let item=g.world.drops.splice(idx,1)[0];n.inventory.push(item.item);n.activity='Carrying '+(ITEMS.find(i=>i.id===item.item)?.name||'item')}}
