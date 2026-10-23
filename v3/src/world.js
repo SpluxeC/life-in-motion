@@ -16,7 +16,7 @@ export function createHardwareStore(){
   walls.set(k,piece);
   return piece;
  };
- const door=(x,y,type='hinged',label='Door',axis='x',span=1)=>doors.push({id:'door-'+x+'-'+y,x,y,w:axis==='x'?span:1,h:axis==='y'?span:1,type,label,axis,open:0,target:0,auto:type==='sliding',locked:false,forceUntil:0});
+ const door=(x,y,type='hinged',label='Door',axis='x',span=1,slideTo='start',pairId=null)=>doors.push({id:'door-'+x+'-'+y,x,y,w:axis==='x'?span:1,h:axis==='y'?span:1,type,label,axis,open:0,target:0,auto:type==='sliding',locked:false,forceUntil:0,...(type==='sliding'?{slideTo}:{}),...(pairId?{pairId}:{})});
  const fixture=(type,x,y,w=1,h=1,extra={})=>fixtures.push({id:type+'-'+x+'-'+y,type,x,y,w,h,...extra});
  for(let y=0;y<HEIGHT;y++)for(let x=0;x<WIDTH;x++){
   let area=x>=65&&y<43?'road':y<10&&x<65?'parking':x===37&&y>=10&&y<=39?'sidewalk':x>=25&&x<=34&&y>=40&&y<=43?'loading':x>=38&&x<=46&&y>=10&&y<28?'employee':x>=38&&x<=48&&y>=28&&y<=39?'garden':y>=10&&y<=39&&x>=2&&x<=36?'store':x>=49&&x<=63&&y>=10&&y<44?'landscape':'grass';
@@ -33,10 +33,13 @@ export function createHardwareStore(){
  // Actual openings are the exact tiles occupied by animated doors.
  for(let x of [19,20])walls.delete(key(x,10));
  for(let x of [28,29])walls.delete(key(x,39));
- for(let y of [17,30])walls.delete(key(36,y));
- door(19,10,'sliding','Main entrance');door(20,10,'sliding','Main entrance');
+ for(let y of [17,30,31])walls.delete(key(36,y));
+ door(19,10,'sliding','Main entrance');door(20,10,'sliding','Main entrance','x',1,'end');
  door(28,39,'rollup','Receiving double-wide roll-up door','x',2);
- door(36,17,'hinged','Employee access','y');door(36,30,'sliding','Garden center sliding entrance','y');
+ // Two opposing glass leaves form the garden-to-store double sliding entrance.
+ door(36,17,'hinged','Employee access','y');
+ door(36,30,'sliding','Garden center double entrance','y',1,'start','garden-double');
+ door(36,31,'sliding','Garden center double entrance','y',1,'end','garden-double');
  // Staff wing has a complete exterior and rear wall, with functional room doors.
  for(let x=38;x<=46;x++){wall(x,10,'staff');wall(x,27,'staff')}
  for(let y=10;y<=27;y++){wall(38,y,'staff','y');wall(46,y,'staff','y')}
@@ -51,10 +54,9 @@ export function createHardwareStore(){
  // walls; avoid a redundant fence along the building's lower side.
  // Keep the freestanding wooden fence on the outer and southern edges.
  for(let y=28;y<=39;y++)wall(48,y,'gardenFence','y');
- for(let x=39;x<=47;x++)if(x!==43)wall(x,39,'gardenFence','x');
+ // The old outer gate is gone; wooden pickets now seal the entire south edge.
+ for(let x=39;x<=47;x++)wall(x,39,'gardenFence','x');
  wall(47,28,'gardenFence','x');
- // Relocate the opening to the outer end, leaving store-to-garden travel clear.
- door(43,39,'gate','Garden outer gate','x');
  for(let x of [5,11,17,23,29])for(let band=0;band<2;band++){
   const start=band===0?18:27;
   fixture('shelf',x,start,1,5,{department:['PAINT','TOOLS','ELECTRICAL','PLUMBING','HARDWARE'][(x-5)/6],stock:11,capacity:12});
@@ -100,7 +102,7 @@ export function createHardwareStore(){
  fixture('coatRack',39,18,1,1,{facing:'east'});
  fixture('storageShelves',45,25,1,1,{facing:'west'});
  fixture('supplyCabinet',39,25,1,1,{facing:'west'});
- // Garden beds are set back from the fence, leaving wide routes from the gate.
+ // Garden beds remain set back from the continuous southern fence.
  fixture('flowerBed',40,36,2,1);fixture('flowerBed',44,32,2,1);
  fixture('flowerBed',46,34,1,1);fixture('seedDisplay',46,30,1,1,{facing:'west'});
  fixture('pottingBench',44,30,2,1,{facing:'south'});
@@ -112,7 +114,7 @@ export function createHardwareStore(){
  for(let x of [4,12,20,28,36,44,52,60])props.push({id:'shrub-'+x,type:'shrub',x,y:1});
  for(let y of [12,20,28,37,45])props.push({id:'tree-'+y,type:'tree',x:60,y});
  for(let x of [51,57])for(let y of [13,25,38])props.push({id:'shrub-'+x+'-'+y,type:'shrub',x,y});
- return {id:'hardware-store',title:'Hardware Store',layoutVersion:13,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
+ return {id:'hardware-store',title:'Hardware Store',layoutVersion:14,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
 }
 export const inside=(x,y)=>x>=0&&y>=0&&x<WIDTH&&y<HEIGHT;
 export function fixtureAt(world,x,y){return world.fixtures.find(o=>x>=o.x&&x<o.x+o.w&&y>=o.y&&y<o.y+o.h)}
