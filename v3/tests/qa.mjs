@@ -13,6 +13,7 @@ import {signOpacity,signCoversNpc,signFace} from '../src/sign-visibility.js';
 import {hitProjectedFixture,isGroundTileTap,selectionLabel} from '../src/selection.js';
 import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness,HAIR_COLORS,HAIR_STYLES} from '../src/hud.js';
 import {readFileSync} from 'node:fs';
+import {pinchCamera} from '../src/pinch-zoom.js';
 const store=new Map();
 globalThis.localStorage={getItem:key=>store.get(key)||null,setItem:(key,value)=>store.set(key,value)};
 const world=createHardwareStore();
@@ -374,7 +375,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===15,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===16,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(!doorAt(migrated.world,43,39)&&doorAt(migrated.world,36,31)?.type==='sliding',
@@ -384,17 +385,23 @@ assert(migrated.world.fixtures.some(f=>f.type==='flowerBed')&&
  'Save migration restores new garden and loading props');
 assert.equal(migrated.world.fixtures.find(f=>f.id===preserved.id).stock,3,
  'Save migration preserves shelf inventory');
-// An older v14 save carries Garden Shelf stock from the former Receiving tile.
-const shelfSnapshot=JSON.parse(store.get(legacyKey));
-shelfSnapshot.world.layoutVersion=14;
-shelfSnapshot.world.fixtures=shelfSnapshot.world.fixtures.filter(f=>f.type!=='bagPallet');
-shelfSnapshot.world.fixtures.push({id:'bagPallet-32-35',type:'bagPallet',department:'GARDEN',x:32,y:35,w:2,h:1,stock:4});
-store.set(legacyKey,JSON.stringify(shelfSnapshot));
-const gardenMigrated=loadGame();
-const migratedGardenShelf=gardenMigrated?.world.fixtures.find(f=>f.department==='GARDEN'&&f.type==='bagPallet');
-assert.deepEqual([migratedGardenShelf?.x,migratedGardenShelf?.y,migratedGardenShelf?.w,migratedGardenShelf?.h],
- [35,32,1,2],'Migration uses new Garden Shelf wall position');
-assert.equal(migratedGardenShelf.stock,4,'Migration preserves Garden Shelf inventory');
+// v14 and v15 Garden Shelf stocks migrate into the renamed wall rack.
+for(const original of [
+ {id:'bagPallet-32-35',x:32,y:35,w:2,h:1,stock:4,layoutVersion:14},
+ {id:'bagPallet-35-32',x:35,y:32,w:1,h:2,stock:6,layoutVersion:15}
+]){
+ const shelfSnapshot=JSON.parse(store.get(legacyKey));
+ shelfSnapshot.world.layoutVersion=original.layoutVersion;
+ shelfSnapshot.world.fixtures=shelfSnapshot.world.fixtures.filter(f=>f.department!=='GARDEN'||f.type!=='gardenToolsRack');
+ shelfSnapshot.world.fixtures.push({id:original.id,type:'bagPallet',department:'GARDEN',
+  x:original.x,y:original.y,w:original.w,h:original.h,stock:original.stock});
+ store.set(legacyKey,JSON.stringify(shelfSnapshot));
+ const gardenMigrated=loadGame();
+ const rack=gardenMigrated?.world.fixtures.find(f=>f.type==='gardenToolsRack');
+ assert.deepEqual([rack?.x,rack?.y,rack?.w,rack?.h],[35,28,1,2],
+  'Legacy shelf inventory migrates to opposite side of door');
+ assert.equal(rack?.stock,original.stock,'Garden Tools keeps v'+original.layoutVersion+' stock');
+}
 // Occlusion regression: fixtures occupy large footprints while character
 // torsos rise above the floor; foreground staff should render after counters.
 const order=(object,actor)=>[
@@ -685,27 +692,37 @@ for(const y of [30,31]){
   'NPCs can walk through garden entrance at y='+y);
 }
 assert(doorAt(remodeled,20,10)?.slideTo==='end','Main entrance opposing slider remains');
-// The former Garden Shelf in Receiving sits immediately to the right
-// of the double doors on the INSIDE, oriented along the exterior wall.
-const gardenShelf=remodeled.fixtures.find(f=>f.department==='GARDEN'&&f.type==='bagPallet');
-assert(gardenShelf,'Stocked Garden Shelf still exists');
-assert.deepEqual([gardenShelf.x,gardenShelf.y,gardenShelf.w,gardenShelf.h],[35,32,1,2],
- 'Garden Shelf is rotated and placed against interior wall at y=32..33');
-assert.equal(selectionLabel(remodeled,gardenShelf),'Garden Shelf');
-assert(!remodeled.fixtures.some(f=>f.type==='bagPallet'&&f.x===32&&f.y===35),
- 'Old Receiving-area garden shelf has been removed');
-for(const yy of [32,33]){
+// Garden Tools hangs opposite its previous position, still inside the shop.
+// A tall Y-oriented panel displays shovels/rakes immediately before the doors.
+const gardenTools=remodeled.fixtures.find(f=>f.type==='gardenToolsRack');
+assert(gardenTools&&gardenTools.department==='GARDEN','Garden Tools rack exists');
+assert.deepEqual([gardenTools.x,gardenTools.y,gardenTools.w,gardenTools.h],[35,28,1,2],
+ 'Garden Tools now hangs against the opposite interior wall');
+assert.equal(gardenTools.facing,'west');
+assert.equal(selectionLabel(remodeled,gardenTools),'Garden Tools');
+assert(!remodeled.fixtures.some(f=>f.type==='bagPallet'&&f.department==='GARDEN'),
+ 'No garden bag shelf remains in Receiving or beside the sliders');
+for(const yy of [28,29]){
  assert.equal(remodeled.walls.get('36,'+yy)?.section,'exterior',
-  'Garden Shelf is directly against original exterior wall');
- assert(walkable(remodeled,34,yy),'Customers have an aisle in front of Garden Shelf');
+  'Rack backs onto the original exterior wall');
+ assert(walkable(remodeled,34,yy),'Customer aisle remains clear in front of the rack');
  assert(pathTo(remodeled,{x:35,y:30},{x:34,y:yy}).length>0,
-  'Customer can reach shelf from inside entrance');
+  'Garden Tools is reachable from inside the entrance');
 }
 for(const yy of [30,31]){
- assert(walkable(remodeled,35,yy),'Inside of each sliding door is unobstructed');
+ assert(walkable(remodeled,35,yy),'Both inside door approaches remain unobstructed');
  assert(pathTo(remodeled,{x:34,y:yy},{x:39,y:yy}).some(p=>p.x===36&&p.y===yy),
-  'Relocated Garden Shelf does not block either slider');
+  'Garden Tools does not block either slider');
 }
+const gardenRackDraws=graphicsCalls.count;
+artwork.drawFixture(gardenTools);
+assert(graphicsCalls.count-gardenRackDraws>70,
+ 'Rack renders hanging handles, spades and individual rake tines');
+const gardenRackSource=readFileSync(new URL('../src/artwork.js',import.meta.url),'utf8');
+assert(gardenRackSource.includes("type==='gardenToolsRack'")&&
+ gardenRackSource.includes("const yy=y-.25+i*.31,shovel=i%2===0")&&
+ gardenRackSource.includes("P(toolX-.035,ty,7.5)"),
+ 'Garden Tools artwork has six hanging shovels/rakes with visible tines');
 const gardenSignClient=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
 assert(gardenSignClient.includes("x:35.2,y:30.5,name:'GARDEN',accent:'#63905b',axis:'y'"),
  'GARDEN overhead sign is centered inside the two garden doors');
@@ -1247,4 +1264,38 @@ assert(liftSection.includes("surface(cabLeft,cabRear,cabRight-cabLeft,cabFront-c
 assert(liftSection.indexOf("Exactly two visible driver-side tires")<
  liftSection.indexOf("All four cage legs START"),
  'Wheel layer is behind full-height cage posts');
+// Pinch gestures scale about the same world point as the moving midpoint;
+// mouse wheel zoom, single-touch taps and NPC selection must remain intact.
+const viewport={w:800,h:500},camera={zoom:.7,offset:{x:100,y:200}};
+const touchBefore=[{x:300,y:200},{x:500,y:200}];
+const touchAfter=[{x:270,y:210},{x:570,y:210}];
+const cameraNext=pinchCamera(camera,touchBefore,touchAfter,viewport);
+assert(Math.abs(cameraNext.zoom-1.05)<1e-9,'Pinch-out zooms in');
+const beforeMid={x:400,y:200},afterMid={x:420,y:210};
+assert(Math.abs(camera.offset.x+(beforeMid.x-viewport.w*.5)/camera.zoom-
+ (cameraNext.offset.x+(afterMid.x-viewport.w*.5)/cameraNext.zoom))<1e-9,
+ 'Pinch translation preserves the world coordinate under the X midpoint');
+assert(Math.abs(camera.offset.y+(beforeMid.y-viewport.h*.56)/camera.zoom-
+ (cameraNext.offset.y+(afterMid.y-viewport.h*.56)/cameraNext.zoom))<1e-9,
+ 'Pinch translation preserves the world coordinate under the Y midpoint');
+assert.equal(pinchCamera(camera,[{x:0,y:0},{x:0,y:0}],touchAfter,viewport).zoom,camera.zoom,
+ 'Overlapping touch points cannot divide by zero');
+assert.equal(pinchCamera(camera,touchBefore,[{x:0,y:0},{x:2000,y:0}],viewport).zoom,2,
+ 'Maximum touch zoom matches wheel zoom');
+assert.equal(pinchCamera(camera,touchBefore,[{x:0,y:0},{x:1,y:0}],viewport).zoom,.32,
+ 'Minimum touch zoom matches wheel zoom');
+const pinchClient=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+const pinchPage=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+for(const fragment of ['activePointers=new Map()',"'pointerdown'","'pointermove'","'pointerup'",
+ "'pointercancel'","'lostpointercapture'","pinchCamera({zoom,offset}","drag=null;"]){
+ assert(pinchClient.includes(fragment),'Touch gesture support: '+fragment);
+}
+assert(pinchClient.includes("const tapped=!cancelled&&activePointers.size===1"),
+ 'Finishing two-finger gestures never taps NPCs or spends God Energy');
+assert(pinchClient.includes("addEventListener('wheel'"),
+ 'Mouse wheel zoom is unaffected');
+assert(pinchPage.includes('touch-action:none'),
+ 'Canvas gestures do not trigger browser page scroll/zoom');
+assert(!/pinch[- ]to[- ]zoom|pinch with two|pinch to zoom/i.test(pinchPage),
+ 'No on-screen hint about the pinch gesture is added');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
