@@ -1015,12 +1015,13 @@ export function createArtwork(ctx,project,getZoom){
    // Hand dolly depth order: far tire and rear rail first, platform and
    // braces next, and near tire / near rail last. No wheel crosses a rail.
    shadow(x,y,1,1,.75);
-   const rear=y-.25,front=y+.24,side=x+.22;
+   const rear=y-.25,front=y+.24,side=x+.34;
    const rearWheel=P(x+.35,rear,5);
    ellipse(rearWheel.x,rearWheel.y,7.5,7.5,'#253138','#73858a');
    ellipse(rearWheel.x,rearWheel.y,3.2,3.2,'#bfcbca');
    // Rear-facing structural rail is occluded by platform and nearer details.
-   line(P(side,rear,8),P(side,rear,56),'#506b75',4);
+   // Tall rear upright painted ON TOP of its tire, including the axle area.
+   line(P(side,rear,3),P(side,rear,56),'#506b75',5.5);
    line(P(side,rear,56),P(side,front,56),'#c8d4cf',4.7);
    line(P(side,rear,42),P(side,front,42),'#8ba2a5',3.4);
    line(P(side,rear,25),P(side,front,25),'#8ba2a5',3.4);
@@ -1039,34 +1040,37 @@ export function createArtwork(ctx,project,getZoom){
    // Painter-ordered industrial forklift. Far wheels and back safety posts
    // first, then body/seat, near wheels, overhead guard and forward mast.
    shadow(x,y,w,h,1.12);
-   // Far-side tires are partially hidden by the chassis.
-   for(const xx of [x+.82,x+1.47]){
-    const p=P(xx,y-.29,7);
-    ellipse(p.x,p.y,10,9,'#2a3135','#65777b');
-    ellipse(p.x,p.y,4,3.7,'#b6c1be');
+   // Four wheels share chassis axle coordinates (rather than drifting
+   // independently from the canopy). Far tires draw first.
+   const axleX=[x+.84,x+1.47],farY=y-.25,nearY=y+.25;
+   for(const xx of axleX){
+    const p=P(xx,farY,6);
+    ellipse(p.x,p.y,9,8,'#293238','#60777c');
+    ellipse(p.x,p.y,3.5,3.3,'#b8c6c2');
    }
-   // Rear posts are behind cab and should not slice through engine housing.
-   for(const xx of [x+.74,x+1.56])
-    line(P(xx,y-.28,20),P(xx,y-.28,64),'#425a62',4.4);
-   // Counterweight at right / rear; cab body anchored to the footprint.
-   solid(x+.65,y+.10,1.10,.75,19,'#d48c31','#89582d','#b76d2d');
-   solid(x+1.02,y+.13,.67,.69,27,'#edb444','#985f2d','#d99336');
-   surface(x+1.05,y+.16,.59,.55,28,'#dda048','#aa7136');
-   // Seat, steering and controls stand in front of back-panel body.
-   solid(x+.99,y+.13,.27,.29,36,'#39484d','#25353b','#5b7074');
-   line(P(x+.91,y+.31,29),P(x+.87,y+.31,44),'#586e74',2.8);
-   const steering=P(x+.87,y+.31,44);
-   ellipse(steering.x,steering.y,6.3,4.3,'#24363d','#aabbbb');
-   // Near tires layer over lower body, never over raised cab.
-   for(const xx of [x+.83,x+1.48]){
-    const p=P(xx,y+.34,7);
-    ellipse(p.x,p.y,10,9,'#253036','#65777b');
-    ellipse(p.x,p.y,4,3.7,'#b6c1be');
+   // Rear roof posts share the exact plan rectangle of the overhead guard.
+   const cabLeft=x+.75,cabRight=x+1.57,cabRear=y-.24,cabFront=y+.24;
+   for(const xx of [cabLeft,cabRight])
+    line(P(xx,cabRear,20),P(xx,cabRear,61),'#455b63',4.4);
+   solid(x+.68,y+.02,1.02,.76,18,'#da9538','#84532d','#b77730');
+   solid(x+1.03,y+.10,.62,.62,26,'#e9b34c','#916233','#d8953f');
+   surface(x+1.08,y+.13,.51,.50,27,'#c98a3d','#865a32');
+   // Occupant position sits below roof, fully inside the canopy footprint.
+   solid(x+1.05,y+.06,.28,.29,33,'#34454c','#24343b','#5c7074');
+   line(P(x+.94,y+.26,28),P(x+.90,y+.26,41),'#60747c',3);
+   const steering=P(x+.90,y+.26,41);
+   ellipse(steering.x,steering.y,6,4,'#293941','#acbab6');
+   // Near tires belong to same axles and stay outboard of the body.
+   for(const xx of axleX){
+    const p=P(xx,nearY,6);
+    ellipse(p.x,p.y,9,8,'#253138','#61767b');
+    ellipse(p.x,p.y,3.5,3.3,'#b8c6c2');
    }
-   // Open safety cage is clearly ABOVE the seat and behind mast uprights.
-   for(const xx of [x+.74,x+1.56])
-    line(P(xx,y+.34,28),P(xx,y+.34,64),'#485e66',4.3);
-   surface(x+.72,y-.30,.91,.70,65,'#3e555d','#667d80');
+   for(const xx of [cabLeft,cabRight])
+    line(P(xx,cabFront,26),P(xx,cabFront,61),'#4d636b',4.5);
+   // Roof corners use the SAME positions as all four cage uprights.
+   surface(cabLeft,cabRear,cabRight-cabLeft,cabFront-cabRear,62,
+    '#364e56','#6d8284');
    // The forward mast stays in the foreground and tines emerge at its base.
    for(const yy of [y-.26,y+.28])
     line(P(x+.29,yy,7),P(x+.29,yy,78),'#2c434d',6.8);
