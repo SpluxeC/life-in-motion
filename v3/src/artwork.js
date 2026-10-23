@@ -1012,56 +1012,74 @@ export function createArtwork(ctx,project,getZoom){
    for(let i=0;i<4;i++)line(P(x+.2+i*.17,y-.23,26),P(x+.2+i*.17,y+.10,26),'#586a6d',.8);
    const p=P(x+1.05,y-.15,33);ellipse(p.x,p.y,4,3,'#384f5a');
   }else if(type==='handTruck'){
-   // Real two-wheel upright appliance dolly with curved handle, tubular frame,
-   // braced backrest, low toe plate and thick solid rubber axle wheels.
+   // Hand dolly depth order: far tire and rear rail first, platform and
+   // braces next, and near tire / near rail last. No wheel crosses a rail.
    shadow(x,y,1,1,.75);
-   surface(x+.02,y+.23,.61,.35,4,'#9aadb2','#415b63');
-   for(const yy of [y-.26,y+.25]){
-    line(P(x+.25,yy,5),P(x+.25,yy,55),'#526e77',4.2);
-   }
-   line(P(x+.25,y-.26,55),P(x+.25,y+.25,55),'#d6dfda',5.2);
-   line(P(x+.25,y-.26,42),P(x+.25,y+.25,42),'#9eafb3',3.5);
-   line(P(x+.25,y-.26,21),P(x+.25,y+.25,21),'#9eafb3',3.5);
-   line(P(x+.25,y-.26,6),P(x-.32,y+.25,6),'#597780',3.5);
-   for(const yy of [y-.29,y+.29]){
-    const wheel=P(x+.31,yy,6);
-    ellipse(wheel.x,wheel.y,8,8,'#283338','#82949b');
-    ellipse(wheel.x,wheel.y,3.6,3.6,'#b8c6c5','#405760');
-   }
-   line(P(x-.38,y+.33,4),P(x+.24,y+.33,4),'#c6d2cc',4.6);
+   const rear=y-.25,front=y+.24,side=x+.22;
+   const rearWheel=P(x+.35,rear,5);
+   ellipse(rearWheel.x,rearWheel.y,7.5,7.5,'#253138','#73858a');
+   ellipse(rearWheel.x,rearWheel.y,3.2,3.2,'#bfcbca');
+   // Rear-facing structural rail is occluded by platform and nearer details.
+   line(P(side,rear,8),P(side,rear,56),'#506b75',4);
+   line(P(side,rear,56),P(side,front,56),'#c8d4cf',4.7);
+   line(P(side,rear,42),P(side,front,42),'#8ba2a5',3.4);
+   line(P(side,rear,25),P(side,front,25),'#8ba2a5',3.4);
+   line(P(side,rear,10),P(side,front,10),'#83999d',3);
+   // Low loading lip projects forward and is visibly grounded.
+   surface(x-.31,y-.14,.55,.42,5,'#a8b9b8','#526a72');
+   line(P(x-.34,y+.28,5),P(x+.22,y+.28,5),'#d0dcd6',4);
+   // Front wheel sits offset from the near rail, behind its bottom section.
+   const frontWheel=P(x+.35,front,5);
+   ellipse(frontWheel.x,frontWheel.y,7.5,7.5,'#253138','#73858a');
+   ellipse(frontWheel.x,frontWheel.y,3.2,3.2,'#bfcbca');
+   line(P(side,front,13),P(side,front,56),'#607e87',4.4);
+   // Axle is confined to the underside, not drawn through the handle.
+   line(P(x+.30,rear,5),P(x+.30,front,5),'#60747b',2);
   }else if(type==='forklift'){
-   // Parked industrial counterbalance forklift: two-tile footprint, real
-   // rubber tires, orange engine housing, enclosed cab, black mast and tines.
+   // Painter-ordered industrial forklift. Far wheels and back safety posts
+   // first, then body/seat, near wheels, overhead guard and forward mast.
    shadow(x,y,w,h,1.12);
-   solid(x+.66,y+.10,1.10,.77,17,'#e39a35','#87522b','#ba7229');
-   solid(x+.84,y+.18,.77,.60,27,'#edb13e','#935d2e','#ce8835');
-   surface(x+.92,y+.21,.54,.47,28,'#dba04a','#a66d33');
-   for(const xx of [x+.78,x+1.46])for(const yy of [y-.28,y+.33]){
-    const tire=P(xx,yy,7);
-    ellipse(tire.x,tire.y,11,10,'#2a3135','#58676a');
-    ellipse(tire.x,tire.y,4.1,4,'#bfc4bc','#515b5f');
+   // Far-side tires are partially hidden by the chassis.
+   for(const xx of [x+.82,x+1.47]){
+    const p=P(xx,y-.29,7);
+    ellipse(p.x,p.y,10,9,'#2a3135','#65777b');
+    ellipse(p.x,p.y,4,3.7,'#b6c1be');
    }
-   // Open protective roll cage, roof, seat and driving controls.
-   for(const xx of [x+.72,x+1.57])for(const yy of [y-.29,y+.33])
-    line(P(xx,yy,22),P(xx,yy,63),'#455b60',4.6);
-   surface(x+.73,y-.29,.90,.71,64,'#3c525a','#657a7e');
-   solid(x+1.03,y+.12,.28,.30,35,'#3b4548','#252f33','#667477');
-   const steering=P(x+.84,y+.35,42);
-   ellipse(steering.x,steering.y,7,5,'#2a393f','#9daeb0');
-   line(P(x+.87,y+.33,28),P(x+.85,y+.33,42),'#5e7277',3);
-   // Mast and cross-members rise higher than the cab roof.
+   // Rear posts are behind cab and should not slice through engine housing.
+   for(const xx of [x+.74,x+1.56])
+    line(P(xx,y-.28,20),P(xx,y-.28,64),'#425a62',4.4);
+   // Counterweight at right / rear; cab body anchored to the footprint.
+   solid(x+.65,y+.10,1.10,.75,19,'#d48c31','#89582d','#b76d2d');
+   solid(x+1.02,y+.13,.67,.69,27,'#edb444','#985f2d','#d99336');
+   surface(x+1.05,y+.16,.59,.55,28,'#dda048','#aa7136');
+   // Seat, steering and controls stand in front of back-panel body.
+   solid(x+.99,y+.13,.27,.29,36,'#39484d','#25353b','#5b7074');
+   line(P(x+.91,y+.31,29),P(x+.87,y+.31,44),'#586e74',2.8);
+   const steering=P(x+.87,y+.31,44);
+   ellipse(steering.x,steering.y,6.3,4.3,'#24363d','#aabbbb');
+   // Near tires layer over lower body, never over raised cab.
+   for(const xx of [x+.83,x+1.48]){
+    const p=P(xx,y+.34,7);
+    ellipse(p.x,p.y,10,9,'#253036','#65777b');
+    ellipse(p.x,p.y,4,3.7,'#b6c1be');
+   }
+   // Open safety cage is clearly ABOVE the seat and behind mast uprights.
+   for(const xx of [x+.74,x+1.56])
+    line(P(xx,y+.34,28),P(xx,y+.34,64),'#485e66',4.3);
+   surface(x+.72,y-.30,.91,.70,65,'#3e555d','#667d80');
+   // The forward mast stays in the foreground and tines emerge at its base.
    for(const yy of [y-.26,y+.28])
-    line(P(x+.30,yy,5),P(x+.30,yy,78),'#2b444d',7);
-   for(const z of [21,46,75])
-    line(P(x+.30,y-.28,z),P(x+.30,y+.30,z),'#9aabb1',4.2);
-   solid(x+.17,y-.13,.24,.56,13,'#526972','#314850','#617980');
-   // Twin forward forks lie low and project towards the front of the chassis.
+    line(P(x+.29,yy,7),P(x+.29,yy,78),'#2c434d',6.8);
+   for(const z of [19,43,76])
+    line(P(x+.29,y-.26,z),P(x+.29,y+.28,z),'#a1b2b7',3.8);
+   solid(x+.18,y-.12,.22,.53,13,'#556f77','#334b54','#72888c');
    for(const yy of [y-.20,y+.18]){
-    surface(x-.36,yy,.66,.10,6,'#c1cbc8','#40565c');
-    line(P(x-.39,yy+.05,6),P(x+.23,yy+.05,6),'#384e55',3.4);
+    surface(x-.36,yy,.63,.10,6,'#bac6c4','#485c63');
+    line(P(x-.38,yy+.05,6),P(x+.20,yy+.05,6),'#364c54',3);
    }
-   const warning=P(x+1.44,y-.25,65);
-   ellipse(warning.x,warning.y,5,3,'#e6a73a','#b96e2e');
+   // Safety lamp goes on top, not behind the mast.
+   const warning=P(x+1.45,y-.24,67);
+   ellipse(warning.x,warning.y,5,3,'#e8ae45','#a7682f');
   }else if(type==='filingCabinet'||type==='supplyCabinet'||type==='storageShelves'){
    const metal=type==='filingCabinet';
    solid(x,y,w,h,metal?36:40,metal?'#9aa8ae':'#b6bcb1',metal?'#657b82':'#707b75');
