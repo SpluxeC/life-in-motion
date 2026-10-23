@@ -374,7 +374,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===14,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===15,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(!doorAt(migrated.world,43,39)&&doorAt(migrated.world,36,31)?.type==='sliding',
@@ -384,6 +384,17 @@ assert(migrated.world.fixtures.some(f=>f.type==='flowerBed')&&
  'Save migration restores new garden and loading props');
 assert.equal(migrated.world.fixtures.find(f=>f.id===preserved.id).stock,3,
  'Save migration preserves shelf inventory');
+// An older v14 save carries Garden Shelf stock from the former Receiving tile.
+const shelfSnapshot=JSON.parse(store.get(legacyKey));
+shelfSnapshot.world.layoutVersion=14;
+shelfSnapshot.world.fixtures=shelfSnapshot.world.fixtures.filter(f=>f.type!=='bagPallet');
+shelfSnapshot.world.fixtures.push({id:'bagPallet-32-35',type:'bagPallet',department:'GARDEN',x:32,y:35,w:2,h:1,stock:4});
+store.set(legacyKey,JSON.stringify(shelfSnapshot));
+const gardenMigrated=loadGame();
+const migratedGardenShelf=gardenMigrated?.world.fixtures.find(f=>f.department==='GARDEN'&&f.type==='bagPallet');
+assert.deepEqual([migratedGardenShelf?.x,migratedGardenShelf?.y,migratedGardenShelf?.w,migratedGardenShelf?.h],
+ [35,32,1,2],'Migration uses new Garden Shelf wall position');
+assert.equal(migratedGardenShelf.stock,4,'Migration preserves Garden Shelf inventory');
 // Occlusion regression: fixtures occupy large footprints while character
 // torsos rise above the floor; foreground staff should render after counters.
 const order=(object,actor)=>[
@@ -674,6 +685,39 @@ for(const y of [30,31]){
   'NPCs can walk through garden entrance at y='+y);
 }
 assert(doorAt(remodeled,20,10)?.slideTo==='end','Main entrance opposing slider remains');
+// The former Garden Shelf in Receiving sits immediately to the right
+// of the double doors on the INSIDE, oriented along the exterior wall.
+const gardenShelf=remodeled.fixtures.find(f=>f.department==='GARDEN'&&f.type==='bagPallet');
+assert(gardenShelf,'Stocked Garden Shelf still exists');
+assert.deepEqual([gardenShelf.x,gardenShelf.y,gardenShelf.w,gardenShelf.h],[35,32,1,2],
+ 'Garden Shelf is rotated and placed against interior wall at y=32..33');
+assert.equal(selectionLabel(remodeled,gardenShelf),'Garden Shelf');
+assert(!remodeled.fixtures.some(f=>f.type==='bagPallet'&&f.x===32&&f.y===35),
+ 'Old Receiving-area garden shelf has been removed');
+for(const yy of [32,33]){
+ assert.equal(remodeled.walls.get('36,'+yy)?.section,'exterior',
+  'Garden Shelf is directly against original exterior wall');
+ assert(walkable(remodeled,34,yy),'Customers have an aisle in front of Garden Shelf');
+ assert(pathTo(remodeled,{x:35,y:30},{x:34,y:yy}).length>0,
+  'Customer can reach shelf from inside entrance');
+}
+for(const yy of [30,31]){
+ assert(walkable(remodeled,35,yy),'Inside of each sliding door is unobstructed');
+ assert(pathTo(remodeled,{x:34,y:yy},{x:39,y:yy}).some(p=>p.x===36&&p.y===yy),
+  'Relocated Garden Shelf does not block either slider');
+}
+const gardenSignClient=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+assert(gardenSignClient.includes("x:35.2,y:30.5,name:'GARDEN',accent:'#63905b',axis:'y'"),
+ 'GARDEN overhead sign is centered inside the two garden doors');
+assert(!gardenSignClient.includes("x:42.7,y:29,name:'GARDEN'"),
+ 'Old sign outside near the garden desk was removed');
+assert(gardenSignClient.includes("artwork.drawDepartmentSign(o.x,o.y,o.name,o.accent,o.axis||'x')"),
+ 'Renderer forwards doorway wall orientation to sign artwork');
+const gardenSign={x:35.2,y:30.5,name:'GARDEN',axis:'y'};
+const footprint=signFace(gardenSign,(x,y,z=0)=>({x:(x-y)*24,y:-(x+y)*12-z}));
+assert(footprint.length===4&&footprint[0].x<footprint[1].x,
+ 'Garden sign face follows the Y-oriented garden wall');
+artwork.drawDepartmentSign(35.2,30.5,'GARDEN','#63905b','y');
 assert(pathTo(remodeled,{x:29,y:42},{x:29,y:37}).some(p=>p.x===29&&p.y===39),
  'NPCs can enter through the second tile of the double receiving door');
 const doorGame=makeGame(remodeled,{seed:142,staff:4,customers:2});
