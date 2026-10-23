@@ -44,24 +44,73 @@ function project(x,y,z=0){let v=view(),p=iso(x,y);return{x:v.w*.5+(p.x-offset.x)
 function unproject(sx,sy){let v=view(),px=(sx-v.w*.5)/zoom+offset.x,py=(sy-v.h*.56)/zoom+offset.y;return{x:Math.round(px/TW-py/TH),y:Math.round(-px/TW-py/TH)}}
 function resize(){let dpr=Math.min(2,window.devicePixelRatio||1),v=view();if(lastViewport.w!==v.w||lastViewport.h!==v.h||canvas.width!==Math.round(v.w*dpr)){canvas.width=Math.round(v.w*dpr);canvas.height=Math.round(v.h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);lastViewport={...v}}}
 function drawHair(n,z,h){
- const appearance=hairAppearance(n),style=appearance.style,c=appearance.color;
- const head=-h*z*.82;
- // Protect the role-specific helmets; civilian hair uses world-scale silhouettes.
- if(n.role==='police'||n.role==='firefighter'||n.role==='paramedic'){
-  ctx.fillStyle=n.role==='firefighter'?'#cfb059':n.role==='police'?'#27465c':'#e6ebdc';
-  ctx.fillRect(-8*z,head-9*z,16*z,6*z);ctx.fillRect(-11*z,head-4*z,20*z,3*z);return;
+ const {color,style}=hairAppearance(n),dir=n.facing==='left'?-1:1,head=-h*z*.82;
+ ctx.save();ctx.scale(dir,1);
+ const point=(x,y)=>({x:x*z,y:head+y*z});
+ const oval=(x,y,rx,ry,fill)=>{
+  ctx.beginPath();ctx.ellipse(x*z,head+y*z,rx*z,ry*z,0,0,Math.PI*2);
+  ctx.fillStyle=fill;ctx.fill();
+ };
+ const shape=(pts,fill)=>{
+  ctx.beginPath();pts.forEach(([x,y],i)=>{
+   const p=point(x,y);if(i)ctx.lineTo(p.x,p.y);else ctx.moveTo(p.x,p.y);
+  });
+  ctx.closePath();ctx.fillStyle=fill;ctx.fill();
+ };
+ const stroke=(pts,ink,w=1)=>{
+  ctx.beginPath();pts.forEach(([x,y],i)=>{
+   const p=point(x,y);if(i)ctx.lineTo(p.x,p.y);else ctx.moveTo(p.x,p.y);
+  });ctx.strokeStyle=ink;ctx.lineWidth=w*z;ctx.stroke();
+ };
+ if(n.role==='firefighter'){
+  oval(0,-5,8,5,'#be913b');
+  shape([[-8,-5],[-6,-11],[-2,-14],[3,-14],[8,-9],[9,-3],[-8,-3]],'#e0b441');
+  shape([[5,-5],[11,-3],[10,2],[6,4]],'#af832e');
+  stroke([[-1,-13],[2,-9],[3,-4]],'#ffe08a',1.7);
+  shape([[-3,-6],[3,-6],[3,-3],[-3,-3]],'#e6d28b');
+  stroke([[-9,-2],[11,-2]],'#5c4f3d',2.4);
+  stroke([[-4,0],[-2,5],[5,4]],'#404a48',1.1);
+ }else if(n.role==='police'){
+  shape([[-7,-5],[-6,-11],[-2,-13],[5,-12],[8,-8],[8,-4]],'#284665');
+  oval(0,-5,7.5,2.7,'#314f70');
+  shape([[-8,-5],[9,-5],[9,-2],[-8,-2]],'#162d43');
+  shape([[3,-3],[12,-3],[13,-1],[6,1]],'#1a2731');
+  oval(-.5,-5.3,1.4,1.9,'#d9e4d2');
+  stroke([[-6,-9],[0,-11],[6,-9]],'#6483a0',.8);
+ }else if(n.role==='paramedic'){
+  shape([[-7,-4],[-6,-10],[-1,-12],[5,-10],[8,-6],[7,-3]],'#edf3eb');
+  shape([[4,-4],[12,-3],[12,-1],[5,0]],'#344e65');
+  stroke([[-6,-4],[7,-4]],'#8a9ca2',1.1);
+  shape([[-1,-10],[1,-10],[1,-7],[4,-7],[4,-5],[1,-5],[1,-3],[-1,-3],[-1,-5],[-4,-5],[-4,-7],[-1,-7]],'#c93d49');
+ }else{
+  oval(0,-4.4,7.2,5.7,color);
+  if(style==='buzz'){oval(0,-3.8,7.1,3.4,color)}
+  else if(style==='sidePart'){
+   shape([[-7,-6],[-2,-11],[7,-8],[8,-3],[3,-3],[0,-6],[-4,-2]],color);
+   stroke([[0,-8],[4,-5],[7,-5]],'#dfcfb280',.9);
+  }else if(style==='curly'){
+   for(let i=0;i<7;i++)oval(-6+i*2.15,-7-(i%3)*1.5,3.1,3.2,color);
+   oval(-7,1,2.9,3,color);oval(7,0,3,3.2,color);
+  }else if(style==='wavy'){
+   for(const [x,y] of [[-7,-3],[-9,1],[8,-2],[8,3]])oval(x,y,3.3,4,color);
+  }else if(style==='bob'){
+   shape([[-7,-7],[7,-7],[9,5],[6,7],[-7,7],[-9,4]],color);
+  }else if(style==='ponytail'){
+   oval(8,-1,3.6,4,color);
+   shape([[7,0],[11,0],[13,9],[9,11]],color);
+   stroke([[8,1],[12,3]],'#d6b788',1);
+  }else if(style==='bun'){
+   oval(0,-12,4.6,4,color);oval(0,-7,7,4,color);
+  }else if(style==='long'){
+   shape([[-8,-7],[-9,10],[-5,11],[-5,-1],[7,-2],[8,12],[11,11],[9,-7]],color);
+  }else if(style==='messy'){
+   shape([[-8,-4],[-8,-12],[-4,-8],[-1,-14],[2,-9],[7,-13],[9,-4],[5,-3]],color);
+  }else{
+   shape([[-7,-7],[-3,-11],[5,-10],[8,-4],[3,-3],[-2,-2]],color);
+  }
+  if(style!=='buzz'&&style!=='bun')oval(5,-2.5,2.5,2,color);
  }
- ctx.fillStyle=c;ctx.strokeStyle=c;ctx.lineWidth=3*z;
- const tuft=(x,y,r)=>{ctx.beginPath();ctx.arc(x*z,head+y*z,r*z,0,Math.PI*2);ctx.fill()};
- if(style==='buzz'){ctx.beginPath();ctx.ellipse(0,head-2*z,7*z,5*z,0,Math.PI,Math.PI*2);ctx.fill()}
- else if(style==='sidePart'){ctx.fillRect(-7*z,head-9*z,14*z,5*z);tuft(-6,-5,4)}
- else if(style==='curly'||style==='messy'){for(let k=0;k<6;k++)tuft(-7+k*2.8,-6-(k%3)*2,style==='curly'?3:3.4)}
- else if(style==='wavy'){ctx.fillRect(-7*z,head-9*z,14*z,5*z);tuft(-8,1,3);tuft(8,2,3)}
- else if(style==='bob'){ctx.fillRect(-8*z,head-7*z,16*z,9*z);tuft(0,-8,7)}
- else if(style==='ponytail'){tuft(0,-5,7);tuft(9,4,3);tuft(11,8,3)}
- else if(style==='bun'){tuft(0,-5,7);tuft(1,-13,4)}
- else if(style==='long'){ctx.fillRect(-8*z,head-7*z,16*z,13*z);tuft(0,-7,7)}
- else{tuft(0,-5,7);tuft(-4,-5,4)}
+ ctx.restore();
 }
 function stick(n,t){let p=project(n.rx,n.ry),z=zoom*(n.role==='customer'||n.role==='employee'?1:1.07),moving=n.path.length>0,step=moving?Math.sin(t*10+n.id.length):0,h=n.unconscious>0?5:35;ctx.save();ctx.translate(p.x,p.y);ctx.strokeStyle='#121a1c';ctx.lineWidth=2.6*z;ctx.lineCap='round';ctx.fillStyle='#121b2380';ctx.beginPath();ctx.ellipse(0,2*z,10*z,4*z,0,0,7);ctx.fill();if(!n.alive){ctx.rotate(Math.PI/2);ctx.translate(0,9*z)}if(n.unconscious>0){ctx.rotate(1.4);ctx.translate(0,9*z)}
  const leg=h*.45*z;ctx.beginPath();ctx.moveTo(0,-h*z*.56);ctx.lineTo(0,-10*z);ctx.moveTo(0,-10*z);ctx.lineTo((-7+step*4)*z,0);ctx.moveTo(0,-10*z);ctx.lineTo((7-step*4)*z,0);const pose=n.action||'idle',wave=Math.sin((n.actionPhase||0)*7),bob=moving?Math.sin(t*12+n.id.length)*1.4:0;
