@@ -230,9 +230,12 @@ function portraitHTML(n){
   style==='wavy'?'<path d="M16 43Q6 2 32-5Q62-20 82 11l2 31-10 17-6-30Q45 13 29 30l-6 29z"/>':
   style==='messy'?'<path d="M12 37l9-26 13-14 8 7 9-16 11 15 18-1 9 30-18-9Q47 6 26 29z"/>':
   '<path d="M19 38Q11-5 50-7q38 0 31 45l-9-15Q50 12 28 26z"/>';
- const helmet=n.role==='police'?'<path d="M22 20h56v10H22z" fill="#25435c"/>':
-  n.role==='firefighter'?'<path d="M17 30Q23-8 50-8T83 30z" fill="#d6b753"/>':
-  n.role==='paramedic'?'<path d="M23 21Q50-7 77 21v9H23z" fill="#e9f1ec"/>':'';
+ const helmet=n.role==='police'?
+  '<path d="M21 30Q18 0 42-5Q64-12 79 11L82 30Z" fill="#2f4c6c" stroke="#142e42" stroke-width="3"/><path d="M23 24H81V35H20Z" fill="#1c354b"/><path d="M52 18L59 23L54 31H47L43 23Z" fill="#cbd8d6" stroke="#516e81"/><path d="M61 30Q85 29 91 36Q82 43 61 38Z" fill="#182832" stroke="#334b55" stroke-width="2"/><path d="M28 9Q48 1 68 10" fill="none" stroke="#708da5" stroke-width="2"/>':
+  n.role==='firefighter'?
+  '<path d="M18 33Q14-11 49-12Q84-10 84 32L77 47H24Z" fill="#d4aa3b" stroke="#7d5e27" stroke-width="3"/><path d="M44-10Q51-16 57-9L57 30H44Z" fill="#f3d26b"/><path d="M21 26H83L92 33L85 39H15L8 33Z" fill="#9f772d" stroke="#58482b" stroke-width="3"/><path d="M40 20H61V33H40Z" fill="#ede4b4" stroke="#b38c36"/><path d="M26 36L28 57L36 60" fill="none" stroke="#4b5047" stroke-width="3"/><path d="M80 36L73 53" stroke="#63502e" stroke-width="3"/>':
+  n.role==='paramedic'?
+  '<path d="M20 28Q17-7 52-7Q79-6 83 28H20Z" fill="#ecf0e9" stroke="#6b8386" stroke-width="3"/><path d="M19 27H81V36H20Z" fill="#cad7d3"/><path d="M56 29Q82 25 89 36Q79 43 56 38Z" fill="#314e60"/><path d="M45 7H55V16H64V24H55V33H45V24H36V16H45Z" fill="#c73e4a"/><path d="M28 13Q34 7 40 8" stroke="#fff" fill="none" stroke-width="2"/>':'';
  const vest=n.role==='employee'?'<path d="M23 96L16 118h68L77 96l-15-8H38z" fill="#c9323c" stroke="#182025" stroke-width="3"/>':'';
  const extra=fear?'<path d="M77 56q5 8 0 14" stroke="#65aeca" stroke-width="3" fill="none"/>':
   angry?'<path d="M21 61l-6 8 M78 61l6 8" stroke="#c97669" stroke-width="2"/>':
@@ -242,7 +245,7 @@ function portraitHTML(n){
   '<ellipse cx="50" cy="48" rx="31" ry="37" fill="#f7f4eb" stroke="#293436" stroke-width="3"/>'+
   '<g fill="#18252a">'+eyes+'</g><path d="'+brow+'" stroke="#283032" stroke-width="3.5" fill="none"/>'+
   '<path d="'+mouth+'" stroke="#4b292c" stroke-width="3.2" fill="none"/>'+extra+
-  '<g fill="'+color+'" stroke="'+color+'" stroke-width="2">'+hairShape+'</g>'+helmet+
+  '<g transform="'+(n.facing==='left'?'translate(100 0) scale(-1 1)':'')+'"><g fill="'+color+'" stroke="'+color+'" stroke-width="2">'+hairShape+'</g>'+helmet+'</g>'+
   '</svg><div><strong>'+escapeHTML(n.name)+'</strong><span>'+escapeHTML(n.role)+' · '+escapeHTML(mood)+'</span></div></div>';
 }
 function powerUsable(p,n=null){
