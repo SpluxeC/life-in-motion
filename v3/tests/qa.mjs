@@ -362,7 +362,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===7,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===8,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(migrated.world.fixtures.some(f=>f.type==='flowerBed')&&
@@ -754,7 +754,7 @@ const safetyV6=serviceWorldV6.fixtures.find(f=>f.type==='safetyStation');
 assert.deepEqual([serviceDeskV6.x,serviceDeskV6.y,serviceDeskV6.w,serviceDeskV6.h],
  [31,13,3,1],'Service desk spans three tiles along the customer-facing front');
 assert.equal(serviceDeskV6.monitorFaces,'north');
-assert.deepEqual([safetyV6.x,safetyV6.y,safetyV6.w,safetyV6.h],[35,12,1,1],
+assert.deepEqual([safetyV6.x,safetyV6.y,safetyV6.w,safetyV6.h],[35,19,1,1],
  'Wall-mounted emergency station is relocated away from staff entry');
 assert.equal(safetyV6.facing,'west','Safety cabinet doors face the open aisle');
 for(const p of [{x:32,y:12},{x:32,y:14},{x:34,y:17},{x:35,y:17},{x:36,y:17}]){
@@ -928,4 +928,67 @@ simulatedWalkerGame.paused=true;
 updateGame(simulatedWalkerGame,1);
 assert.equal(simulatedWalker.walkDistance,walked,
  'Pausing stops the travel-driven arm and leg animation');
+
+// Hardware department remodeling: center-mounted key duplicator, two-tile
+// paint tinting desk, wall-side first aid and relocated right-hand endcap.
+const remodeledHardware=createHardwareStore();
+const remodelPaint=remodeledHardware.fixtures.find(f=>f.type==='paintMixer');
+const remodelKey=remodeledHardware.fixtures.find(f=>f.type==='keyCutter');
+const remodelSafety=remodeledHardware.fixtures.find(f=>f.type==='safetyStation');
+const remodelTools=remodeledHardware.fixtures.find(f=>f.type==='endcap'&&f.department==='TOOLS');
+assert.deepEqual([remodelPaint.x,remodelPaint.y,remodelPaint.w,remodelPaint.h],[7,23,2,1],
+ 'Larger paint workstation occupies center of Paint department');
+assert.deepEqual([remodelKey.x,remodelKey.y,remodelKey.w,remodelKey.h],[31,23,2,1],
+ 'Key cutter sits at center of Hardware department');
+assert.deepEqual([remodelTools.x,remodelTools.y],[34,23],
+ 'Small Tools endcap moved out of Tools aisle to Hardware right side');
+assert.deepEqual([remodelSafety.x,remodelSafety.y],[35,19],
+ 'Safety cabinet is on the south side of employee door');
+assert(remodelSafety.y>doorAt(remodeledHardware,36,17).y,
+ 'Safety station is beyond the employee doorway, not above it');
+assert(!remodeledHardware.fixtures.some(f=>f.type==='endcap'&&f.x===9&&f.y===23),
+ 'Old small Tools display no longer obstructs aisle center');
+const serviceSignIsometric={x:34,y:11,name:'SERVICE'};
+const serviceSignShape=signFace(serviceSignIsometric,(x,y,z=0)=>({x:(x-y)*24,y:-(x+y)*12-z}));
+const extentPoints=points=>({l:Math.min(...points.map(p=>p.x)),r:Math.max(...points.map(p=>p.x)),
+ t:Math.min(...points.map(p=>p.y)),b:Math.max(...points.map(p=>p.y))});
+const safetyGeometry=[];
+for(const x of [remodelSafety.x-.5,remodelSafety.x+remodelSafety.w-.5])
+ for(const y of [remodelSafety.y-.5,remodelSafety.y+remodelSafety.h-.5])
+  for(const z of [0,43])safetyGeometry.push({x:(x-y)*24,y:-(x+y)*12-z});
+const signBounds=extentPoints(serviceSignShape),safetyBounds=extentPoints(safetyGeometry);
+assert(signBounds.r<=safetyBounds.l||safetyBounds.r<=signBounds.l||
+ signBounds.b<=safetyBounds.t||safetyBounds.b<=signBounds.t,
+ 'Relocated safety cabinet is not projected behind Service sign');
+const remodelEmployeeDoor=doorAt(remodeledHardware,36,17);
+for(const location of [{x:35,y:16},{x:35,y:17},{x:35,y:18},
+ {x:35,y:20},{x:6,y:23},{x:8,y:22},{x:8,y:24},
+ {x:31,y:22},{x:31,y:24},{x:33,y:23},{x:33,y:24},{x:34,y:24}]){
+ assert(walkable(remodeledHardware,location.x,location.y),
+  'Door, department aisles and workstation access clear at '+location.x+','+location.y);
+ assert(pathTo(remodeledHardware,{x:20,y:12},location).length>0,
+  'NPC route remains connected at '+location.x+','+location.y);
+}
+const remfixtures=remodeledHardware.fixtures;
+for(let i=0;i<remfixtures.length;i++){
+ const a=remfixtures[i];
+ for(let j=i+1;j<remfixtures.length;j++){
+  const b=remfixtures[j];
+  assert(a.x+a.w<=b.x||b.x+b.w<=a.x||a.y+a.h<=b.y||b.y+b.h<=a.y,
+   'Fixtures must not overlap after relocating '+a.id+' and '+b.id);
+ }
+}
+const mixerCalls0=graphicsCalls.count;
+artwork.drawFixture(remodelPaint);
+const mixerCalls=graphicsCalls.count-mixerCalls0;
+const keyCalls0=graphicsCalls.count;
+artwork.drawFixture(remodelKey);
+const keyCalls=graphicsCalls.count-keyCalls0;
+assert(mixerCalls>95,'Paint desk draws a detailed dispenser, tint screen, paint can and shaker');
+assert(keyCalls>95,'Key cutter draws grinding wheel, key clamps, control housing and blanks');
+const improvedArt=readFileSync(new URL('../src/artwork.js',import.meta.url),'utf8');
+assert(improvedArt.includes('function paintMixingDesk(o)')&&improvedArt.includes('function keyCuttingBench(o)'),
+ 'Both machines have dedicated artwork matched to their full physical footprint');
+assert(improvedArt.includes("paintMixingDesk(o);")&&improvedArt.includes("keyCuttingBench(o);"),
+ 'Fixture dispatcher uses the new workstation renderers');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
