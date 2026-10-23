@@ -31,3 +31,22 @@ export const POWER_HELP={
  hazard:['Start a random fire, spill, electrical, or falling hazard.','Choose Use Power, then tap an open floor tile or a fixture with open space nearby.'],
  lightning:['Strike an NPC with deadly lightning.','Choose Use Power, then tap a living NPC. High energy cost.']
 };
+
+export const HAIR_COLORS=['#211a17','#37271f','#573829','#76503a','#9b704a','#b18c60','#d3b178','#e2cf9d','#934b31','#a7a39a','#e5e1d7'];
+export const HAIR_STYLES=['short','sidePart','curly','wavy','bob','ponytail','buzz','bun','long','messy'];
+export function hairAppearance(n){
+ const num=Number(String(n.id||'0').replace(/[^0-9]/g,''))||0;
+ return {color:n.hairColor||HAIR_COLORS[num%HAIR_COLORS.length],style:n.hairStyle||HAIR_STYLES[num%HAIR_STYLES.length]};
+}
+export function npcWeakness(n){
+ const t=n.traits||{};
+ const ranked=[
+  {value:t.bravery??50,label:'Fearful'},
+  {value:t.loyalty??50,label:'Disloyal'},
+  {value:t.compassion??50,label:'Low compassion'},
+  {value:t.suspicion??50,label:'Too trusting'},
+  {value:100-(t.aggression??50),label:'Quick temper'}
+ ];
+ ranked.sort((a,b)=>a.value-b.value);
+ return ranked[0].label;
+}
