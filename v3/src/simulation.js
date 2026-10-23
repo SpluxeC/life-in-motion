@@ -151,8 +151,12 @@ export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
   // stays open while the opening is occupied and closes after a short clear period.
   // A double-width opening is one door with one animation and two
   // accessible grid tiles. Characters nearing either half trigger it.
+  // Both halves of an automatic double slider react to the same approach.
+  // Each leaf remains a selectable / passable tile, but they move in sync.
+  const joined=d.pairId?g.world.doors.filter(other=>other.pairId===d.pairId):[d];
   const cells=[];
-  for(let ix=0;ix<(d.w||1);ix++)for(let iy=0;iy<(d.h||1);iy++)cells.push({x:d.x+ix,y:d.y+iy});
+  for(const leaf of joined)for(let ix=0;ix<(leaf.w||1);ix++)
+   for(let iy=0;iy<(leaf.h||1);iy++)cells.push({x:leaf.x+ix,y:leaf.y+iy});
   const approaching=g.npcs.some(n=>n.alive&&!n.arrested&&n.unconscious<=0&&
     cells.some(c=>Math.hypot(n.rx-c.x,n.ry-c.y)<2.4||
        (n.path||[]).slice(0,4).some(p=>p.x===c.x&&p.y===c.y&&Math.hypot(n.rx-c.x,n.ry-c.y)<4.8)));
