@@ -1065,4 +1065,17 @@ for(const type of ['paintMixer','keyCutter','wireCutter']){
  assert(clientCode.includes("'"+type+"'"),
   type+' participates in the large/tall fixture touch target');
 }
+// Selected machine headers use user-friendly full equipment names.
+const machineLabels={
+ paintMixer:'Paint Mixer',keyCutter:'Key Cutting Machine',wireCutter:'Wire Cutting Machine'
+};
+for(const [type,label] of Object.entries(machineLabels)){
+ const fixture=world.fixtures.find(f=>f.type===type);
+ assert(fixture,'New '+type+' fixture exists');
+ assert.equal(selectionLabel(world,fixture),label,'Correct selected label: '+label);
+}
+const artStyleCode=readFileSync(new URL('../src/artwork.js',import.meta.url),'utf8');
+assert(artStyleCode.includes("Prominent west-facing display fascia")&&
+ artStyleCode.includes("Tall back frame and visually larger side basket"),
+ 'Visible wall display fronts and utility-cart silhouette have explicit details');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
