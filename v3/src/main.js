@@ -7,6 +7,7 @@ import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness} from 
 import {hitProjectedFixture,isGroundTileTap,selectionLabel} from './selection.js?v=garden-shelf-label-map15-20261023';
 import {signOpacity} from './sign-visibility.js?v=garden-sign-shelf-wall-map15-20261023';
 import {npcLimbPose} from './npc-pose.js?v=driver-side-forklift-wheels-20261023-1';
+import {pinchCamera} from './pinch-zoom.js?v=garden-tools-pinch-map16-20261023';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d');
 let game=null,scene=createHardwareStore(),zoom=.72,offset={x:0,y:0},last=performance.now(),acc=0,lastHud=0,lastSave=0,lastViewport={w:0,h:0},drag=null,selected=null,resultShown=false,activeTab='world',selectedPowerId='whisper',pendingPower=null,feedback='';
@@ -356,7 +357,7 @@ function inspectAtScreen(sx,sy){
   if(hit!==null)add(d,hit,1);
  }
  for(const f of world.fixtures){
-  const tall=['lockers','vending','drinkCooler','shelf','hardwareBins','paintMixer','keyCutter','wireCutter','saw','forklift','handTruck'].includes(f.type);
+  const tall=['lockers','vending','drinkCooler','shelf','hardwareBins','paintMixer','keyCutter','wireCutter','saw','forklift','handTruck','gardenToolsRack'].includes(f.type);
   const hit=boxHit(f,tall?49:35,5);
   if(hit!==null)add(f,hit,2);
  }
@@ -396,9 +397,51 @@ function inspectAtScreen(sx,sy){
  if(hits.length){selectTarget(hits[0].target);return}
  inspect(tile.x,tile.y)
 }
-canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);drag={x:e.clientX,y:e.clientY,ox:offset.x,oy:offset.y,moved:false}});
-canvas.addEventListener('pointermove',e=>{if(!drag)return;let dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>7)drag.moved=true;if(game?.npcs.some(n=>n.id===selected?.id))return;offset.x=drag.ox-dx/zoom;offset.y=drag.oy-dy/zoom});
-canvas.addEventListener('pointerup',e=>{if(!drag)return;if(!drag.moved){let rect=canvas.getBoundingClientRect(),tile=unproject(e.clientX-rect.left,e.clientY-rect.top);inspectAtScreen(e.clientX-rect.left,e.clientY-rect.top)}drag=null});
+// Pointer events support one-finger map drags/taps and anchored two-finger
+// pinch/pan; a multi-touch gesture must never select an NPC or fire a power.
+const activePointers=new Map();
+const pointerPosition=e=>{
+ const rect=canvas.getBoundingClientRect();
+ return {x:e.clientX-rect.left,y:e.clientY-rect.top};
+};
+canvas.addEventListener('pointerdown',e=>{
+ activePointers.set(e.pointerId,pointerPosition(e));
+ canvas.setPointerCapture(e.pointerId);
+ if(activePointers.size===1)
+  drag={pointerId:e.pointerId,x:e.clientX,y:e.clientY,ox:offset.x,oy:offset.y,moved:false};
+ else drag=null;
+});
+canvas.addEventListener('pointermove',e=>{
+ if(!activePointers.has(e.pointerId))return;
+ const before=[...activePointers.values()];
+ activePointers.set(e.pointerId,pointerPosition(e));
+ if(activePointers.size===2){
+  const next=pinchCamera({zoom,offset},before,[...activePointers.values()],view());
+  zoom=next.zoom;
+  // Follow mode retains its existing centered camera, but zoom still works.
+  if(!game?.npcs.some(n=>n.id===selected?.id))offset=next.offset;
+  return;
+ }
+ if(activePointers.size!==1||!drag||drag.pointerId!==e.pointerId)return;
+ const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
+ if(Math.abs(dx)+Math.abs(dy)>7)drag.moved=true;
+ if(game?.npcs.some(n=>n.id===selected?.id))return;
+ offset.x=drag.ox-dx/zoom;offset.y=drag.oy-dy/zoom;
+});
+function finishPointer(e,cancelled=false){
+ if(!activePointers.has(e.pointerId))return;
+ const tapped=!cancelled&&activePointers.size===1&&
+  drag?.pointerId===e.pointerId&&!drag.moved;
+ activePointers.delete(e.pointerId);
+ drag=null;
+ if(tapped){
+  const point=pointerPosition(e);
+  inspectAtScreen(point.x,point.y);
+ }
+}
+canvas.addEventListener('pointerup',e=>finishPointer(e));
+canvas.addEventListener('pointercancel',e=>finishPointer(e,true));
+canvas.addEventListener('lostpointercapture',e=>finishPointer(e,true));
 canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=clamp(zoom*(e.deltaY>0?.91:1.1),.32,2)},{passive:false});
 function frame(now){
  const dt=Math.min(.08,(now-last)/1000);last=now;
