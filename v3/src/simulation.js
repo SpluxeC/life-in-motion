@@ -40,7 +40,18 @@ export function spawnNPC(g,role='customer'){
  const hairColors=['#211a17','#37271f','#573829','#76503a','#9b704a','#b18c60','#d3b178','#e2cf9d','#934b31','#a7a39a','#e5e1d7'];
  const hairStyles=['short','sidePart','curly','wavy','bob','ponytail','buzz','bun','long','messy'];
  const hairColor=hairColors[Math.floor(r()*hairColors.length)],hairStyle=hairStyles[Math.floor(r()*hairStyles.length)];
- const n={hairColor,hairStyle,id:'npc-'+i,name:FIRST[Math.floor(r()*FIRST.length)]+' '+LAST[Math.floor(r()*LAST.length)],role,x:pos.x,y:pos.y,rx:pos.x,ry:pos.y,health:100,bleeding:0,pain:0,unconscious:0,alive:true,arrested:false,detention:0,emotion:{anger:r()*20,fear:r()*15,stress:r()*15},traits,relationships:{},memory:[],inventory:r()<.6?[ITEMS[Math.floor(r()*ITEMS.length)].id]:[],path:[],target:null,activity:role==='employee'?'Working':'Browsing',think:1+r()*3,callCooldown:0,recovery:0,panic:0};
+ // Three RNG samples, as before: select a starting mood and vary its
+ // intensity without changing the deterministic sequence for the rest of the round.
+ const moodRoll=r(),moodStrength=r(),moodVariation=r();
+ let emotion;
+ if(moodRoll<.18)emotion={anger:4+moodStrength*13,fear:3+moodVariation*13,stress:4+moodStrength*15}; // Calm
+ else if(moodRoll<.38)emotion={anger:6+moodStrength*17,fear:35+moodVariation*21,stress:17+moodStrength*14}; // Nervous
+ else if(moodRoll<.58)emotion={anger:38+moodStrength*20,fear:4+moodVariation*16,stress:12+moodVariation*17}; // Irritated
+ else if(moodRoll<.78)emotion={anger:7+moodStrength*19,fear:10+moodVariation*19,stress:35+moodStrength*20}; // Uneasy
+ else if(moodRoll<.9)emotion={anger:13+moodStrength*15,fear:14+moodVariation*15,stress:63+moodStrength*16}; // Stressed
+ else if(moodRoll<.95)emotion={anger:66+moodStrength*16,fear:4+moodVariation*15,stress:30+moodVariation*18}; // Furious
+ else emotion={anger:5+moodVariation*17,fear:65+moodStrength*16,stress:39+moodVariation*17}; // Terrified
+ const n={hairColor,hairStyle,id:'npc-'+i,name:FIRST[Math.floor(r()*FIRST.length)]+' '+LAST[Math.floor(r()*LAST.length)],role,x:pos.x,y:pos.y,rx:pos.x,ry:pos.y,health:100,bleeding:0,pain:0,unconscious:0,alive:true,arrested:false,detention:0,emotion,traits,relationships:{},memory:[],inventory:r()<.6?[ITEMS[Math.floor(r()*ITEMS.length)].id]:[],path:[],target:null,activity:role==='employee'?'Working':'Browsing',think:1+r()*3,callCooldown:0,recovery:0,panic:0};
  if(role==='employee'||role==='customer')initializeRoutine(n,role==='employee'?coworkerCount:shopperCount);
  g.npcs.push(n);return n;
 }
