@@ -1,11 +1,11 @@
-import {createHardwareStore,doorAt,fixtureAt,nearestOpen,walkable,key} from './world.js?v=garden-double-door-restore-20261023-1';
-import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v=garden-double-door-restore-20261023-1';
-import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js?v=garden-double-door-restore-20261023-1';
-import {createArtwork} from './artwork.js?v=garden-double-door-restore-20261023-1';
+import {createHardwareStore,doorAt,fixtureAt,nearestOpen,walkable,key} from './world.js?v=garden-sign-shelf-wall-map15-20261023';
+import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v=garden-sign-shelf-wall-map15-20261023';
+import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js?v=garden-sign-shelf-wall-map15-20261023';
+import {createArtwork} from './artwork.js?v=garden-sign-shelf-wall-map15-20261023';
 import {renderDepth,compareRenderDepth} from './render-depth.js?v=driver-side-forklift-wheels-20261023-1';
 import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness} from './hud.js?v=driver-side-forklift-wheels-20261023-1';
 import {hitProjectedFixture,isGroundTileTap,selectionLabel} from './selection.js?v=driver-side-forklift-wheels-20261023-1';
-import {signOpacity} from './sign-visibility.js?v=driver-side-forklift-wheels-20261023-1';
+import {signOpacity} from './sign-visibility.js?v=garden-sign-shelf-wall-map15-20261023';
 import {npcLimbPose} from './npc-pose.js?v=driver-side-forklift-wheels-20261023-1';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d');
