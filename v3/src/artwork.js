@@ -165,7 +165,8 @@ export function createArtwork(ctx,project,getZoom){
  function drawDoor(d){
   const axis=d.axis||([36,38].includes(d.x)?'y':'x'),open=Math.max(0,Math.min(1,d.open||0));
   const start={x:d.x-.5,y:d.y-.5};
-  const end=axis==='x'?{x:start.x+1,y:start.y}:{x:start.x,y:start.y+1};
+  const span=axis==='x'?(d.w||1):(d.h||1);
+  const end=axis==='x'?{x:start.x+span,y:start.y}:{x:start.x,y:start.y+span};
   const h=d.type==='rollup'?53:48;
   const a=P(start.x,start.y),b=P(end.x,end.y),at=P(start.x,start.y,h),bt=P(end.x,end.y,h);
   // Rigid frame: ground threshold, twin jambs, lintel; opening stays empty.
@@ -199,8 +200,10 @@ export function createArtwork(ctx,project,getZoom){
    return;
   }
   if(d.type==='sliding'){
-   const len=(1-open)*.91,fromX=d.x===20?1-len:0;
-   const x1=start.x+(axis==='x'?fromX:0),y1=start.y+(axis==='y'?fromX:0);
+   // Both axes share the exact sliding track plane; the garden wall runs
+   // along Y, so its glass translates along Y rather than turning outward.
+   const len=span*(1-open)*.91,from= d.x===20&&axis==='x'?span-len:0;
+   const x1=start.x+(axis==='x'?from:0),y1=start.y+(axis==='y'?from:0);
    const x2=x1+(axis==='x'?len:0),y2=y1+(axis==='y'?len:0);
    poly([P(x1,y1,4),P(x2,y2,4),P(x2,y2,h-4),P(x1,y1,h-4)],'#699da363','#90b2b4',1.7);
    line(P((x1+x2)/2,(y1+y2)/2,4),P((x1+x2)/2,(y1+y2)/2,h-4),'#d2e7e3',.7);
