@@ -483,4 +483,29 @@ assert(currentClient.indexOf("'<br><strong>Weakness:</strong> '")<currentClient.
 assert(currentClient.includes("POWER_LIST.map(p=>{")&&currentClient.includes("open?'<div class=\"powerDescription\""),'Power explanations appear inline under selected power');
 assert(currentClient.includes("const activate=powers.querySelector('#armPower')"),'Expand/collapse power guidance keeps usable action');
 assert(currentClient.includes("hairAppearance(n)")&&currentClient.includes("emotionState(n)"),'NPC portrait reads same hair and emotion state');
+// Spawned people should display varied, reproducible starting emotions.
+for(const seed of [447,91,2026]){
+ const moodGame=makeGame(createHardwareStore(),{seed,staff:8,customers:12});
+ const moods=moodGame.npcs.map(emotionState);
+ assert(new Set(moods).size>=3,'NPCs start with multiple random moods for seed '+seed);
+ assert(moods.some(m=>m!=='Calm'),'NPCs do not all begin calm');
+ assert(moodGame.npcs.every(n=>Object.values(n.emotion).every(v=>v>=0&&v<=100)),
+  'All starting emotion values stay within their valid limits');
+ if(seed===447){
+  assert(saveGame(moodGame),'Random initial NPC emotions are saveable');
+  const moodReload=loadGame();
+  assert.deepEqual(moodReload.npcs.map(n=>n.emotion),moodGame.npcs.map(n=>n.emotion),
+   'Starting moods persist after save and load');
+ }
+}
+for(const power of ['anger','suspicion','trust']){
+ const description=POWER_HELP[power][0];
+ assert(description.includes('targets'),'God Power description refers to targets: '+power);
+ assert(!/undefined|character/i.test(description),'God Power description has no broken apostrophe: '+power);
+}
+const updatedPortraitCode=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+assert(!updatedPortraitCode.includes("escapeHTML(style)+' hair"),
+ 'Hair style name is not printed underneath selected NPC portrait');
+assert(updatedPortraitCode.includes("hairAppearance(n)"),
+ 'Portrait still renders the character\'s assigned hairstyle');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
