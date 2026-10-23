@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 118 160" width="118" height="160" fill="none">
+  <defs><linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#adc0bf"/><stop offset=".45" stop-color="#66838b"/><stop offset="1" stop-color="#3b5964"/></linearGradient></defs>
+  <!-- One integrated hand truck: frame, wheels, axle and toe stay aligned. -->
+  <ellipse cx="62" cy="148" rx="45" ry="8" fill="#132a2b" opacity=".25"/>
+  <path d="m71 127 29-6" stroke="#344c56" stroke-width="8" stroke-linecap="round"/>
+  <ellipse cx="92" cy="128" rx="12" ry="14" fill="#263238" stroke="#111f26" stroke-width="3"/>
+  <ellipse cx="92" cy="128" rx="6" ry="7" fill="#98adaf" stroke="#465d66" stroke-width="2"/>
+  <ellipse cx="70" cy="141" rx="13" ry="15" fill="#263238" stroke="#111f26" stroke-width="3"/>
+  <ellipse cx="70" cy="141" rx="7" ry="8" fill="#a6babb" stroke="#425d66" stroke-width="2"/>
+  <path d="M69 131 51 25q-1-6 5-7l30-5q6-1 7 5l14 103" stroke="#293f49" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M69 131 51 25q-1-6 5-7l30-5q6-1 7 5l14 103" stroke="url(#metal)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m55 19 3-9q2-5 7-5l15-2q6 0 8 6l3 9" stroke="#425e68" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M65 9 81 6" stroke="#b3c6c3" stroke-width="3" stroke-linecap="round"/>
+  <path d="m55 45 42-6M59 69l41-6M64 93l39-5M68 116l38-5" stroke="#364e59" stroke-width="9" stroke-linecap="round"/>
+  <path d="m55 45 42-6M59 69l41-6M64 93l39-5M68 116l38-5" stroke="#8da5a8" stroke-width="5" stroke-linecap="round"/>
+  <path d="M82 16 99 119" stroke="#c5d5d0" stroke-width="1.8" opacity=".6"/>
+  <path d="m68 125 15 7-7 12-46 15-19-8 5-9Z" fill="#5b767f" stroke="#324b55" stroke-width="4" stroke-linejoin="round"/>
+  <path d="m15 142 53-17 15 7-52 18Z" fill="#c2d2cd" stroke="#4b656e" stroke-width="2.5" stroke-linejoin="round"/>
+  <path d="m14 146 18 5 43-14" stroke="#e2eae2" stroke-width="2" stroke-linecap="round"/>
+  <!-- Front upright is painted over its own wheel, never offset from it. -->
+  <path d="M68 137 50 25" stroke="#344b54" stroke-width="10" stroke-linecap="round"/>
+  <path d="M67 131 51 26" stroke="#91aab0" stroke-width="5" stroke-linecap="round"/>
+  <path d="M104 120 91 20" stroke="#405b64" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="69" cy="133" r="3.5" fill="#c5d2ce" stroke="#415c62" stroke-width="1.5"/>
+</svg>
