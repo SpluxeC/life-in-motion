@@ -3,7 +3,7 @@ import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v
 import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js?v=hud-clock-20261022-1';
 import {createArtwork} from './artwork.js?v=hud-clock-20261022-1';
 import {renderDepth,compareRenderDepth} from './render-depth.js?v=hud-clock-20261022-1';
-import {formatGameTime,emotionState,POWER_HELP} from './hud.js?v=hud-clock-20261022-1';
+import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness} from './hud.js?v=hud-clock-20261022-1';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d');
 let game=null,scene=createHardwareStore(),zoom=.72,offset={x:0,y:0},last=performance.now(),acc=0,lastHud=0,lastSave=0,lastViewport={w:0,h:0},drag=null,selected=null,resultShown=false,activeTab='world',selectedPowerId='whisper',pendingPower=null,feedback='';
@@ -41,7 +41,26 @@ function iso(x,y){return{x:(x-y)*TW*.5,y:-(x+y)*TH*.5}}
 function project(x,y,z=0){let v=view(),p=iso(x,y);return{x:v.w*.5+(p.x-offset.x)*zoom,y:v.h*.56+(p.y-offset.y-z)*zoom}}
 function unproject(sx,sy){let v=view(),px=(sx-v.w*.5)/zoom+offset.x,py=(sy-v.h*.56)/zoom+offset.y;return{x:Math.round(px/TW-py/TH),y:Math.round(-px/TW-py/TH)}}
 function resize(){let dpr=Math.min(2,window.devicePixelRatio||1),v=view();if(lastViewport.w!==v.w||lastViewport.h!==v.h||canvas.width!==Math.round(v.w*dpr)){canvas.width=Math.round(v.w*dpr);canvas.height=Math.round(v.h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);lastViewport={...v}}}
-function drawHair(n,z,h){const hash=Number(String(n.id).replace(/[^0-9]/g,''))||0,style=n.role==='firefighter'?5:n.role==='police'?4:hash%6;const head=-h*z*.82;ctx.fillStyle='#11171b';ctx.strokeStyle='#101517';ctx.lineWidth=2*z;if(style===4||style===5){ctx.fillStyle=style===5?'#d4ba64':'#25394c';ctx.fillRect(-8*z,head-9*z,16*z,5*z);ctx.fillRect(-12*z,head-4*z,17*z,3*z)}else if(style===0){ctx.beginPath();ctx.arc(0,head-2*z,7*z,Math.PI,Math.PI*2);ctx.fill()}else if(style===1){ctx.beginPath();ctx.arc(0,head-3*z,7.5*z,Math.PI,Math.PI*2);ctx.fill();ctx.fillRect(6*z,head,4*z,9*z)}else if(style===2){ctx.fillRect(-7*z,head-9*z,14*z,4*z);ctx.fillRect(5*z,head-6*z,4*z,11*z)}else if(style===3){ctx.beginPath();ctx.arc(0,head-5*z,7*z,Math.PI,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(7*z,head-10*z,5*z,0,7);ctx.fill()}else{ctx.beginPath();ctx.arc(0,head-6*z,6*z,Math.PI,Math.PI*2);ctx.fill()}}
+function drawHair(n,z,h){
+ const appearance=hairAppearance(n),style=appearance.style,c=appearance.color;
+ const head=-h*z*.82;
+ // Protect the role-specific helmets; civilian hair uses world-scale silhouettes.
+ if(n.role==='police'||n.role==='firefighter'||n.role==='paramedic'){
+  ctx.fillStyle=n.role==='firefighter'?'#cfb059':n.role==='police'?'#27465c':'#e6ebdc';
+  ctx.fillRect(-8*z,head-9*z,16*z,6*z);ctx.fillRect(-11*z,head-4*z,20*z,3*z);return;
+ }
+ ctx.fillStyle=c;ctx.strokeStyle=c;ctx.lineWidth=3*z;
+ const tuft=(x,y,r)=>{ctx.beginPath();ctx.arc(x*z,head+y*z,r*z,0,Math.PI*2);ctx.fill()};
+ if(style==='buzz'){ctx.beginPath();ctx.ellipse(0,head-2*z,7*z,5*z,0,Math.PI,Math.PI*2);ctx.fill()}
+ else if(style==='sidePart'){ctx.fillRect(-7*z,head-9*z,14*z,5*z);tuft(-6,-5,4)}
+ else if(style==='curly'||style==='messy'){for(let k=0;k<6;k++)tuft(-7+k*2.8,-6-(k%3)*2,style==='curly'?3:3.4)}
+ else if(style==='wavy'){ctx.fillRect(-7*z,head-9*z,14*z,5*z);tuft(-8,1,3);tuft(8,2,3)}
+ else if(style==='bob'){ctx.fillRect(-8*z,head-7*z,16*z,9*z);tuft(0,-8,7)}
+ else if(style==='ponytail'){tuft(0,-5,7);tuft(9,4,3);tuft(11,8,3)}
+ else if(style==='bun'){tuft(0,-5,7);tuft(1,-13,4)}
+ else if(style==='long'){ctx.fillRect(-8*z,head-7*z,16*z,13*z);tuft(0,-7,7)}
+ else{tuft(0,-5,7);tuft(-4,-5,4)}
+}
 function stick(n,t){let p=project(n.rx,n.ry),z=zoom*(n.role==='customer'||n.role==='employee'?1:1.07),moving=n.path.length>0,step=moving?Math.sin(t*10+n.id.length):0,h=n.unconscious>0?5:35;ctx.save();ctx.translate(p.x,p.y);ctx.strokeStyle='#121a1c';ctx.lineWidth=2.6*z;ctx.lineCap='round';ctx.fillStyle='#121b2380';ctx.beginPath();ctx.ellipse(0,2*z,10*z,4*z,0,0,7);ctx.fill();if(!n.alive){ctx.rotate(Math.PI/2);ctx.translate(0,9*z)}if(n.unconscious>0){ctx.rotate(1.4);ctx.translate(0,9*z)}
  const leg=h*.45*z;ctx.beginPath();ctx.moveTo(0,-h*z*.56);ctx.lineTo(0,-10*z);ctx.moveTo(0,-10*z);ctx.lineTo((-7+step*4)*z,0);ctx.moveTo(0,-10*z);ctx.lineTo((7-step*4)*z,0);const pose=n.action||'idle',wave=Math.sin((n.actionPhase||0)*7),bob=moving?Math.sin(t*12+n.id.length)*1.4:0;
  ctx.moveTo(0,-h*z*.45);
@@ -127,7 +146,41 @@ function render(t){
 }
 function inspect(x,y){if(!game)return;let w=game.world;let n=[...game.npcs].filter(n=>Math.hypot(n.rx-x,n.ry-y)<2).sort((a,b)=>Math.hypot(a.rx-x,a.ry-y)-Math.hypot(b.rx-x,b.ry-y))[0];
  let d=doorAt(w,x,y),f=fixtureAt(w,x,y),prop=w.props.filter(o=>Math.abs(o.x-x)<=Math.max(1,o.w||1)&&Math.abs(o.y-y)<=Math.max(1,o.h||1)).sort((a,b)=>Math.hypot(a.x-x,a.y-y)-Math.hypot(b.x-x,b.y-y))[0];let target=n||d||f||prop||{id:'tile-'+x+'-'+y,x,y,type:'tile'};selectTarget(target)}
-function portraitHTML(n){let angry=n.emotion.anger>=55,afraid=n.emotion.fear>=55,injured=n.health<35,mood=!n.alive?'Deceased':n.unconscious>0?'Unconscious':angry?'Angry':afraid?'Afraid':injured?'In pain':n.emotion.anger>25?'Irritated':'Calm';let brow=angry?'M24 39l11 5 M65 44l11-5':afraid?'M23 40l12-4 M65 36l12 4':'M24 38h12 M64 38h12';let mouth=angry?'M37 69q13-8 26 0':afraid?'M41 64q9-14 18 0':mood==='Calm'?'M39 61q11 10 22 0':'M39 66h22';let headwear=n.role==='police'?'<path d="M23 22h54v9H23z" fill="#203d65" stroke="#111"/><path d="M30 16h40v10H30z" fill="#203d65" stroke="#111"/>':n.role==='firefighter'?'<path d="M23 27q3-28 27-28t27 28z" fill="#e1bd53" stroke="#111"/><path d="M16 25h68v8H16z" fill="#c99b38" stroke="#111"/>':n.role==='paramedic'?'<path d="M22 22q28-29 56 0v10H22z" fill="#f7f9f6" stroke="#111"/><path d="M45 8h10v19H45z M39 14h22v7H39z" fill="#b5343b"/>':n.role==='employee'?'<path d="M27 22q22-22 46 0l-4 7H31z" fill="#262d33"/>':'<path d="M27 21q20-21 46 0l-3 6H30z" fill="#1d2429"/>';let vest=n.role==='employee'?'<path d="M23 96L16 118h68L77 96l-15-8H38z" fill="#d7353b" stroke="#111" stroke-width="3"/>':'';return '<div class="npcPortrait"><svg viewBox="0 0 100 125" role="img" aria-label="Portrait expressing '+mood+'"><path d="M22 123l8-30 20-7 20 7 8 30" fill="#15191d" stroke="#090d0f" stroke-width="4"/>'+vest+'<ellipse cx="50" cy="48" rx="31" ry="37" fill="#fff" stroke="#111" stroke-width="3"/><path d="'+brow+'" stroke="#111" stroke-width="3" fill="none"/><circle cx="32" cy="50" r="3" fill="#111"/><circle cx="68" cy="50" r="3" fill="#111"/><path d="'+mouth+'" stroke="#111" stroke-width="3" fill="none"/>'+headwear+'</svg><div><strong>'+escapeHTML(n.name)+'</strong><span>'+escapeHTML(n.role)+' · '+mood+'</span></div></div>'}
+function portraitHTML(n){
+ const mood=emotionState(n),{color,style}=hairAppearance(n);
+ const angry=['Furious','Irritated'].includes(mood),fear=['Terrified','Nervous'].includes(mood);
+ const stressed=['Stressed','Uneasy'].includes(mood);
+ const brow=angry?'M24 40l12 5 M64 45l12-5':fear?'M24 41l12-6 M64 35l12 6':
+  stressed?'M23 39q7-7 13 0 M64 39q7-7 13 0':'M24 38q6-3 12 0 M64 38q6-3 12 0';
+ const eyes=!n.alive?'<path d="M28 49l10 6m0-6-10 6 M62 49l10 6m0-6-10 6" stroke="#202a2a" stroke-width="3"/>':
+  fear?'<ellipse cx="33" cy="51" rx="4.5" ry="7" fill="#172326"/><ellipse cx="67" cy="51" rx="4.5" ry="7" fill="#172326"/>':
+  stressed?'<ellipse cx="33" cy="52" rx="3" ry="3.8"/><ellipse cx="67" cy="52" rx="3" ry="3.8"/>':
+  '<circle cx="33" cy="51" r="3.1"/><circle cx="67" cy="51" r="3.1"/>';
+ const mouth=!n.alive?'M39 70h22':angry?'M36 73q14-17 28 0':fear?'M42 67q8-13 16 0q-8 19-16 0':
+  stressed?'M38 72q12-7 24 0':mood==='Calm'?'M36 63q14 15 28 0':'M39 69q11 5 22 0';
+ const hairShape=style==='buzz'?'<path d="M20 38q0-42 30-42t30 42q-13-25-30-25T20 38"/>':
+  style==='bun'?'<circle cx="51" cy="4" r="13"/><path d="M19 38Q14-4 50-5q37 1 32 43-12-28-32-27-19 0-31 27"/>':
+  style==='ponytail'?'<path d="M18 35Q13-5 50-6q36 0 32 38l-10-15-47 0z"/><path d="M77 10q23 10 15 43l-11-8 1-24z"/>':
+  style==='long'||style==='bob'?'<path d="M18 40Q7-6 50-7q43 1 33 45l2 43H70V31Q49 12 30 30v51H15z"/>':
+  style==='curly'?'<path d="M15 41Q4 16 21 8Q18-13 40-7Q58-21 69-5Q89-7 88 13Q100 35 81 43L73 23Q50 11 27 25z"/>':
+  style==='wavy'?'<path d="M16 43Q6 2 32-5Q62-20 82 11l2 31-10 17-6-30Q45 13 29 30l-6 29z"/>':
+  style==='messy'?'<path d="M12 37l9-26 13-14 8 7 9-16 11 15 18-1 9 30-18-9Q47 6 26 29z"/>':
+  '<path d="M19 38Q11-5 50-7q38 0 31 45l-9-15Q50 12 28 26z"/>';
+ const helmet=n.role==='police'?'<path d="M22 20h56v10H22z" fill="#25435c"/>':
+  n.role==='firefighter'?'<path d="M17 30Q23-8 50-8T83 30z" fill="#d6b753"/>':
+  n.role==='paramedic'?'<path d="M23 21Q50-7 77 21v9H23z" fill="#e9f1ec"/>':'';
+ const vest=n.role==='employee'?'<path d="M23 96L16 118h68L77 96l-15-8H38z" fill="#c9323c" stroke="#182025" stroke-width="3"/>':'';
+ const extra=fear?'<path d="M77 56q5 8 0 14" stroke="#65aeca" stroke-width="3" fill="none"/>':
+  angry?'<path d="M21 61l-6 8 M78 61l6 8" stroke="#c97669" stroke-width="2"/>':
+  stressed?'<path d="M80 48q5 12-1 21" stroke="#7bb7c4" stroke-width="2" fill="none"/>':'';
+ return '<div class="npcPortrait mood-'+escapeHTML(mood.toLowerCase())+'"><svg viewBox="0 0 100 125" role="img" aria-label="Portrait expressing '+escapeHTML(mood)+'">'+
+  '<path d="M22 123l8-30 20-7 20 7 8 30" fill="#202b32" stroke="#0a1114" stroke-width="4"/>'+vest+
+  '<ellipse cx="50" cy="48" rx="31" ry="37" fill="#f7f4eb" stroke="#293436" stroke-width="3"/>'+
+  '<g fill="#18252a">'+eyes+'</g><path d="'+brow+'" stroke="#283032" stroke-width="3.5" fill="none"/>'+
+  '<path d="'+mouth+'" stroke="#4b292c" stroke-width="3.2" fill="none"/>'+extra+
+  '<g fill="'+color+'" stroke="'+color+'" stroke-width="2">'+hairShape+'</g>'+helmet+
+  '</svg><div><strong>'+escapeHTML(n.name)+'</strong><span>'+escapeHTML(n.role)+' · '+escapeHTML(mood)+'</span><span>'+escapeHTML(style)+' hair</span></div></div>';
+}
 function powerUsable(p,n=null){
  return !!game&&!game.paused&&game.energy>=p.cost&&!(game.cooldowns[p.id]>game.elapsed)&&(!n||(n.alive&&!n.arrested));
 }
@@ -171,6 +224,7 @@ function refreshHud(){
    g.npcs.map(p=>'<button class="personRow" data-person="'+escapeHTML(p.id)+'">'+
     '<strong>'+escapeHTML(p.name)+'</strong><small>'+
     escapeHTML(p.role)+' · '+escapeHTML(emotionState(p))+
+    '<br><strong>Weakness:</strong> '+escapeHTML(npcWeakness(p))+
     '<br>'+escapeHTML(p.alive?p.activity:'Deceased')+'</small></button>').join('')+
    (feedback?'<p class="gameMessage">'+escapeHTML(feedback)+'</p>':'');
   people.querySelectorAll('[data-person]').forEach(b=>b.onclick=()=>{
@@ -179,22 +233,23 @@ function refreshHud(){
  }
  const powers=$('powersContent');
  powers.innerHTML='<h3>God Energy: '+Math.floor(g.energy)+'</h3>'+
-  POWER_LIST.map(p=>'<button class="powerRow '+(selectedPowerId===p.id?'active':'')+'" data-select-power="'+p.id+'"><span>'+
-   escapeHTML(p.name)+'</span><strong>'+p.cost+' Energy</strong></button>').join('')+
-  (()=>{
-   const p=POWER_LIST.find(p=>p.id===selectedPowerId)||POWER_LIST[0];
-   const details=POWER_HELP[p.id]||['Influence the world.','Tap a valid target.'];
-   return '<div class="powerDescription"><strong>'+escapeHTML(p.name)+'</strong>'+
-     '<p>'+escapeHTML(details[0])+'</p><p>'+escapeHTML(details[1])+'</p>'+
+  POWER_LIST.map(p=>{
+   const open=selectedPowerId===p.id;
+   const help=POWER_HELP[p.id]||['Influence the world.','Tap a valid target.'];
+   return '<button class="powerRow '+(open?'active':'')+'" data-select-power="'+p.id+'" aria-expanded="'+open+'"><span>'+
+    escapeHTML(p.name)+'</span><strong>'+p.cost+' Energy</strong></button>'+
+    (open?'<div class="powerDescription"><strong>'+escapeHTML(p.name)+'</strong>'+
+     '<p>'+escapeHTML(help[0])+'</p><p>'+escapeHTML(help[1])+'</p>'+
      (g.cooldowns[p.id]>g.elapsed?'<p>Cooldown: '+Math.ceil(g.cooldowns[p.id]-g.elapsed)+'s</p>':'')+
      '<button id="armPower" class="actionWide" '+(powerUsable(p)?'':'disabled')+'>'+
-     (pendingPower===p.id?'Cancel Power':'Use Power · Tap Target')+'</button></div>';
-  })()+
-  (feedback?'<p class="gameMessage">'+escapeHTML(feedback)+'</p>':'');
+     (pendingPower===p.id?'Cancel Power':'Use Power · Tap Target')+'</button></div>':'');
+  }).join('')+(feedback?'<p class="gameMessage">'+escapeHTML(feedback)+'</p>':'');
  powers.querySelectorAll('[data-select-power]').forEach(b=>b.onclick=()=>{
-  selectedPowerId=b.dataset.selectPower;pendingPower=null;feedback='';refreshHud();
+  selectedPowerId=selectedPowerId===b.dataset.selectPower?null:b.dataset.selectPower;
+  pendingPower=null;feedback='';refreshHud();
  });
- powers.querySelector('#armPower').onclick=()=>{
+ const activate=powers.querySelector('#armPower');
+ if(activate)activate.onclick=()=>{
   pendingPower=pendingPower===selectedPowerId?null:selectedPowerId;
   feedback=pendingPower?'Power ready. Tap a valid target in the world.':'Power cancelled.';
   refreshHud();
