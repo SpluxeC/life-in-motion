@@ -885,8 +885,17 @@ export function createArtwork(ctx,project,getZoom){
    line(P(x-.34,y+.36,11),P(x+1.35,y+.36,11),'#536f72',4);
   }else if(type==='pallet'||type==='bagPallet'){
    solid(x,y,w,h,5,'#b79566','#8a6545','#a47e58');
-   for(let i=0;i<6;i++){miniBox(x+.08+i%3*.56,y+.12+Math.floor(i/3)*.36,13+i%2*5,
-     type==='bagPallet'?'#d8cab1':['#a9936b','#b7a383','#989b89'][i%3],.48,.32,10)}
+   if(type==='bagPallet'&&h>w){
+    // Garden stock is rotated 90 degrees to sit wholly inside the
+    // narrow, two-tile wall-side footprint beside the garden doors.
+    for(let i=0;i<6;i++){
+     const bx=x-.33+(i%2)*.36,by=y-.36+Math.floor(i/2)*.56;
+     miniBox(bx,by,13+i%2*5,'#d8cab1',.29,.43,10);
+    }
+   }else{
+    for(let i=0;i<6;i++)miniBox(x+.08+i%3*.56,y+.12+Math.floor(i/3)*.36,13+i%2*5,
+     type==='bagPallet'?'#d8cab1':['#a9936b','#b7a383','#989b89'][i%3],.48,.32,10);
+   }
   }else if(type==='workbench'||type==='office'){
    solid(x,y,w,h,19,'#b9946b','#776049','#8f7255');
    if(type==='office'){miniBox(x+.07,y+.3,26,'#465860',.45,.3,8);miniBox(x+.57,y+.3,23,'#d7d7ca',.24,.28,2)}
@@ -1214,35 +1223,36 @@ export function createArtwork(ctx,project,getZoom){
  }
  // Overhead department signage is an independent visual layer:
  // signs have no collision footprint and do not block doors or aisles.
- function drawDepartmentSign(x,y,name,accent='#467887'){
-  // The board is a true vertical isometric plane (local X runs along the
-  // projected shelf axis, local Y runs straight down from the ceiling).
-  // Text receives that same *affine* projection, not only a rotation;
-  // this keeps every glyph on the painted face instead of hovering outside.
-  const title=String(name).toUpperCase(),span=title.length>=9?2.28:1.78,z=70;
-  const a=P(x-span,y-.12,z),b=P(x+span,y-.12,z),
-        c=P(x+span,y-.12,z-26),d=P(x-span,y-.12,z-26);
+ function drawDepartmentSign(x,y,name,accent='#467887',axis='x'){
+  // A sign over a doorway must follow the wall axis: the garden double
+  // entrance runs along world Y while ordinary department signs run along X.
+  // Both render as properly tilted *vertical* isometric panels.
+  const title=String(name).toUpperCase();
+  const span=axis==='y'?1.06:(title.length>=9?2.28:1.78),z=70;
+  const point=(along,height,offset=-.12)=>
+   axis==='y'?P(x+offset,y-along,height):P(x+along,y+offset,height);
+  const a=point(-span,z),b=point(span,z),
+        c=point(span,z-26),d=point(-span,z-26);
   const width=Math.hypot(b.x-a.x,b.y-a.y),angle=Math.atan2(b.y-a.y,b.x-a.x);
   for(const t of [.18,.82]){
-   const xx=x-span+2*span*t;
-   line(P(xx,y-.12,z+14),P(xx,y-.12,z),'#b4bdb1',1.6);
+   const along=-span+2*span*t;
+   line(point(along,z+14),point(along,z),'#b4bdb1',1.6);
   }
-  // A narrow, offset backing makes the sign visibly three-dimensional.
-  poly([P(x-span,y-.15,z-2),P(x+span,y-.15,z-2),P(x+span,y-.15,z-28),P(x-span,y-.15,z-28)],'#516567');
+  poly([point(-span,z-2,-.15),point(span,z-2,-.15),
+   point(span,z-28,-.15),point(-span,z-28,-.15)],'#516567');
   poly([a,b,c,d],'#e8e7d9','#4c6568',1.2);
-  line(P(x-span+.06,y-.12,z-3),P(x+span-.06,y-.12,z-3),accent,2.8);
+  line(point(-span+.06,z-3),point(span-.06,z-3),accent,2.8);
   const mid={x:(a.x+b.x+c.x+d.x)/4,y:(a.y+b.y+c.y+d.y)/4};
   ctx.save();
-  // Clip to the panel so long labels cannot run across the surrounding wall.
   ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);
   ctx.lineTo(c.x,c.y);ctx.lineTo(d.x,d.y);ctx.closePath();ctx.clip();
   ctx.translate(mid.x,mid.y);ctx.rotate(angle);
-  // Counter-rotate the local vertical basis so the lettering follows the
-  // sign's sloping top edge AND its vertical face, unlike plain rotated text.
+  // Counter-rotate lettering with the projected vertical panel, avoiding a
+  // camera-facing floating label or an upside-down garden sign.
   ctx.transform(1,0,Math.sin(angle),Math.cos(angle),0,0);
   ctx.font=`700 ${Math.max(6.5,10.5*Z())}px system-ui,sans-serif`;
   ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#273f41';
-  ctx.fillText(title,0,0,width-17*Z());
+  ctx.fillText(title,0,0,width-(axis==='y'?9:17)*Z());
   ctx.restore();
  }
  // A-frame warning sign sits at the actual wet-floor tile and persists briefly.
