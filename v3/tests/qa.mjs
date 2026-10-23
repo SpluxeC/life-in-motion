@@ -348,7 +348,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===3,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===4,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(migrated.world.fixtures.some(f=>f.type==='flowerBed')&&
@@ -373,4 +373,56 @@ assert.deepEqual(order(shelf,{rx:shelf.x+2,ry:shelf.y+shelf.h+3}),['npc','fixtur
 const receiving=extended.fixtures.find(f=>f.type==='palletStack');
 assert.deepEqual(order(receiving,{rx:receiving.x+2,ry:receiving.y}),['fixture','npc'],
  'A worker in front of a receiving pallet stays visible');
+// Building-corner regression: perpendicular wall segments cannot overwrite
+// each other at the store and staff-wing exterior corners.
+const cornerWorld=createHardwareStore();
+const corners=[
+ [2,10,'exterior'],[36,10,'exterior'],[2,39,'exterior'],[36,39,'exterior'],
+ [38,10,'staff'],[46,10,'staff'],[38,27,'staff'],[46,27,'staff']
+];
+for(const [x,y,section] of corners){
+ const corner=cornerWorld.walls.get(x+','+y);
+ assert(corner,'No missing wall at '+x+','+y);
+ assert.equal(corner.section,section,'Correct exterior corner wall material');
+ assert.equal(corner.axis,'corner','Corner holds both directions');
+ assert.deepEqual(new Set(corner.axes),new Set(['x','y']),
+  'Both perpendicular wall panels share the corner tile');
+}
+const glazed=cornerWorld.ground.filter(t=>t.y===10&&cornerWorld.walls.get(t.x+',10')?.window==='storefront').map(t=>t.x);
+assert.deepEqual(glazed,[4,5,7,8,9,11,12,15,16,22,23,26,27,32,33],
+ 'Expanded glazing exists on the parking-lot-facing north wall');
+assert(!cornerWorld.walls.has('19,10')&&!cornerWorld.walls.has('20,10'),
+ 'Storefront windows never cover the main entrance');
+assert.equal(doorAt(cornerWorld,19,10)?.type,'sliding');
+assert.equal(doorAt(cornerWorld,20,10)?.type,'sliding');
+assert(pathTo(cornerWorld,{x:20,y:9},{x:31,y:15}).length>0,'Entrance navigation remains open');
+assert(pathTo(cornerWorld,{x:20,y:9},{x:41,y:18}).length>0,'Employee wing remains accessible');
+assert(pathTo(cornerWorld,{x:28,y:42},{x:28,y:37}).length>0,'Receiving access remains open');
+// Canvas-level contract: a corner draws TWO correctly joined wall faces,
+// while every window is painted precisely once on its own facade tile.
+const geometryFills=[];
+let tempPath=[];
+const facadeCtx={
+ beginPath(){tempPath=[]},moveTo(x,y){tempPath.push([x,y])},
+ lineTo(x,y){tempPath.push([x,y])},closePath(){},
+ fill(){geometryFills.push({color:this.fillStyle,vertices:tempPath.map(p=>[...p])})},
+ stroke(){},ellipse(){},arc(){},fillRect(){},strokeRect(){},fillText(){}
+};
+const facadeArt=createArtwork(facadeCtx,project,()=>.7);
+for(const [x,y] of corners){
+ geometryFills.length=0;
+ facadeArt.drawWall(cornerWorld.walls.get(x+','+y),cornerWorld);
+ assert.equal(geometryFills.filter(p=>p.color==='#a6b7b0'||p.color==='#c0c6ba').length,2,
+  'Corner must draw exactly one perpendicular face in each direction');
+}
+for(const x of glazed){
+ geometryFills.length=0;
+ facadeArt.drawWall(cornerWorld.walls.get(x+',10'),cornerWorld);
+ assert.equal(geometryFills.filter(p=>p.color==='#507b8799').length,1,
+  'Exactly one isometric storefront window painted at '+x);
+}
+geometryFills.length=0;
+facadeArt.drawWall(cornerWorld.walls.get('6,10'),cornerWorld);
+assert.equal(geometryFills.filter(p=>p.color==='#507b8799').length,0,
+ 'Plain wall sections remain solid between windows');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
