@@ -785,7 +785,7 @@ assert(gardenRackSource.includes("if(o.toolSet==='hoesLoppers')")&&
  gardenRackSource.includes("Hoe: long single wooden shaft"),
  'Second matching display draws clearly different hoes and loppers');
 assert(gardenRackSource.includes("type==='ridingMower'")&&
- gardenRackSource.includes("toward the shop interior (negative X)")&&
+ gardenRackSource.includes("the shop interior (negative X)")&&
  gardenRackSource.includes("The two near-side wheels"),
  'Riding mower has inward-facing engine hood, deck, seat, steering and aligned tires');
 const gardenSignClient=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
