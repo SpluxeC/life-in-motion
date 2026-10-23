@@ -57,7 +57,7 @@ export function createHardwareStore(){
  door(43,39,'gate','Garden outer gate','x');
  for(let x of [5,11,17,23,29])for(let band=0;band<2;band++){
   const start=band===0?18:27;
-  fixture('shelf',x,start,1,5,{department:['PAINT','TOOLS','ELECTRICAL','PLUMBING','HARDWARE'][(x-5)/6],stock:7,capacity:12});
+  fixture('shelf',x,start,1,5,{department:['PAINT','TOOLS','ELECTRICAL','PLUMBING','HARDWARE'][(x-5)/6],stock:11,capacity:12});
  }
  for(let x of [8,14,25])fixture('checkout',x,13,2,1);
  fixture('serviceDesk',31,13,2,1);
