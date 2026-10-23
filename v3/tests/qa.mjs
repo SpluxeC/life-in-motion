@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import {createHardwareStore,walkable,pathTo,doorAt} from '../src/world.js';
-import {makeGame,applyPower,updateGame,addHazard} from '../src/simulation.js';
+import {makeGame,applyPower,updateGame,addHazard,POWER_LIST} from '../src/simulation.js';
 import {saveGame,loadGame} from '../src/persistence.js';
 import {createArtwork} from '../src/artwork.js';
 import {renderDepth,compareRenderDepth} from '../src/render-depth.js';
+import {formatGameTime,emotionState,POWER_HELP} from '../src/hud.js';
+import {readFileSync} from 'node:fs';
 const store=new Map();
 globalThis.localStorage={getItem:key=>store.get(key)||null,setItem:(key,value)=>store.set(key,value)};
 const world=createHardwareStore();
@@ -425,4 +427,42 @@ geometryFills.length=0;
 facadeArt.drawWall(cornerWorld.walls.get('6,10'),cornerWorld);
 assert.equal(geometryFills.filter(p=>p.color==='#507b8799').length,0,
  'Plain wall sections remain solid between windows');
+// In-game time is 12-hour, uses the selected start, and freezes when paused.
+const timed=makeGame(createHardwareStore(),{staff:4,customers:2,seed:91,clockStartMinutes:480});
+assert.equal(formatGameTime(timed),'8:00 AM');
+timed.elapsed=240;assert.equal(formatGameTime(timed),'12:00 PM');
+timed.elapsed=960;assert.equal(formatGameTime(timed),'12:00 AM');
+timed.elapsed=1125;assert.equal(formatGameTime(timed),'2:45 AM');
+timed.paused=true;
+const haltedTime=formatGameTime(timed),haltedElapsed=timed.elapsed;
+for(let i=0;i<20;i++)updateGame(timed,.1);
+assert.equal(timed.elapsed,haltedElapsed,'Pausing freezes simulation time');
+assert.equal(formatGameTime(timed),haltedTime,'Pausing freezes the clock');
+timed.paused=false;updateGame(timed,1);
+assert.notEqual(formatGameTime(timed),haltedTime,'Resuming advances the game clock');
+const frightened=timed.npcs[0];
+frightened.emotion.fear=75;assert.equal(emotionState(frightened),'Terrified');
+frightened.alive=false;assert.equal(emotionState(frightened),'Deceased');
+assert.equal(Object.keys(POWER_HELP).length,POWER_LIST.length,'Every power has instructions');
+for(const p of POWER_LIST)assert(POWER_HELP[p.id]?.every(text=>text.length>15),'Power help missing: '+p.id);
+assert(saveGame(timed));
+assert.equal(formatGameTime(loadGame()),formatGameTime(timed),'Clock persists through save/load');
+// Static DOM and rendering integration coverage without browser dependencies.
+const page=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+const client=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+assert(!page.includes('data-tab="events"'),'Events tab removed');
+assert(!page.includes('v3 · Hardware Store</small>'),'Header has no version/map subtitle');
+assert(!page.includes('<h2>Hardware Store</h2>'),'Panels have no repeated Hardware Store heading');
+for(const id of ['peopleContent','powersContent','worldEvents','gameClock','saveV3','home','stopFollow']){
+ assert(page.includes('id="'+id+'"'),'Missing HUD element '+id);
+}
+assert(page.includes('data-tab="settings"')&&page.includes('data-tab="people"'));
+assert(page.includes('V3 · TOTAL ELIMINATION')&&page.indexOf('V3 · TOTAL ELIMINATION')<page.indexOf('id="game"'),
+ 'Total Elimination board must be in top header');
+assert(client.includes('render(game?.elapsed||0)'),'Animations use simulation time, not wall time');
+assert(client.includes('offset=iso(n.rx,n.ry)'),'Camera follows selected NPC');
+assert(client.includes("activateTab('people')"),'Tapping an NPC opens overview');
+assert(client.includes('selectTarget(person)'),'People list can select an NPC');
+assert(client.includes('clearSelection()'),'People can unselect an NPC');
+assert(client.includes('POWER_HELP[p.id]'),'Power guidance appears for every power');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
