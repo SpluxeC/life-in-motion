@@ -132,20 +132,42 @@ export function createArtwork(ctx,project,getZoom){
  }
  function drawWall(o,world){
   if(o.section==='gardenFence'){drawTimberFence(o);return}
-  let axis=o.axis;if(!axis){const onY=world.walls.has((o.x)+','+(o.y+1))||world.walls.has((o.x)+','+(o.y-1));axis=onY?'y':'x'}
-  const p=P(o.x-.5,o.y-.5),q=axis==='y'?P(o.x-.5,o.y+.5):P(o.x+.5,o.y-.5),height=o.section==='staff'?55:53,z=height*Z();
-  const top={x:p.x,y:p.y-z},end={x:q.x,y:q.y-z},shade=axis==='y'?'#a6b7b0':'#c0c6ba';
-  poly([{x:p.x+3*Z(),y:p.y+5*Z()},{x:q.x+3*Z(),y:q.y+5*Z()},{x:q.x+4*Z(),y:q.y-20*Z()},{x:p.x+4*Z(),y:p.y-20*Z()}],'#1a252a27');
-  poly([p,q,end,top],shade,'#536563',1);
-  line(top,end,o.section==='staff'?'#ede9dc':'#e7e5d5',3);
-  line(P(o.x-.5,o.y-.5,6),axis==='y'?P(o.x-.5,o.y+.5,6):P(o.x+.5,o.y-.5,6),'#657773',1);
-  if((o.x*7+o.y)%5===0){line({x:p.x,y:p.y-z*.45},{x:q.x,y:q.y-z*.45},'#d4d5c949',.8)}
-  // Tall glazed storefront panels, aligned with the wall's actual X axis.
-  if(o.y===10&&o.section==='exterior'&&axis==='x'&&[7,8,9,26,27,32,33].includes(o.x)){
-   const a=P(o.x-.35,o.y-.5,43),b=P(o.x+.33,o.y-.5,43),c=P(o.x+.33,o.y-.5,13),d=P(o.x-.35,o.y-.5,13);
-   poly([a,b,c,d],'#5b849091','#344f59',1.4);
-   line(P(o.x-.35,o.y-.5,27),P(o.x+.33,o.y-.5,27),'#cbdad3',1);
-   line(P(o.x-.24,o.y-.5,39),P(o.x+.16,o.y-.5,16),'#d9edf044',2)
+  const dirs=o.axes?.length?o.axes:[o.axis==='y'?'y':'x'];
+  const height=o.section==='staff'?55:53,z=height*Z();
+  // Paint each leg of a genuine X/Y corner once. Previously the world
+  // overwrote a wall leg, creating holes; drawing duplicate end caps instead
+  // made the opposite corners look thicker than the rest of the building.
+  for(const axis of dirs){
+   const p=P(o.x-.5,o.y-.5),q=axis==='y'?P(o.x-.5,o.y+.5):P(o.x+.5,o.y-.5);
+   const top={x:p.x,y:p.y-z},end={x:q.x,y:q.y-z};
+   const shade=axis==='y'?'#a6b7b0':'#c0c6ba';
+   poly([{x:p.x+3*Z(),y:p.y+5*Z()},{x:q.x+3*Z(),y:q.y+5*Z()},
+     {x:q.x+4*Z(),y:q.y-20*Z()},{x:p.x+4*Z(),y:p.y-20*Z()}],'#1a252a27');
+   poly([p,q,end,top],shade,'#536563',1);
+   line(top,end,o.section==='staff'?'#ede9dc':'#e7e5d5',3);
+   line(P(o.x-.5,o.y-.5,6),axis==='y'?P(o.x-.5,o.y+.5,6):P(o.x+.5,o.y-.5,6),'#657773',1);
+   if((o.x*7+o.y)%5===0){
+    line({x:p.x,y:p.y-z*.45},{x:q.x,y:q.y-z*.45},'#d4d5c949',.8)
+   }
+   // North elevation faces the parking lot. Glass and mullions stay inside
+   // the physical wall segment; no window occupies either main entry tile.
+   if(o.window==='storefront'&&o.y===10&&axis==='x'){
+    const left=o.x-.38,right=o.x+.38,front=o.y-.51;
+    const topZ=43,bottomZ=14;
+    const a=P(left,front,topZ),b=P(right,front,topZ);
+    const c=P(right,front,bottomZ),d=P(left,front,bottomZ);
+    poly([a,b,c,d],'#507b8799','#3d5e67',1.5);
+    line(P(left,front,topZ),P(right,front,topZ),'#d6e0dc',1.2);
+    line(P(left,front,bottomZ),P(right,front,bottomZ),'#aebfb8',1.5);
+    line(P(left,front,29),P(right,front,29),'#c7d5d2',.9);
+    line(P(left+.10,front,40),P(left+.46,front,17),'#e6eff055',1.8);
+   }
+  }
+  // A single narrow joint finishes the intersection without extending a
+  // second full-height panel beyond the true footprint of the corner.
+  if(dirs.includes('x')&&dirs.includes('y')){
+   const bottom=P(o.x-.5,o.y-.5),top=P(o.x-.5,o.y-.5,height);
+   line(bottom,top,'#82968f',2.3);
   }
  }
  function drawDoor(d){
