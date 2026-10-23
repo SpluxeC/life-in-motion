@@ -16,7 +16,7 @@ export function createHardwareStore(){
   walls.set(k,piece);
   return piece;
  };
- const door=(x,y,type='hinged',label='Door',axis='x')=>doors.push({id:'door-'+x+'-'+y,x,y,type,label,axis,open:0,target:0,auto:type==='sliding',locked:false,forceUntil:0});
+ const door=(x,y,type='hinged',label='Door',axis='x',span=1)=>doors.push({id:'door-'+x+'-'+y,x,y,w:axis==='x'?span:1,h:axis==='y'?span:1,type,label,axis,open:0,target:0,auto:type==='sliding',locked:false,forceUntil:0});
  const fixture=(type,x,y,w=1,h=1,extra={})=>fixtures.push({id:type+'-'+x+'-'+y,type,x,y,w,h,...extra});
  for(let y=0;y<HEIGHT;y++)for(let x=0;x<WIDTH;x++){
   let area=x>=65&&y<43?'road':y<10&&x<65?'parking':x===37&&y>=10&&y<=39?'sidewalk':x>=25&&x<=34&&y>=40&&y<=43?'loading':x>=38&&x<=46&&y>=10&&y<28?'employee':x>=38&&x<=48&&y>=28&&y<=39?'garden':y>=10&&y<=39&&x>=2&&x<=36?'store':x>=49&&x<=63&&y>=10&&y<44?'landscape':'grass';
@@ -35,8 +35,8 @@ export function createHardwareStore(){
  for(let x of [28,29])walls.delete(key(x,39));
  for(let y of [17,30])walls.delete(key(36,y));
  door(19,10,'sliding','Main entrance');door(20,10,'sliding','Main entrance');
- door(28,39,'rollup','Receiving door');door(29,39,'rollup','Receiving door');
- door(36,17,'hinged','Employee access','y');door(36,30,'hinged','Garden exit','y');
+ door(28,39,'rollup','Receiving double-wide roll-up door','x',2);
+ door(36,17,'hinged','Employee access','y');door(36,30,'sliding','Garden center sliding entrance','y');
  // Staff wing has a complete exterior and rear wall, with functional room doors.
  for(let x=38;x<=46;x++){wall(x,10,'staff');wall(x,27,'staff')}
  for(let y=10;y<=27;y++){wall(38,y,'staff','y');wall(46,y,'staff','y')}
@@ -102,11 +102,11 @@ export function createHardwareStore(){
  for(let x of [4,12,20,28,36,44,52,60])props.push({id:'shrub-'+x,type:'shrub',x,y:1});
  for(let y of [12,20,28,37,45])props.push({id:'tree-'+y,type:'tree',x:60,y});
  for(let x of [51,57])for(let y of [13,25,38])props.push({id:'shrub-'+x+'-'+y,type:'shrub',x,y});
- return {id:'hardware-store',title:'Hardware Store',layoutVersion:4,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
+ return {id:'hardware-store',title:'Hardware Store',layoutVersion:5,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
 }
 export const inside=(x,y)=>x>=0&&y>=0&&x<WIDTH&&y<HEIGHT;
 export function fixtureAt(world,x,y){return world.fixtures.find(o=>x>=o.x&&x<o.x+o.w&&y>=o.y&&y<o.y+o.h)}
-export function doorAt(world,x,y){return world.doors.find(d=>d.x===x&&d.y===y)}
+export function doorAt(world,x,y){return world.doors.find(d=>x>=d.x&&x<d.x+(d.w||1)&&y>=d.y&&y<d.y+(d.h||1))}
 export function walkable(world,x,y,allowDoor=true){
  x=Math.round(x);y=Math.round(y);
  if(!inside(x,y)||world.walls.has(key(x,y))||world.blocking.has(key(x,y))||fixtureAt(world,x,y))return false;
