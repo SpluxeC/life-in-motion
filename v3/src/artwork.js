@@ -356,6 +356,19 @@ export function createArtwork(ctx,project,getZoom){
    line(P(faceX-.02,yy,4),P(faceX-.02,yy,41),'#38565e',3);
   }
   line(P(faceX-.02,start,40),P(faceX-.02,end,40),scheme.accent,4);
+  // Prominent west-facing display fascia, trays and stocked product blocks.
+  // Extend towards the aisle to avoid appearing as a thin cabinet side.
+  for(let tier=0;tier<3;tier++){
+   const z=7+tier*10;
+   const a=P(x-.63,start,z),b=P(x-.63,end,z);
+   line(a,b,'#d6dfd7',3.5);
+   line(P(x-.64,start,z+8),P(x-.64,end,z+8),scheme.accent,1.5);
+   for(let bin=0;bin<3;bin++){
+    const yy=start+(bin+.5)*(end-start)/3;
+    const c=P(x-.68,yy,z+4);
+    ellipse(c.x,c.y,4.4,3.2,scheme.packs[(tier+bin)%scheme.packs.length],'#284348');
+   }
+  }
  }
  // Cylindrical paint pails stacked in offset tiers on a low timber pallet.
  function paintBucketStack(o){
@@ -401,6 +414,15 @@ export function createArtwork(ctx,project,getZoom){
    line({x:c.x-3*Z(),y:c.y},{x:c.x+3*Z(),y:c.y},'#e7e7dc',1.4);
   }
   line(P(x-.28,y-.16,35),P(x-.33,y-.16,46),'#8ba6a7',2.4);
+  // Tall back frame and visually larger side basket: readable at gameplay zoom.
+  line(P(x-.34,y-.32,5),P(x-.34,y-.32,40),'#294e58',4);
+  line(P(x+.37,y-.32,5),P(x+.37,y-.32,40),'#294e58',4);
+  line(P(x-.34,y-.32,40),P(x+.37,y-.32,40),'#d3e0d8',4);
+  for(const z of [14,27]){
+   line(P(x-.38,y-.34,z),P(x+.40,y-.34,z),'#afc3bf',3.2);
+  }
+  const supply=P(x+.06,y+.07,35);
+  ellipse(supply.x,supply.y,6,4,'#e8c4a1','#697e7d');
  }
  function checkout(o){
   const {x,y,w,h}=o;
