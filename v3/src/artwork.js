@@ -820,6 +820,20 @@ export function createArtwork(ctx,project,getZoom){
  function drawFixture(o){
   const {x,y,w,h,type}=o;shadow(x,y,w,h,1.1);
   if(type==='shelf'){rack(x,y,w,h,o.department,o.stock,o.capacity||12);return}
+  if(type==='pallet'){
+   // Flat, EMPTY shipping pallet: separated top deck boards, visible gaps,
+   // longitudinal runners and spacer blocks. No boxes or stock on top.
+   shadow(x,y,w,h,.96);
+   for(const yy of [y-.32,y+.02,y+.34])solid(x+.08,yy,w-.16,.12,3.5,'#806043','#60452f','#916e4e');
+   for(const xx of [x+.15,x+w-.75])for(const yy of [y-.27,y+.27])
+    solid(xx,yy,.24,.16,6.5,'#b38b60','#805e42','#9c734f');
+   for(let i=0;i<6;i++){
+    const yy=y-.41+i*.15;
+    solid(x+.04,yy,w-.08,.11,9,'#cda579','#886445','#b68d63');
+    line(P(x+.08,yy+.055,9.2),P(x+w-.56,yy+.055,9.2),'#a47a53',.85);
+   }
+   return;
+  }
   if(type==='checkout'){checkout(o);return}
   if(type==='serviceDesk'){
    serviceDesk(o);
@@ -950,8 +964,26 @@ export function createArtwork(ctx,project,getZoom){
    // Lift-truck timber skids keep each pack visibly grounded.
    for(const dx of [.22,w-.75])solid(x+dx,y+.02,.30,.78,5,'#77543a','#554333','#87654a');
   }else if(type==='lumberRack'){
-   solid(x,y,w,h,8,'#837866','#565447');for(let i=0;i<6;i++){
-    solid(x+.12,y+.1+i*.13,w-.25,.12,12+i*3,'#c09e6c','#8a684c')}
+   // Exposed south-facing horizontal bays, oriented across the long edge
+   // toward customers (previous rack looked like a solid pile of blocks).
+   shadow(x,y,w,h,1.1);
+   const aisleFace=y+.52;
+   for(const xx of [x-.42,x+.44,x+w-.55]){
+    line(P(xx,aisleFace,3),P(xx,aisleFace,52),'#53646a',4.5);
+    line(P(xx,y-.36,3),P(xx,y-.36,52),'#475d63',3);
+   }
+   for(const z of [11,25,39]){
+    surface(x+.05,y-.30,w-.10,.75,z,'#667b7a','#395259');
+    line(P(x-.42,aisleFace,z),P(x+w-.53,aisleFace,z),'#d5d9d0',3.4);
+    for(let plank=0;plank<3;plank++){
+     const yy=y-.24+plank*.23;
+     solid(x+.10,yy,w-.20,.17,z+3,
+      ['#cfa36d','#ddb681','#b88b59'][plank],'#9b744f','#b48b62');
+     line(P(x+.13,yy+.08,z+3),P(x+w-.64,yy+.08,z+3),'#9a754d',.8);
+    }
+   }
+   // Aisle-visible orange rack-end warning strip.
+   line(P(x-.43,aisleFace,48),P(x+w-.53,aisleFace,48),'#d8a049',4);
   }else if(type==='toolCabinet'){
    solid(x,y,w,h,33,'#a34438','#733c37','#974a3e');
    for(let i=0;i<3;i++)line(P(x+.13,y+.1+i*.26,22),P(x+1.75,y+.1+i*.26,22),'#d0cbb4',1.5)
