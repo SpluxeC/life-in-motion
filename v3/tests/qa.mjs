@@ -4,6 +4,7 @@ import {makeGame,applyPower,updateGame,addHazard,POWER_LIST} from '../src/simula
 import {saveGame,loadGame} from '../src/persistence.js';
 import {createArtwork} from '../src/artwork.js';
 import {renderDepth,compareRenderDepth} from '../src/render-depth.js';
+import {hitProjectedFixture,isGroundTileTap,selectionLabel} from '../src/selection.js';
 import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness,HAIR_COLORS,HAIR_STYLES} from '../src/hud.js';
 import {readFileSync} from 'node:fs';
 const store=new Map();
@@ -37,7 +38,7 @@ updateGame(saved,.1);assert.equal(saved.completed,true);assert.equal(saved.winne
 const oldLog=saved.log.length;updateGame(saved,.1);assert.equal(saved.log.length,oldLog);
 // Built-in art must render every world asset type without external PNG files.
 const graphicsCalls={count:0};
-const drawingMethods=new Set(['beginPath','moveTo','lineTo','closePath','fill','stroke','ellipse','fillRect','strokeRect','fillText','arc','save','restore','translate','rotate']);
+const drawingMethods=new Set(['beginPath','moveTo','lineTo','closePath','fill','stroke','ellipse','fillRect','strokeRect','fillText','arc','save','restore','translate','rotate','transform','clip']);
 const drawingContext=new Proxy({},{
  get:(obj,k)=>drawingMethods.has(k)?()=>{graphicsCalls.count++}:obj[k],
  set:(obj,k,val)=>{obj[k]=val;return true}
@@ -181,13 +182,14 @@ for(let i=0;i<boxLeft.length;i++){
 }
 // No more legacy machine/store/door branding; hanging department panels
 // and their text share a true isometric angle, including long titles.
-const signCalls={texts:[],polygons:[],rotation:null,translation:null};
+const signCalls={texts:[],polygons:[],rotation:null,translation:null,affine:null,clips:0};
 let signPath=[];
 const labelCtx={
  beginPath(){signPath=[]},moveTo(x,y){signPath.push([x,y])},
  lineTo(x,y){signPath.push([x,y])},closePath(){},
  fill(){signCalls.polygons.push({color:this.fillStyle,vertices:signPath.map(p=>[...p])})},
- stroke(){},ellipse(){},arc(){},save(){},restore(){},
+ stroke(){},ellipse(){},arc(){},save(){},restore(){},clip(){signCalls.clips++},
+ transform(a,b,c,d,e,f){signCalls.affine=[a,b,c,d,e,f]},
  translate(x,y){signCalls.translation=[x,y]},rotate(angle){signCalls.rotation=angle},
  fillRect(){},strokeRect(){},
  fillText(text,x,y,maxWidth){signCalls.texts.push({text,x,y,maxWidth,angle:signCalls.rotation,position:signCalls.translation})}
@@ -205,11 +207,11 @@ for(const wall of world.walls.values())labelArt.drawWall(wall,world);
 for(const door of world.doors)labelArt.drawDoor(door);
 assert(!signCalls.texts.some(t=>forbidden.includes(t.text)),
  'Outdated building and restroom signs should be removed');
-for(const title of ['PAINT','ELECTRICAL','PLUMBING','CHECKOUT','SERVICE','GARDEN']){
+for(const title of ['PAINT','ELECTRICAL','PLUMBING','CHECKOUT','SERVICE','GARDEN','RECEIVING']){
  signCalls.texts.length=0;signCalls.polygons.length=0;
  signCalls.rotation=null;signCalls.translation=null;
  labelArt.drawDepartmentSign(17.5,16.5,title,'#c9a946');
- const face=signCalls.polygons.find(r=>r.color==='#e9e8db');
+ const face=signCalls.polygons.find(r=>r.color==='#e8e7d9');
  assert(face&&face.vertices.length===4,'An isometric sign face exists for '+title);
  const [a,b,c,d]=face.vertices;
  const angle=Math.atan2(b[1]-a[1],b[0]-a[0]);
@@ -217,6 +219,10 @@ for(const title of ['PAINT','ELECTRICAL','PLUMBING','CHECKOUT','SERVICE','GARDEN
  const text=signCalls.texts.find(t=>t.text===title);
  assert(text,'Department title appears: '+title);
  assert(Math.abs(text.angle-angle)<1e-7,'Department lettering rotates with its panel');
+ assert(signCalls.affine&&Math.abs(signCalls.affine[2]-Math.sin(angle))<1e-7&&
+   Math.abs(signCalls.affine[3]-Math.cos(angle))<1e-7,
+  'Lettering uses panel vertical basis as well as its rotated top edge');
+ assert(signCalls.clips>0,'Lettering is clipped to the sign face');
  assert.equal(text.x,0,'Title horizontally centered in the angled local frame');
  assert.equal(text.y,0,'Title vertically centered in the angled local frame');
  const width=Math.hypot(b[0]-a[0],b[1]-a[1]);
@@ -508,4 +514,45 @@ assert(!updatedPortraitCode.includes("escapeHTML(style)+' hair"),
  'Hair style name is not printed underneath selected NPC portrait');
 assert(updatedPortraitCode.includes("hairAppearance(n)"),
  'Portrait still renders the character\'s assigned hairstyle');
+
+// World selection should respect real ground-tile diamonds rather than
+// inflated bounding boxes around tall store fixtures.
+const selectionWorld=createHardwareStore();
+const selectProject=(x,y,z=0)=>({x:(x-y)*24,y:-(x+y)*12-z});
+const selectionAisle=selectionWorld.ground.find(t=>t.area==='store'&&t.x===9&&t.y===20);
+assert(selectionAisle,'A store aisle tile exists');
+const selectionCenter=selectProject(selectionAisle.x,selectionAisle.y);
+assert(isGroundTileTap(selectionWorld,selectionAisle.x,selectionAisle.y,selectionCenter.x,selectionCenter.y,selectProject,1),
+ 'Aisle floor tile is recognized before nearby shelf art');
+assert.equal(selectionLabel(selectionWorld,{id:'tile-9-20',x:9,y:20,type:'tile'}),
+ 'Store Aisle Tile (9, 20)','Selected aisle tile has useful header text');
+const selectedShelf=selectionWorld.fixtures.find(f=>f.type==='shelf');
+const shelfTestTop=selectProject(selectedShelf.x,selectedShelf.y,41);
+assert(!isGroundTileTap(selectionWorld,selectedShelf.x,selectedShelf.y,shelfTestTop.x,shelfTestTop.y,selectProject,1),
+ 'An occupied shelf tile is not mistaken for a walkable aisle tile');
+const selectedShelfCenter=selectProject(selectedShelf.x,selectedShelf.y,20);
+assert(hitProjectedFixture(selectedShelf,selectedShelfCenter.x,selectedShelfCenter.y,selectProject,49)!==null,
+ 'Fixture silhouette remains tappable');
+const distantPoint=selectProject(selectedShelf.x-10,selectedShelf.y-9);
+assert.equal(hitProjectedFixture(selectedShelf,distantPoint.x,distantPoint.y,selectProject,49),null,
+ 'Distant walkable floors do not trigger fixture picking');
+const selectionPage=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+const selectionClient=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+assert(selectionPage.includes('id="selectedLabel"')&&
+ selectionPage.indexOf('id="selectedLabel"')<selectionPage.indexOf('id="gameClock"'),
+ 'Selection label sits immediately before in-game time');
+assert(selectionClient.includes('isGroundTileTap(world,tile.x,tile.y'),
+ 'Map picking prioritizes walkable tiles over projecting shelf bboxes');
+assert(!selectionClient.includes('if(selected)selected=null;'),
+ 'Tile and fixture selections persist after HUD refresh');
+assert(selectionClient.includes("name:'RECEIVING'"),
+ 'Matching overhead Receiving sign is included');
+const seamStrokeColors=[];
+const seamAuditCtx={beginPath(){},moveTo(){},lineTo(){},closePath(){},fill(){},
+ stroke(){seamStrokeColors.push(this.strokeStyle)},
+ ellipse(){},arc(){},fillRect(){},strokeRect(){},fillText(){}};
+const seamArtwork=createArtwork(seamAuditCtx,selectProject,()=>1);
+seamArtwork.drawWall(selectionWorld.walls.get('6,10'),selectionWorld);
+assert(!seamStrokeColors.includes('#536563')&&!seamStrokeColors.includes('#82968f'),
+ 'Exterior wall panels have no vertical separator strokes');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
