@@ -21,10 +21,16 @@ export function loadGame(){try{let data=JSON.parse(localStorage.getItem(SAVE)||'
    return saved?{...o,stock:saved.stock??o.stock,damaged:saved.damaged??o.damaged}:o;
   });
   const oldDoors=new Map((data.world.doors||[]).map(o=>[o.id,o]));
-  world.doors=world.doors.map(d=>({
-   ...d,open:oldDoors.get(d.id)?.open??d.open,
-   forceUntil:oldDoors.get(d.id)?.forceUntil??d.forceUntil
-  }));
+  world.doors=world.doors.map(d=>{
+   const previous=oldDoors.get(d.id);
+   // Legacy receiving bays were two independent shutters. Preserve the
+   // most-open panel state when merging them into one double-width opening.
+   const second=d.type==='rollup'&&d.w===2?oldDoors.get('door-29-39'):null;
+   return {...d,
+    open:Math.max(previous?.open??d.open,second?.open??0),
+    forceUntil:Math.max(previous?.forceUntil??0,second?.forceUntil??0)
+   };
+  });
   const originalProps=new Map((data.world.props||[]).map(o=>[o.id,o]));
   const basePropIds=new Set(world.props.map(o=>o.id));
   world.props=world.props.map(o=>{
