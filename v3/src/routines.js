@@ -49,7 +49,9 @@ function customerShopTarget(g,n){
  return {x:s.x+2,y:s.y+2,department:s.department,shelfId:s.id};
 }
 function canHelp(g,n){
- if(n.duty!=='floor'||g.elapsed<(n.nextHelpAt||0))return null;
+ // One roving floor employee follows the entire map loop; other associates
+ // can interrupt their route for customer conversations and restocking.
+ if(n.duty!=='floor'||n.stationIndex===0||g.elapsed<(n.nextHelpAt||0))return null;
  return g.npcs.filter(c=>isShopper(c)&&!c.helpedBy&&c.task?.kind==='browse'&&
   Math.hypot(c.rx-n.rx,c.ry-n.ry)<17).sort((a,b)=>
    Math.hypot(a.rx-n.rx,a.ry-n.ry)-Math.hypot(b.rx-n.rx,b.ry-n.ry))[0];
@@ -89,7 +91,7 @@ function staffDuty(g,n){
  }
  const c=canHelp(g,n);if(c&&assignHelp(g,n,c))return true;
  // A floor associate also restocks merchandise depleted by shoppers.
- const low=g.world.fixtures.filter(f=>f.type==='shelf'&&f.stock!==undefined&&f.stock<=4&&
+ const low=(n.stationIndex===0?[]:g.world.fixtures).filter(f=>f.type==='shelf'&&f.stock!==undefined&&f.stock<=4&&
   (!f.restockingBy||!g.npcs.some(o=>o.id===f.restockingBy&&o.task?.kind==='restock'&&isAvailable(o))))
   .sort((a,b)=>Math.hypot(a.x-n.rx,a.y-n.ry)-Math.hypot(b.x-n.rx,b.y-n.ry))[0];
  if(low&&schedule(g,n,'restock',{x:low.x+2,y:low.y+2},7,{shelfId:low.id,label:'Restocking '+low.department?.toLowerCase()+' shelves'})){
