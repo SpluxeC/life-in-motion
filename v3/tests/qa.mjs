@@ -597,4 +597,38 @@ assert(receivingSignClient.includes("y:36.4,name:'RECEIVING'"),
  'Receiving sign moved away from the loading wall');
 assert(receivingSignClient.includes("o.name==='RECEIVING'?-1000"),
  'Receiving sign is drawn above wall geometry');
+// Large, department-specific shelf graphics are now a visual language,
+// deliberately independent from small gameplay-inventory icon drawings.
+const visualSource=readFileSync(new URL('../src/artwork.js',import.meta.url),'utf8');
+const rackStart=visualSource.indexOf(' function rack(');
+const rackStop=visualSource.indexOf(' function checkout(',rackStart);
+const rackCode=visualSource.slice(rackStart,rackStop);
+assert(!rackCode.includes('drawItem('),
+ 'Full-size shelf facades should no longer use tiny inventory-item sprites');
+assert(rackCode.includes('merchandiseFace(')&&rackCode.includes('shelfBand('),
+ 'Shelves have large item silhouettes and department trim');
+for(const department of departments){
+ const shelfFixture=fullStockWorld.fixtures.find(o=>o.type==='shelf'&&o.department===department);
+ const before=graphicsCalls.count;
+ artwork.drawFixture({...shelfFixture,stock:12});
+ assert(graphicsCalls.count-before>100,
+  'Chunky display merchandise renders in '+department+' aisle');
+}
+assert(visualSource.includes("const shelfSchemes={")&&
+ visualSource.includes("function endcapDisplay(o)"),
+ 'Department palettes and separate endcap presentation exist');
+const endcaps=fullStockWorld.fixtures.filter(f=>f.type==='endcap');
+assert(endcaps.length>=3,'Several endcaps are placed throughout the store');
+for(const display of endcaps){
+ const beforeEmptyEndcap=graphicsCalls.count;
+ artwork.drawFixture({...display,stock:0});const emptyEndcapCalls=graphicsCalls.count-beforeEmptyEndcap;
+ const beforeFullEndcap=graphicsCalls.count;
+ artwork.drawFixture({...display,stock:display.capacity||display.stock});const fullEndcapCalls=graphicsCalls.count-beforeFullEndcap;
+ assert(fullEndcapCalls>emptyEndcapCalls+20,
+  'Endcap '+display.department+' visibly changes when products sell out');
+}
+assert(visualSource.includes("merchandiseFace('y',faceY"),
+ 'Endcap merchandise faces outward to the aisle, not toward the camera');
+assert(visualSource.includes("shelfBand('x',x-.50"),
+ 'Each endcap has a colored physical side panel');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
