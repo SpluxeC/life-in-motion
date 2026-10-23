@@ -52,5 +52,5 @@ export function loadGame(){try{let data=JSON.parse(localStorage.getItem(SAVE)||'
   for(const hazard of world.hazards){hazard.cleanerId=null;hazard.beingCleaned=false}
  }
  return g;
- }catch{return null}}
+ }catch(error){console.warn('Life in Motion save migration failed:',error);return null}}
 export function unlockMap(mapId){let progress=getProgress();if(!progress.unlocked.includes(mapId))progress.unlocked.push(mapId);try{localStorage.setItem(PROGRESS,JSON.stringify(progress))}catch{}}
