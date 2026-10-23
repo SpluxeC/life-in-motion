@@ -44,9 +44,18 @@ updateGame(saved,.1);assert.equal(saved.completed,true);assert.equal(saved.winne
 const oldLog=saved.log.length;updateGame(saved,.1);assert.equal(saved.log.length,oldLog);
 // Built-in art must render every world asset type without external PNG files.
 const graphicsCalls={count:0};
+const imageDraws=[];
+// Mock browser image readiness so QA verifies that each handling fixture
+// is ONE canvas drawImage instead of dozens of offset geometry primitives.
+globalThis.Image=class {
+ constructor(){this.complete=true;this.naturalWidth=220}
+ set src(value){this._src=value}
+ get src(){return this._src}
+};
 const drawingMethods=new Set(['beginPath','moveTo','lineTo','closePath','fill','stroke','ellipse','fillRect','strokeRect','fillText','arc','save','restore','translate','rotate','transform','clip']);
 const drawingContext=new Proxy({},{
- get:(obj,k)=>drawingMethods.has(k)?()=>{graphicsCalls.count++}:obj[k],
+ get:(obj,k)=>k==='drawImage'?(...args)=>{graphicsCalls.count++;imageDraws.push(args)}:
+  drawingMethods.has(k)?()=>{graphicsCalls.count++}:obj[k],
  set:(obj,k,val)=>{obj[k]=val;return true}
 });
 const project=(x,y,h=0)=>({x:500+(x-y)*17,y:350-(x+y)*8-h*.7});
@@ -1146,9 +1155,13 @@ assert.equal(selectionLabel(shippingWorld,forklift),'Forklift');
 assert.equal(handTrucks.length,2);
 for(const dolly of handTrucks)assert.equal(selectionLabel(shippingWorld,dolly),'Hand Truck');
 for(const f of [forklift,...handTrucks]){
- const count=graphicsCalls.count;
+ const count=graphicsCalls.count,spritesBefore=imageDraws.length;
  artwork.drawFixture(f);
- assert(graphicsCalls.count-count>(f.type==='forklift'?65:30),'Detailed handling equipment renders: '+f.type);
+ assert.equal(graphicsCalls.count-count,1,'Handling fixture is a single canvas draw: '+f.type);
+ assert.equal(imageDraws.length-spritesBefore,1,'Handling fixture renders one sprite: '+f.type);
+ const [sprite,,,width,height]=imageDraws.at(-1);
+ assert(sprite.src.endsWith(f.type==='forklift'?'/assets/forklift.svg':'/assets/hand-truck.svg'));
+ assert(width>0&&height>0,'Sprite is sized by zoom and grounded in the map');
  const p=project(f.x+(f.w-1)/2,f.y,24);
  assert(hitProjectedFixture(f,p.x,p.y,project,49)!==null,'Equipment is selectable');
 }
@@ -1156,28 +1169,17 @@ for(const q of [{x:32,y:37},{x:33,y:36},{x:34,y:36},{x:35,y:37},{x:33,y:38}]){
  assert(walkable(shippingWorld,q.x,q.y),'Forklift access lane open');
  assert(pathTo(shippingWorld,{x:28,y:38},q).length>0);
 }
-// Painter order regression: the hand truck rear wheel must be behind its
-// platform and front rail. Forklift far tires precede chassis; near tires,
-// roof and forward mast follow the chassis.
+// The procedural hand truck / forklift painters must never return.
+// Assets contain one permanently aligned body, wheels and frame, while
+// collision/selection remain governed by their original fixture footprints.
 const handlingArt=readFileSync(new URL('../src/artwork.js',import.meta.url),'utf8');
-const truckSection=handlingArt.slice(handlingArt.indexOf("}else if(type==='handTruck')"),
- handlingArt.indexOf("}else if(type==='forklift')"));
-const liftSection=handlingArt.slice(handlingArt.indexOf("}else if(type==='forklift')"),
- handlingArt.indexOf("}else if(type==='filingCabinet'"));
-assert(truckSection.includes("line(P(side,front,3),P(side,front,56)"),
- 'Opposite hand-truck wheel is covered by tall front rail from axle to handle');
-assert(truckSection.indexOf('frontWheel=P')<
- truckSection.indexOf('line(P(side,front,3)'),
- 'Front tire is drawn before its covering metal upright');
-assert(liftSection.includes("const axleX=[x+.84,x+1.47],driverY=y+.36"),
- 'Forklift displays only two driver-side wheels');
-assert(!liftSection.includes("farY=")&&!liftSection.includes("nearY="),
- 'Passenger-side wheel loops are absent');
-assert(liftSection.includes("line(P(xx,yy,18),P(xx,yy,62)"),
- 'Safety-cage posts connect at the chassis top and reach roof height');
-assert(liftSection.includes("surface(cabLeft,cabRear,cabRight-cabLeft,cabFront-cabRear,62"),
- 'Safety canopy corners share the cage post geometry');
-assert(liftSection.indexOf("Exactly two visible driver-side tires")<
- liftSection.indexOf("All four cage legs START"),
- 'Wheel layer is behind full-height cage posts');
+assert(handlingArt.includes("if(type==='forklift'||type==='handTruck'){drawHandlingSprite(o);return}"));
+assert(!handlingArt.includes("}else if(type==='handTruck')"));
+assert(!handlingArt.includes("}else if(type==='forklift')"));
+const forkliftSvg=readFileSync(new URL('../assets/forklift.svg',import.meta.url),'utf8');
+const handTruckSvg=readFileSync(new URL('../assets/hand-truck.svg',import.meta.url),'utf8');
+assert(forkliftSvg.includes('Exactly two driver-side wheels'));
+assert(forkliftSvg.includes('Every roll-cage leg touches the chassis'));
+assert(handTruckSvg.includes('Front upright is painted over its own wheel'));
+assert(forkliftSvg.includes('<svg ')&&handTruckSvg.includes('<svg '));
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
