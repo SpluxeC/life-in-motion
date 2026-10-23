@@ -19,8 +19,10 @@ export function loadGame(){try{let data=JSON.parse(localStorage.getItem(SAVE)||'
   world.fixtures=world.fixtures.map(o=>{
    // The renamed Garden Tools rack moved to the other side of the door.
    // Preserve stock from either older Garden Shelf position on upgrades.
-   const saved=oldFixtures.get(o.id)||(o.type==='gardenToolsRack'?
+   const saved=oldFixtures.get(o.id)||(o.id==='gardenToolsRack-35-28'?
     oldFixtures.get('bagPallet-35-32')||oldFixtures.get('bagPallet-32-35'):null);
+   // Only the ORIGINAL shovel/rake rack inherits old shelf stock. The new
+   // hoe/lopper rack and lawn mower receive their own fresh default values.
    return saved?{...o,stock:saved.stock??o.stock,damaged:saved.damaged??o.damaged}:o;
   });
   const oldDoors=new Map((data.world.doors||[]).map(o=>[o.id,o]));
