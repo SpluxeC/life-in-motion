@@ -30,14 +30,14 @@ function stick(n,t){let p=project(n.rx,n.ry),z=zoom*(n.role==='customer'||n.role
  ctx.moveTo(0,-h*z*.45);
  if(pose==='offerHelp')ctx.lineTo((-10-2*wave)*z,(-34+3*wave)*z);
  else if(pose==='scan'||pose==='type')ctx.lineTo((-12-2*wave)*z,(-12+3*wave)*z);
- else if(pose==='inspect')ctx.lineTo((-13-2*wave)*z,(-20-4*wave)*z);
+ else if(pose==='inspect'||pose==='stock')ctx.lineTo((-13-2*wave)*z,(-20-4*wave)*z);
  else if(pose==='drink')ctx.lineTo(-4*z,-h*z*.66);
  else ctx.lineTo((-10-step*3)*z,(-19+bob)*z);
  ctx.moveTo(0,-h*z*.45);
  if(pose==='offerHelp')ctx.lineTo((10+2*wave)*z,(-23+4*wave)*z);
  else if(pose==='scan')ctx.lineTo((13+3*wave)*z,(-11+4*wave)*z);
  else if(pose==='type')ctx.lineTo((11-2*wave)*z,(-12+2*wave)*z);
- else if(pose==='inspect')ctx.lineTo((10+3*wave)*z,(-26+3*wave)*z);
+ else if(pose==='inspect'||pose==='stock')ctx.lineTo((10+3*wave)*z,(-26+3*wave)*z);
  else if(pose==='talk')ctx.lineTo((10+3*wave)*z,(-18+3*wave)*z);
  else ctx.lineTo((9+step*3)*z,(-19+bob)*z);
  ctx.stroke();ctx.fillStyle='#f8faf7';ctx.strokeStyle='#0c1416';ctx.lineWidth=2*z;ctx.beginPath();ctx.arc(0,-h*z*.82,7*z,0,Math.PI*2);ctx.fill();ctx.stroke();if(n.role==='employee'){
@@ -117,6 +117,14 @@ function refreshHud(){if(!game)return;const g=game,alive=g.npcs.filter(n=>n.aliv
  if(selected){let n=g.npcs.find(o=>o.id===selected.id),f=g.world.fixtures.find(o=>o.id===selected.id),d=g.world.doors.find(o=>o.id===selected.id),prop=g.world.props.find(o=>o.id===selected.id);
  html+='<h3>'+escapeHTML(n?.name||f?.type||d?.label||prop?.type||'World tile')+'</h3>';
  if(n){html+=portraitHTML(n);html+='<p>'+escapeHTML(n.role)+' · '+(n.alive?(n.arrested?'Detained':n.unconscious>0?'Unconscious':escapeHTML(n.activity)):'Deceased')+'<br>Health '+Math.round(n.health)+' · Pain '+Math.round(n.pain)+' · Anger '+Math.round(n.emotion.anger)+' · Fear '+Math.round(n.emotion.fear)+'</p><p>Traits: '+Object.entries(n.traits).map(([k,v])=>k+' '+v).join(' · ')+'</p><p>Inventory: '+(n.inventory.map(id=>ITEMS.find(i=>i.id===id)?.name||id).join(', ')||'Empty')+'</p><p>Memory: '+escapeHTML(n.memory.slice(0,3).map(m=>m.text).join(' · ')||'None')+'</p>'}
+ if(n&&n.duty){
+  const job=n.duty==='cashier'?'Cashier':n.duty==='service'?'Customer service':n.duty==='floor'?'Floor associate':'Shopper';
+  const routine=n.task?.kind||'Waiting for next task';
+  const seconds=n.task?.phase==='working'?Math.max(0,Math.ceil((n.task.until||0)-g.elapsed)):null;
+  html+='<p><strong>Assigned role:</strong> '+escapeHTML(job)+'<br><strong>Current task:</strong> '+escapeHTML(n.activity||routine)+
+    (seconds!==null?' · '+seconds+'s remaining':'')+
+    (n.role==='employee'&&n.breakAt?'<br><strong>Next break:</strong> '+Math.max(0,Math.ceil(n.breakAt-g.elapsed))+'s':'')+'</p>';
+ }
  if(d)html+='<p>Animated '+d.type+' door · '+Math.round(d.open*100)+'% open</p>';
  if(f)html+='<p>'+escapeHTML(f.department||'Interactable fixture')+' · '+(f.damaged?'Damaged':'Functional')+'</p>';if(prop)html+='<p>'+escapeHTML(prop.type==='car'?'Vehicle — parked or responding':'Landscaping')+' · Ground position '+Math.round(prop.x)+', '+Math.round(prop.y)+'</p>';
  let type=n?'npc':f?'fixture':'tile';html+='<h3>God Powers</h3>';
