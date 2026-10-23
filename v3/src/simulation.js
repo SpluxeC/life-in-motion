@@ -37,7 +37,10 @@ export function spawnNPC(g,role='customer'){
  const pos=role==='customer'?nearestOpen(g.world,lotX,8):
   nearestOpen(g.world,role==='employee'?12+Math.floor(r()*19):4,role==='employee'?15+Math.floor(r()*11):5);
  const traits={aggression:Math.round(r()*100),bravery:Math.round(r()*100),compassion:Math.round(r()*100),suspicion:Math.round(r()*100),loyalty:Math.round(r()*100)};
- const n={id:'npc-'+i,name:FIRST[Math.floor(r()*FIRST.length)]+' '+LAST[Math.floor(r()*LAST.length)],role,x:pos.x,y:pos.y,rx:pos.x,ry:pos.y,health:100,bleeding:0,pain:0,unconscious:0,alive:true,arrested:false,detention:0,emotion:{anger:r()*20,fear:r()*15,stress:r()*15},traits,relationships:{},memory:[],inventory:r()<.6?[ITEMS[Math.floor(r()*ITEMS.length)].id]:[],path:[],target:null,activity:role==='employee'?'Working':'Browsing',think:1+r()*3,callCooldown:0,recovery:0,panic:0};
+ const hairColors=['#211a17','#37271f','#573829','#76503a','#9b704a','#b18c60','#d3b178','#e2cf9d','#934b31','#a7a39a','#e5e1d7'];
+ const hairStyles=['short','sidePart','curly','wavy','bob','ponytail','buzz','bun','long','messy'];
+ const hairColor=hairColors[Math.floor(r()*hairColors.length)],hairStyle=hairStyles[Math.floor(r()*hairStyles.length)];
+ const n={hairColor,hairStyle,id:'npc-'+i,name:FIRST[Math.floor(r()*FIRST.length)]+' '+LAST[Math.floor(r()*LAST.length)],role,x:pos.x,y:pos.y,rx:pos.x,ry:pos.y,health:100,bleeding:0,pain:0,unconscious:0,alive:true,arrested:false,detention:0,emotion:{anger:r()*20,fear:r()*15,stress:r()*15},traits,relationships:{},memory:[],inventory:r()<.6?[ITEMS[Math.floor(r()*ITEMS.length)].id]:[],path:[],target:null,activity:role==='employee'?'Working':'Browsing',think:1+r()*3,callCooldown:0,recovery:0,panic:0};
  if(role==='employee'||role==='customer')initializeRoutine(n,role==='employee'?coworkerCount:shopperCount);
  g.npcs.push(n);return n;
 }
