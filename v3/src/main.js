@@ -124,7 +124,7 @@ const departmentSigns=[
  {x:10,y:12.3,name:'CHECKOUT',accent:'#b75e4f'},
  {x:31.5,y:12.3,name:'SERVICE',accent:'#558c9a'},
  {x:14,y:34,name:'LUMBER',accent:'#b58a5b'},
- {x:28.5,y:38.2,name:'RECEIVING',accent:'#c08b55'},
+ {x:28.5,y:36.4,name:'RECEIVING',accent:'#c08b55'},
  {x:42.7,y:29,name:'GARDEN',accent:'#63905b'}
 ];
 function render(t){
@@ -138,7 +138,7 @@ function render(t){
   ...[...world.walls.values()].map(o=>({kind:'wall',depth:renderDepth('wall',o),fn:()=>artwork.drawWall(o,world)})),
   ...world.props.map(o=>({kind:'vehicle',depth:renderDepth('vehicle',o),fn:()=>o.type==='wetFloorSign'?artwork.drawWetFloorSign(o.x,o.y):artwork.drawVehicle(o,t)})),
   ...(world.drops||[]).map(o=>({kind:'item',depth:renderDepth('item',o),fn:()=>artwork.drawDrop(o)})),
-  ...departmentSigns.map(o=>({kind:'sign',depth:renderDepth('sign',o)+.1,fn:()=>artwork.drawDepartmentSign(o.x,o.y,o.name,o.accent)})),
+  ...departmentSigns.map(o=>({kind:'sign',depth:o.name==='RECEIVING'?-1000:renderDepth('sign',o)+.1,fn:()=>artwork.drawDepartmentSign(o.x,o.y,o.name,o.accent)})),
   ...world.hazards.filter(h=>h.kind==='spill'&&h.beingCleaned&&h.life>0).map(h=>({kind:'sign',depth:renderDepth('sign',h)+.2,fn:()=>artwork.drawWetFloorSign(h.x,h.y)})),
   ...(game?game.npcs.map(o=>({kind:'npc',depth:renderDepth('npc',o),fn:()=>stick(o,t)})):[]),
   ...world.hazards.map(o=>({kind:'hazard',depth:renderDepth('hazard',o),fn:()=>drawHazard(o,t)}))
