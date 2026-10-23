@@ -264,7 +264,7 @@ function refreshHud(){
  $('selectedLabel').classList.toggle('hidden',!selected);
  $('gameClock').textContent=formatGameTime(g);
  $('pause').textContent=g.paused?'Resume':'Pause';
- $('worldStatus').textContent='Map v'+g.world.layoutVersion+' · Living '+alive+'/'+g.npcs.length+' · God Energy +Math.floor(g.energy)+' · '+(g.paused?'Paused':g.speed+'×')+(pendingPower?' · Tap a target for '+POWER_LIST.find(p=>p.id===pendingPower)?.name:'');
+ $('worldStatus').textContent='Map v'+g.world.layoutVersion+' · Living '+alive+'/'+g.npcs.length+' · God Energy '+Math.floor(g.energy)+' · '+(g.paused?'Paused':g.speed+'×')+(pendingPower?' · Tap a target for '+POWER_LIST.find(p=>p.id===pendingPower)?.name:'');
  $('stopFollow').classList.toggle('hidden',!g.npcs.some(n=>n.id===selected?.id));
  $('settingsFeedback').textContent=feedback;
  $('worldEvents').innerHTML=g.log.slice(0,12).map(e=>'<p class="personFacts">'+escapeHTML(e.text)+'</p>').join('')||'<p>No events yet.</p>';
