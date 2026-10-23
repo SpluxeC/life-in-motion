@@ -29,15 +29,14 @@ export function createHardwareStore(){
  for(let x of [42])for(let y of [16,21])walls.delete(key(x,y));
  door(38,12,'hinged','Staff office door','y');door(38,19,'hinged','Break room door','y');door(38,24,'hinged','Restroom door','y');
  door(42,16,'hinged','Inner staff door');door(42,21,'hinged','Inner staff door');
- // Timber fencing closes the outer garden edge; the store-side gate stays usable.
- // The building's rear wall already forms most of the garden's northern boundary.
- for(let y=28;y<=39;y++)for(let x of [38,48]){
-  if(x===38&&y===30)continue;
-  wall(x,y,'gardenFence','y');
- }
- for(let x=39;x<=47;x++)wall(x,39,'gardenFence','x');
- for(let x=47;x<=47;x++)wall(x,28,'gardenFence','x');
- door(38,30,'gate','Garden wooden gate','y');
+ // Building-side garden edge remains open against the existing shop/staff
+ // walls; avoid a redundant fence along the building's lower side.
+ // Keep the freestanding wooden fence on the outer and southern edges.
+ for(let y=28;y<=39;y++)wall(48,y,'gardenFence','y');
+ for(let x=39;x<=47;x++)if(x!==43)wall(x,39,'gardenFence','x');
+ wall(47,28,'gardenFence','x');
+ // Relocate the opening to the outer end, leaving store-to-garden travel clear.
+ door(43,39,'gate','Garden outer gate','x');
  for(let x of [5,11,17,23,29])for(let band=0;band<2;band++){
   const start=band===0?18:27;
   fixture('shelf',x,start,1,5,{department:['PAINT','TOOLS','ELECTRICAL','PLUMBING','HARDWARE'][(x-5)/6],stock:7,capacity:12});
@@ -85,7 +84,7 @@ export function createHardwareStore(){
  for(let x of [4,12,20,28,36,44,52,60])props.push({id:'shrub-'+x,type:'shrub',x,y:1});
  for(let y of [12,20,28,37,45])props.push({id:'tree-'+y,type:'tree',x:60,y});
  for(let x of [51,57])for(let y of [13,25,38])props.push({id:'shrub-'+x+'-'+y,type:'shrub',x,y});
- return {id:'hardware-store',title:'Hardware Store',layoutVersion:2,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
+ return {id:'hardware-store',title:'Hardware Store',layoutVersion:3,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
 }
 export const inside=(x,y)=>x>=0&&y>=0&&x<WIDTH&&y<HEIGHT;
 export function fixtureAt(world,x,y){return world.fixtures.find(o=>x>=o.x&&x<o.x+o.w&&y>=o.y&&y<o.y+o.h)}
