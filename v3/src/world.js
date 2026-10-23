@@ -3,7 +3,19 @@ export const WIDTH=76,HEIGHT=50;
 export const key=(x,y)=>x+','+y;
 export function createHardwareStore(){
  const walls=new Map(),doors=[],fixtures=[],props=[],ground=[],blocked=new Set();
- const wall=(x,y,section='exterior',axis='x')=>walls.set(key(x,y),{x,y,section,axis});
+ // A rectangular corner uses *both* wall directions at one occupied tile.
+ // Never overwrite an X-facing segment with Y-facing segment (or vice versa).
+ const wall=(x,y,section='exterior',axis='x')=>{
+  const k=key(x,y),existing=walls.get(k);
+  if(existing){
+   if(!existing.axes.includes(axis))existing.axes.push(axis);
+   existing.axis=existing.axes.length===2?'corner':existing.axes[0];
+   return existing;
+  }
+  const piece={x,y,section,axis,axes:[axis]};
+  walls.set(k,piece);
+  return piece;
+ };
  const door=(x,y,type='hinged',label='Door',axis='x')=>doors.push({id:'door-'+x+'-'+y,x,y,type,label,axis,open:0,target:0,auto:type==='sliding',locked:false,forceUntil:0});
  const fixture=(type,x,y,w=1,h=1,extra={})=>fixtures.push({id:type+'-'+x+'-'+y,type,x,y,w,h,...extra});
  for(let y=0;y<HEIGHT;y++)for(let x=0;x<WIDTH;x++){
@@ -12,6 +24,12 @@ export function createHardwareStore(){
  }
  for(let x=2;x<=36;x++){wall(x,10);wall(x,39)}
  for(let y=10;y<=39;y++){wall(2,y,'exterior','y');wall(36,y,'exterior','y')}
+ // Glazed fronts are part of their wall tile, not separate collision pieces.
+ // Include new windows on the parking-lot-facing (y=10) side.
+ for(const x of [4,5,7,8,9,11,12,15,16,22,23,26,27,32,33]){
+  const panel=walls.get(key(x,10));
+  if(panel&&panel.section==='exterior')panel.window='storefront';
+ }
  // Actual openings are the exact tiles occupied by animated doors.
  for(let x of [19,20])walls.delete(key(x,10));
  for(let x of [28,29])walls.delete(key(x,39));
@@ -84,7 +102,7 @@ export function createHardwareStore(){
  for(let x of [4,12,20,28,36,44,52,60])props.push({id:'shrub-'+x,type:'shrub',x,y:1});
  for(let y of [12,20,28,37,45])props.push({id:'tree-'+y,type:'tree',x:60,y});
  for(let x of [51,57])for(let y of [13,25,38])props.push({id:'shrub-'+x+'-'+y,type:'shrub',x,y});
- return {id:'hardware-store',title:'Hardware Store',layoutVersion:3,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
+ return {id:'hardware-store',title:'Hardware Store',layoutVersion:4,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
 }
 export const inside=(x,y)=>x>=0&&y>=0&&x<WIDTH&&y<HEIGHT;
 export function fixtureAt(world,x,y){return world.fixtures.find(o=>x>=o.x&&x<o.x+o.w&&y>=o.y&&y<o.y+o.h)}
