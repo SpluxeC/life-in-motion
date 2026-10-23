@@ -178,7 +178,7 @@ assert.equal(cabinetSides.length,2,'Solid cabinet draws two visible side faces')
 assert(cabinetSides.every(poly=>hasVertex(poly,near)),'Both visible sides join at the nearest ground corner');
 assert(cabinetSides.every(poly=>!hasVertex(poly,far)),'Hidden far faces must never be drawn instead');
 faceCalls.length=0;
-faceArt.drawFixture({type:'pallet',x:11,y:35,w:2,h:1});
+faceArt.drawFixture({type:'bagPallet',x:11,y:35,w:2,h:1});
 const boxLeft=faceCalls.filter(p=>p.color==='#7b6a58');
 const boxRight=faceCalls.filter(p=>p.color==='#9b8065');
 assert(boxLeft.length>=6&&boxLeft.length===boxRight.length,'Each merchandise carton has two side faces');
