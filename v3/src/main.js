@@ -1,10 +1,10 @@
-import {createHardwareStore,doorAt,fixtureAt,nearestOpen,walkable,key} from './world.js?v=random-moods-tooltip-20261023-1';
-import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v=random-moods-tooltip-20261023-1';
-import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js?v=random-moods-tooltip-20261023-1';
-import {createArtwork} from './artwork.js?v=random-moods-tooltip-20261023-1';
-import {renderDepth,compareRenderDepth} from './render-depth.js?v=random-moods-tooltip-20261023-1';
-import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness} from './hud.js?v=random-moods-tooltip-20261023-1';
-import {hitProjectedFixture,isGroundTileTap,selectionLabel} from './selection.js?v=map-selection-20261023-1';
+import {createHardwareStore,doorAt,fixtureAt,nearestOpen,walkable,key} from './world.js?v=signs-walls-tiles-20261023-1';
+import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v=signs-walls-tiles-20261023-1';
+import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js?v=signs-walls-tiles-20261023-1';
+import {createArtwork} from './artwork.js?v=signs-walls-tiles-20261023-1';
+import {renderDepth,compareRenderDepth} from './render-depth.js?v=signs-walls-tiles-20261023-1';
+import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness} from './hud.js?v=signs-walls-tiles-20261023-1';
+import {hitProjectedFixture,isGroundTileTap,selectionLabel} from './selection.js?v=signs-walls-tiles-20261023-1';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d');
 let game=null,scene=createHardwareStore(),zoom=.72,offset={x:0,y:0},last=performance.now(),acc=0,lastHud=0,lastSave=0,lastViewport={w:0,h:0},drag=null,selected=null,resultShown=false,activeTab='world',selectedPowerId='whisper',pendingPower=null,feedback='';
