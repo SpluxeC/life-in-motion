@@ -1,6 +1,7 @@
 // Life in Motion v3 — deterministic, inspectable daily routines on the real world grid.
 // A routine reserves no collision tiles, follows existing pathfinding and survives saves.
 import {nearestOpen,pathTo,walkable} from './world.js?v=signs-walls-tiles-20261023-1';
+import {departmentItem} from './merchandise.js?v=stocked-shelves-20261023-1';
 
 export const ROUTINE_STOPS=[
  {x:7,y:24,label:'paint and tools aisle'},
@@ -174,8 +175,10 @@ export function updateRoutine(g,n,dt){
  if(task.kind==='browse'){
   const shelf=g.world.fixtures.find(f=>f.id===task.shelfId);
   if(shelf&&shelf.stock>0&&n.inventory.length<4){
-   const categoryItems={PAINT:'paint',TOOLS:'hammer',ELECTRICAL:'flashlight',PLUMBING:'wrench',HARDWARE:'gloves'};
-   n.inventory.push(categoryItems[shelf.department]||'wrench');shelf.stock--;
+   // Shoppers pick up one of the *same* real products drawn on these shelves.
+   // Vary purchases within each department without adding RNG side effects.
+   const product=departmentItem(shelf.department,(n.shoppingIndex||0)+shelf.stock);
+   n.inventory.push(product);shelf.stock--;
    n.activity='Picked up '+(shelf.department||'hardware').toLowerCase()+' products';
   }
  }
