@@ -2,6 +2,7 @@
 // A routine reserves no collision tiles, follows existing pathfinding and survives saves.
 import {nearestOpen,pathTo,walkable} from './world.js?v=signs-doors-hair-20261023-1';
 import {departmentItem} from './merchandise.js?v=signs-doors-hair-20261023-1';
+import {checkoutStaffPosition,checkoutCustomerPosition} from './checkout-layout.js?v=register-lanes-20261023-1';
 
 export const ROUTINE_STOPS=[
  {x:7,y:24,label:'paint and tools aisle'},
@@ -40,7 +41,10 @@ function fixture(g,type,index=0){
 function station(g,n){
  const f=n.duty==='service'?fixture(g,'serviceDesk'):fixture(g,'checkout',n.stationIndex||0);
  if(!f)return {x:20,y:15};
- return {x:f.x+Math.min(1,Math.floor(f.w/2)),y:f.y+2};
+ // Cashiers work behind the POS computer, on the south (+Y) side. Service
+ // desk staff retain their existing workstation access.
+ return n.duty==='cashier'?checkoutStaffPosition(f):
+  {x:f.x+Math.min(1,Math.floor(f.w/2)),y:f.y+2};
 }
 function parking(n){const bays=[10,18,26,34,42,50,58];return {x:bays[(n.parkingIndex||0)%bays.length],y:8}}
 function customerShopTarget(g,n){
@@ -118,7 +122,7 @@ function shopperDuty(g,n){
  }
  if(n.tripStage==='checkout'){
   n.tripStage='leaving';const counter=fixture(g,'checkout',(n.parkingIndex||0)%3);
-  return schedule(g,n,'checkout',{x:counter.x,y:counter.y-1},7,{label:'Waiting at checkout'});
+  return schedule(g,n,'checkout',checkoutCustomerPosition(counter),7,{label:'Waiting on customer side of checkout'});
  }
  if(n.tripStage==='leaving'){
   n.tripStage='returning';return schedule(g,n,'leave',parking(n),8,{label:'Returning to parked car'});
