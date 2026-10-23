@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 170" width="220" height="170" fill="none">
+  <defs>
+    <linearGradient id="orange" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f6bf5c"/><stop offset=".46" stop-color="#df9134"/><stop offset="1" stop-color="#a45d29"/></linearGradient>
+    <linearGradient id="cab" x1="0" x2=".9" y1="0" y2="1"><stop stop-color="#e9a442"/><stop offset="1" stop-color="#b9702b"/></linearGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#789098"/><stop offset=".55" stop-color="#405660"/><stop offset="1" stop-color="#293941"/></linearGradient>
+  </defs>
+  <!-- Every painted detail belongs to one fixed sprite, not independent world props. -->
+  <ellipse cx="120" cy="150" rx="96" ry="12" fill="#152a2b" opacity=".24"/>
+  <path d="M87 105 120 93 173 99 185 114 175 137 104 145 75 131Z" fill="#764e30" stroke="#384751" stroke-width="3" stroke-linejoin="round"/>
+  <path d="m105 103 18-9 52 6 11 15-19 11-51-6Z" fill="#efb553" stroke="#85532e" stroke-width="2.5"/>
+  <path d="m151 84 19-7 17 13-3 28-18-6-17-13Z" fill="url(#cab)" stroke="#8b562e" stroke-width="3" stroke-linejoin="round"/>
+  <path d="m157 87 16-5 10 9-21 8Z" fill="#ffd079" opacity=".62"/>
+  <path d="M124 101V85q0-5 5-5h8q5 0 5 5v21Z" fill="#2f434b" stroke="#1e3039" stroke-width="3"/>
+  <path d="m119 109 1-17 10-5 13 5-1 17Z" fill="#394f56" stroke="#253941" stroke-width="2"/>
+  <path d="m105 97 6-14 13 5" stroke="#536b71" stroke-width="4" stroke-linecap="round"/>
+  <ellipse cx="110" cy="82" rx="9" ry="3.5" transform="rotate(-17 110 82)" fill="#263940" stroke="#93a5a7" stroke-width="2"/>
+  <path d="m77 116 26-14 60 8 15 15-7 18-70 7-24-15Z" fill="url(#orange)" stroke="#895629" stroke-width="3" stroke-linejoin="round"/>
+  <path d="m82 117 21-11 56 8 14 11-71 4Z" fill="#f2b24b"/>
+  <path d="m101 130 72-5-4 13-64 7Z" fill="#b9772e"/>
+  <path d="m106 131 55-4" stroke="#ffd37a" stroke-width="2" opacity=".7"/>
+  <path d="m163 120 11 2 1 12-11 2" stroke="#824b25" stroke-width="3"/>
+  <!-- Exactly two driver-side wheels; the unseen pair is not painted. -->
+  <g stroke="#202d33" stroke-width="3.5">
+    <ellipse cx="103" cy="144" rx="16" ry="18" fill="#263137"/>
+    <ellipse cx="163" cy="137" rx="15" ry="18" fill="#263137"/>
+  </g>
+  <g fill="none" stroke="#56676e" stroke-width="3" opacity=".9">
+    <ellipse cx="103" cy="144" rx="12" ry="14"/><ellipse cx="163" cy="137" rx="11" ry="14"/>
+  </g>
+  <g fill="#acbbb9" stroke="#43545b" stroke-width="2">
+    <ellipse cx="103" cy="144" rx="6.5" ry="7"/><ellipse cx="163" cy="137" rx="6" ry="7"/>
+  </g>
+  <g fill="#536970"><circle cx="103" cy="144" r="2.1"/><circle cx="163" cy="137" r="2.1"/></g>
+  <!-- Every roll-cage leg touches the chassis and the solid overhead guard. -->
+  <g stroke="#30444e" stroke-width="7" stroke-linejoin="round" stroke-linecap="round">
+    <path d="m110 105-5-64M155 111l-2-69M174 112l9-71"/>
+  </g>
+  <g stroke="#718990" stroke-width="2" stroke-linecap="round" opacity=".8">
+    <path d="m107 99-5-52m51 58-2-55m29 55 7-58"/>
+  </g>
+  <path d="m93 42 49-22 49 19-47 23Z" fill="#394e58" stroke="#263b44" stroke-width="5" stroke-linejoin="round"/>
+  <path d="m101 42 42-17 37 14-39 18Z" fill="#778f93"/>
+  <path d="m104 41 37 15" stroke="#aac0bf" stroke-width="2" opacity=".6"/>
+  <path d="M141 58 143 111" stroke="#3c515c" stroke-width="6" stroke-linecap="round"/>
+  <path d="M143 60 144 101" stroke="#8da0a3" stroke-width="2"/>
+  <rect x="168" y="27" width="15" height="7" rx="3" fill="#e9a735" stroke="#805127" stroke-width="2"/>
+  <ellipse cx="176" cy="26" rx="5" ry="3" fill="#f8cf6e"/>
+  <path d="m77 113 7-4 24 7-9 15-24-6Z" fill="#506871" stroke="#314a56" stroke-width="3"/>
+  <path d="m64 28 12-5 17 102-13 5Z" fill="url(#steel)" stroke="#253944" stroke-width="3" stroke-linejoin="round"/>
+  <path d="m83 23 10-4 19 102-12 5Z" fill="#465d68" stroke="#263d47" stroke-width="3" stroke-linejoin="round"/>
+  <path d="m71 34 18-5M76 57l18-5M81 82l18-5M86 106l19-5" stroke="#a1b4b7" stroke-width="3.5"/>
+  <path d="m90 30 15 87" stroke="#293d44" stroke-width="2" stroke-dasharray="3 4"/>
+  <path d="m75 116 28 8-2 13-32-9Z" fill="#344b55" stroke="#203842" stroke-width="3"/>
+  <path d="m75 125 6 5-58 20-12-3 1-7Z" fill="#a8b6b6" stroke="#3e555f" stroke-width="3" stroke-linejoin="round"/>
+  <path d="m93 136 8 3-55 20-12-3 1-7Z" fill="#687e87" stroke="#394e58" stroke-width="3" stroke-linejoin="round"/>
+  <path d="m13 141 63-16M35 150l59-14" stroke="#d4dcdc" stroke-width="2" stroke-linecap="round"/>
+  <path d="m78 120 18 6" stroke="#d8ba7a" stroke-width="2"/>
+  <path d="m171 114 7-1" stroke="#fff0be" stroke-width="4" stroke-linecap="round"/>
+</svg>
