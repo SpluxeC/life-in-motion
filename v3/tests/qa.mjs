@@ -3,6 +3,8 @@ import {createHardwareStore,walkable,pathTo,doorAt} from '../src/world.js';
 import {makeGame,applyPower,updateGame,addHazard,POWER_LIST,ITEMS} from '../src/simulation.js';
 import {updateRoutine} from '../src/routines.js';
 import {departmentProducts,departmentItem,visibleShelfCount,DEPARTMENT_PRODUCTS} from '../src/merchandise.js';
+import {checkoutStaffPosition,checkoutCustomerPosition,checkoutFacingIsCorrect} from '../src/checkout-layout.js';
+import {chooseRoutine} from '../src/routines.js';
 import {saveGame,loadGame} from '../src/persistence.js';
 import {createArtwork} from '../src/artwork.js';
 import {renderDepth,compareRenderDepth} from '../src/render-depth.js';
@@ -691,4 +693,56 @@ assert(directionClient.includes('ctx.globalAlpha=opacity'),
 const doorArt=readFileSync(new URL('../src/artwork.js',import.meta.url),'utf8');
 assert(doorArt.includes('const span=axis===\'x\'?(d.w||1):(d.h||1)'),
  'Roll-up artwork renders both door tiles as one full-width panel');
+// Cashier side / shopper side are on opposite Y faces of one checkout.
+const laneWorld=createHardwareStore();
+const checkoutCounters=laneWorld.fixtures.filter(f=>f.type==='checkout');
+assert.equal(checkoutCounters.length,3,'Existing three checkout positions are preserved');
+for(const counter of checkoutCounters){
+ const staff=checkoutStaffPosition(counter),customer=checkoutCustomerPosition(counter);
+ assert(checkoutFacingIsCorrect(counter,staff,customer),'Staff and customer use opposite sides');
+ assert.equal(counter.monitorFaces,'south');
+ assert.equal(counter.staffSide,'south');
+ assert.equal(counter.customerSide,'north');
+ assert(walkable(laneWorld,staff.x,staff.y),'Cashier lane remains walkable');
+ assert(walkable(laneWorld,customer.x,customer.y),'Shopper lane remains walkable');
+ assert(pathTo(laneWorld,{x:20,y:12},staff).length>0,'Cashier can reach the POS side');
+ assert(pathTo(laneWorld,{x:20,y:12},customer).length>0,'Shopper can approach the terminal');
+}
+const laneGame=makeGame(laneWorld,{seed:96,staff:4,customers:3});
+const laneCashier=laneGame.npcs.find(n=>n.duty==='cashier');
+laneCashier.task=null;laneCashier.path=[];laneCashier.panic=0;
+assert(chooseRoutine(laneGame,laneCashier),'Cashier routine assigns a work station');
+assert.deepEqual(laneCashier.task.position,checkoutStaffPosition(checkoutCounters[0]),
+ 'Cashier stands behind the monitor, not on the shopper side');
+const laneCustomer=laneGame.npcs.find(n=>n.role==='customer');
+laneCustomer.task=null;laneCustomer.path=[];laneCustomer.panic=0;laneCustomer.tripStage='checkout';
+assert(chooseRoutine(laneGame,laneCustomer),'Shopper routine assigns checkout');
+const laneCounter=checkoutCounters[(laneCustomer.parkingIndex||0)%checkoutCounters.length];
+assert.deepEqual(laneCustomer.task.position,checkoutCustomerPosition(laneCounter),
+ 'Shopper stands by the card terminal on the opposite side');
+const registerFills=[];let registerPolygon=[];
+const registerContext={
+ beginPath(){registerPolygon=[]},moveTo(x,y){registerPolygon.push([x,y])},
+ lineTo(x,y){registerPolygon.push([x,y])},closePath(){},
+ fill(){registerFills.push({ink:this.fillStyle,points:registerPolygon.map(p=>[...p])})},
+ stroke(){},ellipse(){},arc(){},fillRect(){},strokeRect(){},fillText(){}
+};
+const registerArtwork=createArtwork(registerContext,project,()=>.7);
+registerArtwork.drawFixture(checkoutCounters[0]);
+for(const ink of ['#202d35','#2a404a','#3d7680','#30434d','#708388']){
+ assert(registerFills.some(d=>d.ink===ink),
+  'Register has visible belt, POS monitor, screen, card reader and drawer: '+ink);
+}
+const regScreen=registerFills.find(d=>d.ink==='#2a404a');
+assert(regScreen.points.length===4,'The POS monitor is a vertical quadrilateral');
+const expectedMonitor=project(checkoutCounters[0].x+.85,checkoutCounters[0].y+.495,29);
+assert(regScreen.points.some(p=>Math.hypot(p[0]-expectedMonitor.x,p[1]-expectedMonitor.y)<.01),
+ 'Monitor is mounted on the south/employee side of the physical counter');
+const newHairCode=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+assert(newHairCode.includes('oval(-8,-2,3.6,4,color)'),
+ 'World ponytails trail behind NPCs rather than pointing into movement');
+assert(newHairCode.includes('M23 10Q1 20 8 56'),
+ 'Portrait ponytail is on the rear of the head');
+assert(newHairCode.includes('ctx.scale(dir,1)'),
+ 'Hair still mirrors when the direction of travel changes');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
