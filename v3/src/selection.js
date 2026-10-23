@@ -43,6 +43,8 @@ export function selectionLabel(world,selected){
   const label=ground?.area==='store'?'Store Aisle':displayName(ground?.area||'Ground');
   return label+' Tile ('+selected.x+', '+selected.y+')';
  }
+ const namedMachines={paintMixer:'Paint Mixer',keyCutter:'Key Cutting Machine',wireCutter:'Wire Cutting Machine'};
+ if(namedMachines[selected.type])return namedMachines[selected.type];
  const person=world?.npcs?.find?.(o=>o.id===selected.id);
  if(person)return person.name;
  if(selected.name)return selected.name;
