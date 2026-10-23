@@ -47,7 +47,7 @@ export function createHardwareStore(){
  fixture('paintMixer',5,15,1,1);fixture('keyCutter',15,15,1,1);
  fixture('saw',6,35,1,1);fixture('pallet',11,35,2,1);fixture('workbench',17,35,2,1);
  // Keep 25..32, 35..39 clear for unobstructed receiving circulation.
- fixture('lockers',43,13,2,1,{facing:'west'});fixture('office',40,13,1,1,{facing:'west'});
+ fixture('lockers',43,13,2,1,{facing:'south'});fixture('office',40,13,1,1,{facing:'west'});
  fixture('vending',45,18,1,1,{facing:'west'});fixture('table',41,19,2,1,{facing:'south'});fixture('sink',44,24,1,1,{facing:'west'});fixture('restroom',41,24,1,1,{facing:'west'});
  fixture('plants',41,33,2,2);fixture('plants',45,35,1,2);fixture('gardenDesk',42,29,2,1);
  // Additional stocked departments and service details. Each solid asset reserves its true footprint.
@@ -72,7 +72,7 @@ export function createHardwareStore(){
  fixture('coffeeStation',44,20,1,1,{facing:'west'});
  fixture('coatRack',39,18,1,1,{facing:'east'});
  fixture('storageShelves',45,25,1,1,{facing:'west'});
- fixture('supplyCabinet',39,25,1,1,{facing:'east'});
+ fixture('supplyCabinet',39,25,1,1,{facing:'west'});
  // Garden beds are set back from the fence, leaving wide routes from the gate.
  fixture('flowerBed',40,36,2,1);fixture('flowerBed',44,32,2,1);
  fixture('flowerBed',46,34,1,1);fixture('seedDisplay',46,30,1,1,{facing:'west'});
