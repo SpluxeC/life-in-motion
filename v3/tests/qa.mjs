@@ -362,7 +362,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===11,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===12,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(migrated.world.fixtures.some(f=>f.type==='flowerBed')&&
@@ -1092,4 +1092,29 @@ assert(hitProjectedFixture(twoTileSaw,sawCenter.x,sawCenter.y,project,49)!==null
 const prevSawCount=graphicsCalls.count;
 artwork.drawFixture(twoTileSaw);
 assert(graphicsCalls.count-prevSawCount>65,'Two-tile table saw draws guard, fence, blade and controls');
+// Lumber renovation adds three distinct strapped timber packs against the
+// rear wall, while obsolete bulk shipping stacks move to Receiving.
+const lumberWorld=createHardwareStore();
+const timber=lumberWorld.fixtures.filter(f=>f.type==='lumberBundle');
+assert.deepEqual(timber.map(f=>[f.x,f.y,f.w,f.h,f.bundleSize]),
+ [[5,37,2,1,'short'],[10,37,3,1,'medium'],[15,37,4,1,'long']]);
+assert(!lumberWorld.fixtures.some(f=>
+ ['palletStack','boxStack'].includes(f.type)&&f.y===37),
+ 'Warehouse stacks no longer obscure rear Lumber wall');
+for(const bundle of timber){
+ const before=graphicsCalls.count;artwork.drawFixture(bundle);
+ assert(graphicsCalls.count-before>100,'Lumber packs use individual boards and banding');
+ for(let x=bundle.x;x<bundle.x+bundle.w;x++){
+  assert(walkable(lumberWorld,x,36),'Front aisle stays open for each lumber pack');
+  assert(pathTo(lumberWorld,{x:20,y:12},{x,y:36}).length>0,
+   'Customer can reach each bundle');
+ }
+}
+const sawEnhanced=readFileSync(new URL('../src/artwork.js',import.meta.url),'utf8');
+assert(sawEnhanced.includes("function")&&sawEnhanced.includes("#ee933c"),
+ 'Saw has a large, distinguishable orange cutting enclosure');
+assert(sawEnhanced.includes("type==='lumberBundle'"),
+ 'Timber packs use dedicated fixture rendering');
+const bulk=lumberWorld.fixtures.filter(f=>['palletStack','boxStack'].includes(f.type));
+assert(bulk.every(f=>f.y===42),'Bulk receiving stock is kept in Receiving');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
