@@ -630,6 +630,64 @@ export function createArtwork(ctx,project,getZoom){
    ellipse(p.x,p.y,1.6,1.1,'#d0ba84');
   }
  }
+ // Industrial wire-cutting and stripping station, fixed to a two-tile
+ // work counter, with guarded cutting jaws, paired feed rollers and a
+ // measurement rail. Artwork stays in the world plane, not camera-facing.
+ function wireCuttingStation(o){
+  const {x,y,w,h}=o;
+  shadow(x,y,w,h,1.08);
+  solid(x,y,w,h,22,'#b9c5bf','#556a6c','#819593');
+  surface(x+.06,y+.06,w-.12,h-.12,23,'#d5dad2','#546c70');
+  // Lockable bench-front panels and sturdy steel foot rail.
+  for(let i=0;i<2;i++){
+   const px=x-.40+i*.95;
+   poly([P(px,y+.51,5),P(px+.82,y+.51,5),
+     P(px+.82,y+.51,19),P(px,y+.51,19)],'#627d80','#385358',1);
+   line(P(px+.28,y+.52,13),P(px+.51,y+.52,13),'#e3e8dc',2);
+  }
+  line(P(x-.42,y+.52,3),P(x+1.43,y+.52,3),'#465d62',2.3);
+  // A solid cutting-machine housing and transparent guards.
+  solid(x+.35,y-.12,.89,.65,30,'#506e76','#304d58','#829b9b');
+  miniBox(x+.49,y-.13,31,'#9db0ad',.56,.46,13);
+  const cutter=P(x+.75,y+.08,46);
+  ellipse(cutter.x,cutter.y,10,8,'#a0b1b0','#395560');
+  ellipse(cutter.x,cutter.y,5,4,'#e1ded1','#607477');
+  // Two opposed hardened blades with a safety shield.
+  poly([P(x+.63,y+.30,32),P(x+.83,y+.30,32),
+    P(x+.90,y+.30,42),P(x+.67,y+.30,42)],'#667b82','#2c4c55',1.2);
+  line(P(x+.62,y+.30,39),P(x+.92,y+.30,36),'#d3dfda',3.1);
+  line(P(x+.62,y+.30,36),P(x+.92,y+.30,39),'#d3dfda',3.1);
+  // Feed rollers and a straight feed guide, including a visible copper wire.
+  for(const i of [0,1]){
+   const p=P(x+.36+i*.47,y+.42,30);
+   ellipse(p.x,p.y,5,4,'#99b4b6','#405b62');
+   ellipse(p.x,p.y,2.3,2,'#536c73');
+  }
+  line(P(x+.10,y+.43,32),P(x+1.13,y+.43,32),'#cc985e',2.5);
+  line(P(x+.10,y+.44,33),P(x+1.13,y+.44,33),'#f4d1a1',.9);
+  // Adjustable stop and measuring marks on the cutter's front rail.
+  line(P(x+.16,y+.49,25),P(x+1.23,y+.49,25),'#405e64',2.6);
+  for(let i=0;i<8;i++){
+   const dx=x+.18+i*.14;
+   line(P(dx,y+.50,25),P(dx,y+.50,27+(i%2)),'#dce3dc',.85);
+  }
+  // An angled operator control with emergency stop and status LEDs.
+  miniBox(x+1.37,y+.15,25,'#cad6d1',.42,.53,12);
+  poly([P(x+1.48,y+.40,32),P(x+1.78,y+.40,32),
+    P(x+1.78,y+.40,39),P(x+1.48,y+.40,39)],'#294b56','#1e323a',1.3);
+  line(P(x+1.53,y+.41,36),P(x+1.72,y+.41,36),'#9ce1cc',1.4);
+  for(let i=0;i<3;i++){
+   const p=P(x+1.45+i*.15,y+.50,28);
+   ellipse(p.x,p.y,2.6,1.8,['#ba4f4a','#d5b15c','#83c0b4'][i]);
+  }
+  // Copper wire spool and tray of short cut lengths on the right end.
+  const spool=P(x+1.61,y-.19,31);
+  ellipse(spool.x,spool.y,8,5,'#c08b5a','#6f6458');
+  ellipse(spool.x,spool.y,4,2.7,'#536a70','#e3c69d');
+  surface(x+1.34,y-.24,.46,.20,24.5,'#607b80','#39585e');
+  for(let i=0;i<4;i++)
+   line(P(x+1.40,y-.22+i*.04,26),P(x+1.72,y-.22+i*.04,26),'#d7a675',1.25);
+ }
  function drawItem(id,x,y,z=5,scale=1){
   const p=P(x,y,z),s=Z()*scale,at=(dx,dy)=>({x:p.x+dx*s,y:p.y+dy*s});
   const stroke=(v1,v2,c,w=2)=>line(at(...v1),at(...v2),c,w*scale);
@@ -681,6 +739,8 @@ export function createArtwork(ctx,project,getZoom){
    paintMixingDesk(o);
   }else if(type==='keyCutter'){
    keyCuttingBench(o);
+  }else if(type==='wireCutter'){
+   wireCuttingStation(o);
   }else if(type==='saw'){
    solid(x,y,w,h,18,'#bca98b','#665f54');surface(x+.08,y+.06,.87,.87,20,'#a1a9a9');
    const p=P(x+.5,y+.5,27);ellipse(p.x,p.y,12,5,'#c1c7bf','#455255');
