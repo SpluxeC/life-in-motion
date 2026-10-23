@@ -4,7 +4,7 @@ import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js?v=garden-sig
 import {createArtwork} from './artwork.js?v=garden-sign-shelf-wall-map15-20261023';
 import {renderDepth,compareRenderDepth} from './render-depth.js?v=driver-side-forklift-wheels-20261023-1';
 import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness} from './hud.js?v=driver-side-forklift-wheels-20261023-1';
-import {hitProjectedFixture,isGroundTileTap,selectionLabel} from './selection.js?v=driver-side-forklift-wheels-20261023-1';
+import {hitProjectedFixture,isGroundTileTap,selectionLabel} from './selection.js?v=garden-shelf-label-map15-20261023';
 import {signOpacity} from './sign-visibility.js?v=garden-sign-shelf-wall-map15-20261023';
 import {npcLimbPose} from './npc-pose.js?v=driver-side-forklift-wheels-20261023-1';
 const $=id=>document.getElementById(id);
