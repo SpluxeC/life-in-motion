@@ -1012,25 +1012,56 @@ export function createArtwork(ctx,project,getZoom){
    for(let i=0;i<4;i++)line(P(x+.2+i*.17,y-.23,26),P(x+.2+i*.17,y+.10,26),'#586a6d',.8);
    const p=P(x+1.05,y-.15,33);ellipse(p.x,p.y,4,3,'#384f5a');
   }else if(type==='handTruck'){
-   // Narrow upright steel dolly with rear wheels and an anchored loading lip.
-   solid(x,y,.65,.42,3,'#829397','#586d74');
-   for(const yy of [-.18,.18]){
-    const wheel=P(x-.18,y+yy,3);ellipse(wheel.x,wheel.y,4,3,'#303c3c','#849193');
+   // Real two-wheel upright appliance dolly with curved handle, tubular frame,
+   // braced backrest, low toe plate and thick solid rubber axle wheels.
+   shadow(x,y,1,1,.75);
+   surface(x+.02,y+.23,.61,.35,4,'#9aadb2','#415b63');
+   for(const yy of [y-.26,y+.25]){
+    line(P(x+.25,yy,5),P(x+.25,yy,55),'#526e77',4.2);
    }
-   for(const yy of [-.21,.20]){
-    line(P(x+.18,y+yy,4),P(x+.18,y+yy,38),'#64808b',2.6);
+   line(P(x+.25,y-.26,55),P(x+.25,y+.25,55),'#d6dfda',5.2);
+   line(P(x+.25,y-.26,42),P(x+.25,y+.25,42),'#9eafb3',3.5);
+   line(P(x+.25,y-.26,21),P(x+.25,y+.25,21),'#9eafb3',3.5);
+   line(P(x+.25,y-.26,6),P(x-.32,y+.25,6),'#597780',3.5);
+   for(const yy of [y-.29,y+.29]){
+    const wheel=P(x+.31,yy,6);
+    ellipse(wheel.x,wheel.y,8,8,'#283338','#82949b');
+    ellipse(wheel.x,wheel.y,3.6,3.6,'#b8c6c5','#405760');
    }
-   line(P(x+.18,y-.21,38),P(x+.18,y+.20,38),'#64808b',2.5);
-   miniBox(x-.36,y-.29,5,'#baa47f',.5,.4,10);
-  }else if(type==='flatCart'){
-   solid(x,y,w,h,7,'#899a9a','#647a7e','#8d9e9b');
-   for(const pos of [[-.34,-.27],[w-.68,-.27],[-.34,.24],[w-.68,.24]]){
-    const p=P(x+pos[0],y+pos[1]);ellipse(p.x,p.y,3.5,2.4,'#303b3d')
+   line(P(x-.38,y+.33,4),P(x+.24,y+.33,4),'#c6d2cc',4.6);
+  }else if(type==='forklift'){
+   // Parked industrial counterbalance forklift: two-tile footprint, real
+   // rubber tires, orange engine housing, enclosed cab, black mast and tines.
+   shadow(x,y,w,h,1.12);
+   solid(x+.66,y+.10,1.10,.77,17,'#e39a35','#87522b','#ba7229');
+   solid(x+.84,y+.18,.77,.60,27,'#edb13e','#935d2e','#ce8835');
+   surface(x+.92,y+.21,.54,.47,28,'#dba04a','#a66d33');
+   for(const xx of [x+.78,x+1.46])for(const yy of [y-.28,y+.33]){
+    const tire=P(xx,yy,7);
+    ellipse(tire.x,tire.y,11,10,'#2a3135','#58676a');
+    ellipse(tire.x,tire.y,4.1,4,'#bfc4bc','#515b5f');
    }
-   line(P(x-.38,y+.29,7),P(x-.38,y+.29,28),'#b1bdb7',2);
-   line(P(x+w-.66,y+.29,7),P(x+w-.66,y+.29,28),'#b1bdb7',2);
-   line(P(x-.38,y+.29,28),P(x+w-.66,y+.29,28),'#b1bdb7',2);
-   miniBox(x-.2,y-.22,9,'#bca77c',.65,.34,8);
+   // Open protective roll cage, roof, seat and driving controls.
+   for(const xx of [x+.72,x+1.57])for(const yy of [y-.29,y+.33])
+    line(P(xx,yy,22),P(xx,yy,63),'#455b60',4.6);
+   surface(x+.73,y-.29,.90,.71,64,'#3c525a','#657a7e');
+   solid(x+1.03,y+.12,.28,.30,35,'#3b4548','#252f33','#667477');
+   const steering=P(x+.84,y+.35,42);
+   ellipse(steering.x,steering.y,7,5,'#2a393f','#9daeb0');
+   line(P(x+.87,y+.33,28),P(x+.85,y+.33,42),'#5e7277',3);
+   // Mast and cross-members rise higher than the cab roof.
+   for(const yy of [y-.26,y+.28])
+    line(P(x+.30,yy,5),P(x+.30,yy,78),'#2b444d',7);
+   for(const z of [21,46,75])
+    line(P(x+.30,y-.28,z),P(x+.30,y+.30,z),'#9aabb1',4.2);
+   solid(x+.17,y-.13,.24,.56,13,'#526972','#314850','#617980');
+   // Twin forward forks lie low and project towards the front of the chassis.
+   for(const yy of [y-.20,y+.18]){
+    surface(x-.36,yy,.66,.10,6,'#c1cbc8','#40565c');
+    line(P(x-.39,yy+.05,6),P(x+.23,yy+.05,6),'#384e55',3.4);
+   }
+   const warning=P(x+1.44,y-.25,65);
+   ellipse(warning.x,warning.y,5,3,'#e6a73a','#b96e2e');
   }else if(type==='filingCabinet'||type==='supplyCabinet'||type==='storageShelves'){
    const metal=type==='filingCabinet';
    solid(x,y,w,h,metal?36:40,metal?'#9aa8ae':'#b6bcb1',metal?'#657b82':'#707b75');
