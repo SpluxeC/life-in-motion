@@ -21,10 +21,10 @@ export function emotionState(n){
 }
 export const POWER_HELP={
  whisper:['Plant an unsettling thought, causing some anger.','Choose Use Power, then tap a living NPC. Free, with a cooldown.'],
- anger:['Strongly increase a character\'s anger and the risk of conflict.','Choose Use Power, then tap a living NPC.'],
+ anger:['Increase anger in targets, raising the risk of conflict.','Choose Use Power, then tap a living NPC.'],
  fear:['Make an NPC afraid and more likely to panic or flee.','Choose Use Power, then tap a living NPC.'],
- suspicion:['Heighten someone\'s distrust and suspicion.','Choose Use Power, then tap a living NPC.'],
- trust:['Reduce the target\'s trust in another person.','Choose Use Power, then tap an NPC. The game chooses a nearby person.'],
+ suspicion:['Increase suspicion in targets, making them distrust other people.','Choose Use Power, then tap a living NPC.'],
+ trust:['Reduce trust in targets, weakening their relationships.','Choose Use Power, then tap an NPC. The game chooses a nearby person.'],
  rumor:['Spread a troubling rumor that may lead to conflict.','Choose Use Power, then tap a living NPC.'],
  item:['Influence someone to seek an item, or create an item at a fixture.','Choose Use Power, then tap an NPC or a store fixture.'],
  sabotage:['Damage a fixture and trigger an environmental problem.','Choose Use Power, then tap a machine, counter, shelf, or other fixture.'],
