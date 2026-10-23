@@ -269,4 +269,71 @@ for(let i=0;i<240;i++){
 }
 assert(doingRestock,'Floor associate receives a stock replenishment assignment');
 assert(nearlyEmpty.stock>=5,'Completing a restock adds actual merchandise to the shelf');
+// Staff corridor has true end walls; the fence is collision-aware with one gate.
+const extended=createHardwareStore();
+assert(extended.walls.has('37,10')&&extended.walls.has('37,27'),
+ 'Both ends of the employee hallway have solid walls');
+for(const k of ['38,29','38,31','48,34','43,39']){
+ assert.equal(extended.walls.get(k)?.section,'gardenFence',
+  'Wooden fence seals the garden perimeter at '+k);
+}
+const gardenGate=doorAt(extended,38,30);
+assert(gardenGate&&gardenGate.type==='gate','Garden fence has a functional wooden entrance');
+const gardenRoute=pathTo(extended,{x:35,y:30},{x:43,y:33});
+assert(gardenRoute.some(p=>p.x===38&&p.y===30),
+ 'NPC navigation passes through the garden gate rather than clipping through the fence');
+assert(walkable(extended,28,38)&&walkable(extended,28,40),
+ 'Receiving door and central loading lane remain open');
+assert(pathTo(extended,{x:28,y:42},{x:28,y:37}).some(p=>p.y===39),
+ 'Loading-lane NPCs traverse the receiving roll-up door');
+for(const fixture of extended.fixtures){
+ for(let x=fixture.x;x<fixture.x+fixture.w;x++)for(let y=fixture.y;y<fixture.y+fixture.h;y++){
+  assert(!extended.walls.has(x+','+y),'New fixture intersects a wall: '+fixture.id);
+  assert(!extended.fixtures.some(other=>other!==fixture&&
+   x>=other.x&&x<other.x+other.w&&y>=other.y&&y<other.y+other.h),
+   'Decorations cannot overlap another fixture: '+fixture.id);
+ }
+}
+for(const type of ['receivingDesk','palletStack','boxStack','handTruck','flatCart',
+ 'filingCabinet','noticeBoard','coffeeStation','coatRack','storageShelves',
+ 'supplyCabinet','flowerBed','seedDisplay','pottingBench','gardenBench',
+ 'birdbath','wateringStation','planter']){
+ assert(extended.fixtures.some(f=>f.type===type),'Newly drawn asset present: '+type);
+}
+// Exercise both the fence and animated garden gate with a real NPC crossing.
+const gateGame=makeGame(extended,{staff:4,customers:2,seed:23});
+const gateWalker=gateGame.npcs[2];
+gateWalker.x=gateWalker.rx=37;gateWalker.y=gateWalker.ry=30;
+gateWalker.path=pathTo(extended,{x:37,y:30},{x:40,y:30});
+gateWalker.think=99999;gateWalker.task=null;
+for(const other of gateGame.npcs.filter(n=>n!==gateWalker)){
+ other.x=other.rx=11;other.y=other.ry=20;other.think=99999;other.path=[];
+}
+let gateOpened=false;
+for(let i=0;i<120;i++){updateGame(gateGame,.05);if(gardenGate.open>.65)gateOpened=true}
+assert(gateOpened&&gateWalker.x>=39,'NPC opens garden gate and crosses the fence');
+const originalFences=[...extended.walls.values()].filter(w=>w.section==='gardenFence');
+for(const o of originalFences)artwork.drawWall(o,extended);
+for(const fraction of [0,.5,1]){gardenGate.open=fraction;artwork.drawDoor(gardenGate)}
+for(const o of extended.fixtures)artwork.drawFixture(o);
+// Loading previous saved-game data onto the new layout must not discard progress.
+const legacyGame=makeGame(createHardwareStore(),{staff:4,customers:3,seed:112});
+const preserved=legacyGame.world.fixtures.find(f=>f.type==='shelf');
+preserved.stock=3;assert(saveGame(legacyGame));
+const legacyKey=[...store.keys()].find(k=>k.startsWith('life-in-motion-v3-round-'));
+assert(legacyKey,'Saved world can be read back for the layout migration test');
+const legacySnapshot=JSON.parse(store.get(legacyKey));
+delete legacySnapshot.world.layoutVersion;
+legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='flowerBed');
+legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
+store.set(legacyKey,JSON.stringify(legacySnapshot));
+const migrated=loadGame();
+assert(migrated&&migrated.world.layoutVersion===2,'Older saves receive the revised level');
+assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
+ 'Save migration restores hallway end walls');
+assert(migrated.world.fixtures.some(f=>f.type==='flowerBed')&&
+ migrated.world.fixtures.some(f=>f.type==='receivingDesk'),
+ 'Save migration restores new garden and loading props');
+assert.equal(migrated.world.fixtures.find(f=>f.id===preserved.id).stock,3,
+ 'Save migration preserves shelf inventory');
 console.log('Life in Motion v3 QA PASS: geometry, navigation, population, powers, hazards, reinforcement cap, saving, RNG, pause and victory');
