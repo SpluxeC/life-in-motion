@@ -395,6 +395,115 @@ export function createArtwork(ctx,project,getZoom){
   // Brand-neutral end strip and queue-side bumper.
   line(P(x-.46,y-.47,14),P(x+1.45,y-.47,14),'#af6b50',3.3);
  }
+ function serviceDesk(o){
+  const {x,y,w,h}=o;
+  shadow(x,y,w,h,1.08);
+  // Three-tile customer-service counter, built into the isometric footprint.
+  // Front (-Y) is the customer return/drop-off side; +Y is the workstation.
+  solid(x,y,w,h,23,'#b8bdb3','#566a6a','#788d89');
+  surface(x+.07,y+.07,w-.14,h-.14,24,'#dad8ca','#6e8581');
+  // Customer-side woodgrain front and a protective horizontal bumper.
+  const frontY=y-.505;
+  poly([P(x-.39,frontY,5),P(x+w-.62,frontY,5),
+        P(x+w-.62,frontY,19),P(x-.39,frontY,19)],'#836f61','#536764',1);
+  line(P(x-.42,frontY-.012,19),P(x+w-.59,frontY-.012,19),'#dbb990',2.1);
+  line(P(x-.42,frontY-.012,7),P(x+w-.59,frontY-.012,7),'#52696b',1.8);
+  for(let i=1;i<3;i++){
+   const sx=x-.5+i;
+   line(P(sx,frontY-.01,6),P(sx,frontY-.01,18),'#9e8874',1.05);
+  }
+  // Staff-facing PC: a freestanding base, a real vertical monitor plane,
+  // dark bezel, accessible keyboard and visible illuminated UI lines.
+  const screenX=x+.47,screenY=y+.435;
+  surface(screenX-.18,y+.11,.36,.29,24.7,'#465c66','#283d44');
+  line(P(screenX,screenY-.14,24),P(screenX,screenY-.14,34),'#53686d',3.6);
+  poly([P(screenX-.32,screenY,32),P(screenX+.32,screenY,32),
+        P(screenX+.32,screenY,48),P(screenX-.32,screenY,48)],'#253740','#192d34',2);
+  poly([P(screenX-.27,screenY+.01,34),P(screenX+.27,screenY+.01,34),
+        P(screenX+.27,screenY+.01,45),P(screenX-.27,screenY+.01,45)],'#387a84','#81acae',.9);
+  line(P(screenX-.22,screenY+.02,41),P(screenX+.17,screenY+.02,41),'#b9e9d7',1.45);
+  line(P(screenX-.22,screenY+.02,38),P(screenX+.08,screenY+.02,38),'#f6d28d',1.25);
+  // Keyboard / mouse physically rest on the countertop on the employee side.
+  poly([P(x+.13,y+.32,24.7),P(x+.65,y+.32,24.7),
+        P(x+.65,y+.47,24.7),P(x+.13,y+.47,24.7)],'#394d54','#263b41',1);
+  for(let k=0;k<4;k++){
+   const u=x+.18+k*.105;
+   line(P(u,y+.35,25),P(u,y+.43,25),'#acc8c0',.65);
+  }
+  const mouse=P(x+.80,y+.39,25);
+  ellipse(mouse.x,mouse.y,2.8,1.6,'#4b6470','#213941');
+  // Center section: layered paper forms, document tray and clip binder.
+  poly([P(x+1.08,y-.30,24.6),P(x+1.94,y-.30,24.6),
+        P(x+1.94,y+.22,24.6),P(x+1.08,y+.22,24.6)],'#617b7e','#39585e',1);
+  for(let layer=0;layer<4;layer++){
+   const z=25+layer*1.1,dx=layer*.017;
+   poly([P(x+1.17+dx,y-.24,z),P(x+1.84+dx,y-.24,z),
+         P(x+1.84+dx,y+.16,z),P(x+1.17+dx,y+.16,z)],layer%2?'#f8f6ed':'#e3e8e1','#a0a9a5',.6);
+  }
+  for(let k=0;k<3;k++){
+   line(P(x+1.27,y-.16+k*.10,29.7),
+        P(x+1.75-(k%2)*.12,y-.16+k*.10,29.7),'#8c9a98',.7);
+  }
+  const binder=P(x+1.24,y-.24,30);
+  ellipse(binder.x,binder.y,2.3,1.3,'#354f59');
+  // Right-hand realistic desktop printer: rectangular casing, paper feeder,
+  // printed output sheet and dark control/status panel.
+  miniBox(x+2.12,y+.11,24.5,'#c4c9c3',.67,.59,9);
+  poly([P(x+1.67,y-.31,34),P(x+2.29,y-.31,34),
+        P(x+2.29,y+.21,34),P(x+1.67,y+.21,34)],'#d6dbd4','#74898a',1);
+  poly([P(x+1.75,y-.25,34.5),P(x+2.11,y-.25,34.5),
+        P(x+2.11,y+.09,34.5),P(x+1.75,y+.09,34.5)],'#3f555b','#51646a',.7);
+  // Paper going into the back feeder, vertical and rigid.
+  poly([P(x+1.77,y-.20,34),P(x+2.13,y-.20,34),
+        P(x+2.13,y-.20,42),P(x+1.77,y-.20,42)],'#f6f4e9','#a3b7b6',.8);
+  // Output tray projects toward the staff, resting above the counter.
+  poly([P(x+1.83,y+.12,32),P(x+2.20,y+.12,32),
+        P(x+2.20,y+.37,30),P(x+1.83,y+.37,30)],'#e8e9e0','#79898b',.7);
+  line(P(x+2.14,y+.325,35),P(x+2.21,y+.325,35),'#7bc9a8',1.8);
+ }
+ function safetyStation(o){
+  const {x,y}=o;
+  shadow(x,y,1,1,.75);
+  // Shallow wall-side emergency cabinet with a glass cabinet door, visible
+  // white cross, first-aid supplies, eyewash shelf, fire extinguisher and
+  // red emergency accent. Its accessible face points west toward the aisle.
+  const frontX=x-.455;
+  // Narrow footprint retains access around the staff-wing wall.
+  solid(x+.18,y, .56,.81,43,'#d8e2db','#899e9c','#a0b2ac');
+  const face=[P(frontX,y-.37,7),P(frontX,y+.36,7),
+              P(frontX,y+.36,40),P(frontX,y-.37,40)];
+  poly(face,'#eaf1ea','#597d82',1.6);
+  const pane=[P(frontX-.015,y-.26,17),P(frontX-.015,y+.26,17),
+              P(frontX-.015,y+.26,34),P(frontX-.015,y-.26,34)];
+  poly(pane,'#a0c8cabb','#54787e',1);
+  for(const height of [20,25,30]){
+   line(P(frontX-.023,y-.22,height),P(frontX-.023,y+.22,height),'#d1e1dccc',.85);
+  }
+  const bx=frontX-.035;
+  // Cross is on the same vertical face (x constant), not camera-facing text.
+  poly([P(bx,y-.035,34),P(bx,y+.035,34),P(bx,y+.035,36.8),
+        P(bx,y+.18,36.8),P(bx,y+.18,39),P(bx,y-.18,39),
+        P(bx,y-.18,36.8),P(bx,y-.035,36.8)],'#bf4f50','#a23c41',.6);
+  const doorHandle=P(bx,y+.29,22);
+  ellipse(doorHandle.x,doorHandle.y,1.8,3.2,'#d2d7cb','#647b7c');
+  // Wall-backed eyewash bottles held by a small stainless shelf.
+  const sx=x-.22,sy=y+.25;
+  line(P(sx,sy,15),P(x+.33,sy,15),'#779ca0',2.8);
+  for(let i=0;i<2;i++){
+   const py=y+.05+i*.20,cap=P(x-.05,py,22);
+   poly([P(x-.15,py-.07,16),P(x+.09,py-.07,16),
+         P(x+.09,py+.07,21),P(x-.15,py+.07,21)],'#91c8ce','#5a939e',.6);
+   ellipse(cap.x,cap.y,2.2,1.4,'#d2eee8');
+  }
+  // Extinguisher on a separate secure mount at the side of the cabinet.
+  const ex=x-.17,ey=y-.32;
+  const body=[P(ex-.12,ey-.09,5),P(ex+.11,ey-.09,5),
+              P(ex+.11,ey-.09,21),P(ex-.12,ey-.09,21)];
+  poly(body,'#c84340','#7f3d3b',.9);
+  line(P(ex,ey-.10,22),P(ex,ey-.10,27),'#4d5b5c',2.2);
+  line(P(ex-.10,ey-.11,27),P(ex+.14,ey-.11,27),'#303e43',2.3);
+  line(P(ex-.04,ey-.13,14),P(ex+.08,ey-.13,14),'#f0dbc0',1.8);
+ }
  function drawItem(id,x,y,z=5,scale=1){
   const p=P(x,y,z),s=Z()*scale,at=(dx,dy)=>({x:p.x+dx*s,y:p.y+dy*s});
   const stroke=(v1,v2,c,w=2)=>line(at(...v1),at(...v2),c,w*scale);
@@ -441,9 +550,7 @@ export function createArtwork(ctx,project,getZoom){
   if(type==='shelf'){rack(x,y,w,h,o.department,o.stock,o.capacity||12);return}
   if(type==='checkout'){checkout(o);return}
   if(type==='serviceDesk'){
-   solid(x,y,w,h,22,'#b1bcbc','#6d7778','#8f9b9a');
-   surface(x+.1,y+.1,w-.2,h-.2,23,'#d5cec0','#8e9994');
-   miniBox(x+.3,y+.28,27,'#354e59',.45,.33,7);miniBox(x+1.15,y+.33,27,'#e8dec7',.25,.32,3)
+   serviceDesk(o);
   }else if(type==='paintMixer'){
    solid(x,y,1,1,18,'#bdc5c0','#737e80');miniCan(x+.35,y+.4,24,'#bd4e3c',5);
    miniBox(x+.25,y+.23,31,'#4d6973',.48,.28,13)
@@ -517,8 +624,7 @@ export function createArtwork(ctx,project,getZoom){
    for(let i=0;i<3;i++)line(P(x+.13,y+.1+i*.26,22),P(x+1.75,y+.1+i*.26,22),'#d0cbb4',1.5)
 
   }else if(type==='safetyStation'){
-   solid(x,y,w,h,28,'#e6e9dc','#b8c5c0');
-   miniCan(x+.52,y+.55,28,'#c94940',4)
+   safetyStation(o);
   }else if(type==='utilityCart'){
    solid(x,y,w,h,13,'#60878d','#49636a');miniBox(x+.1,y+.12,18,'#b8ae90',.32,.44,5);
    const p=P(x+.7,y+.7);ellipse(p.x,p.y,4,4,'#26373d')
