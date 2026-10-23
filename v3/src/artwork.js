@@ -1,7 +1,7 @@
 // Life in Motion v3 — resolution-independent, built-in isometric environment artwork.
 // Nothing in this module downloads external images. Every object uses the same
 // world-tile footprint and screen projection as collision/pathfinding.
-import {departmentItem,visibleShelfCount} from './merchandise.js?v=forklift-handtruck-layering-20261023-1';
+import {departmentItem,visibleShelfCount} from './merchandise.js?v=forklift-cab-wheel-align-20261023-2';
 export function createArtwork(ctx,project,getZoom){
  const P=(x,y,h=0)=>project(x,y,h),Z=()=>getZoom();
  const colorNoise=(x,y)=>{let k=((x*73856093)^(y*19349663))>>>0;return k%7};
