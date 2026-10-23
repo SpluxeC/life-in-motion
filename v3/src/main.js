@@ -1,8 +1,8 @@
-import {createHardwareStore,doorAt,fixtureAt,nearestOpen,walkable,key} from './world.js?v=signs-fence-occlusion-20261022-1';
-import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v=signs-fence-occlusion-20261022-1';
-import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js?v=signs-fence-occlusion-20261022-1';
-import {createArtwork} from './artwork.js?v=signs-fence-occlusion-20261022-1';
-import {renderDepth,compareRenderDepth} from './render-depth.js?v=signs-fence-occlusion-20261022-1';
+import {createHardwareStore,doorAt,fixtureAt,nearestOpen,walkable,key} from './world.js?v=exterior-windows-20261022-1';
+import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v=exterior-windows-20261022-1';
+import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js?v=exterior-windows-20261022-1';
+import {createArtwork} from './artwork.js?v=exterior-windows-20261022-1';
+import {renderDepth,compareRenderDepth} from './render-depth.js?v=exterior-windows-20261022-1';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d');
 let game=null,scene=createHardwareStore(),zoom=.72,offset={x:0,y:0},last=performance.now(),acc=0,lastHud=0,lastSave=0,lastViewport={w:0,h:0},drag=null,selected=null,resultShown=false;
