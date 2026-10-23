@@ -46,7 +46,7 @@ function customerShopTarget(g,n){
  const shelves=g.world.fixtures.filter(f=>f.type==='shelf');
  const index=(n.shoppingIndex||0)%shelves.length;
  const s=shelves[index];
- return {x:s.x+2,y:s.y+2,department:s.department};
+ return {x:s.x+2,y:s.y+2,department:s.department,shelfId:s.id};
 }
 function canHelp(g,n){
  if(n.duty!=='floor'||g.elapsed<(n.nextHelpAt||0))return null;
@@ -88,6 +88,13 @@ function staffDuty(g,n){
   return schedule(g,n,n.duty,place,22+g.random()*12,{label:what});
  }
  const c=canHelp(g,n);if(c&&assignHelp(g,n,c))return true;
+ // A floor associate also restocks merchandise depleted by shoppers.
+ const low=g.world.fixtures.filter(f=>f.type==='shelf'&&f.stock!==undefined&&f.stock<=4&&
+  (!f.restockingBy||!g.npcs.some(o=>o.id===f.restockingBy&&o.task?.kind==='restock'&&isAvailable(o))))
+  .sort((a,b)=>Math.hypot(a.x-n.rx,a.y-n.ry)-Math.hypot(b.x-n.rx,b.y-n.ry))[0];
+ if(low&&schedule(g,n,'restock',{x:low.x+2,y:low.y+2},7,{shelfId:low.id,label:'Restocking '+low.department?.toLowerCase()+' shelves'})){
+  low.restockingBy=n.id;return true;
+ }
  const spot=ROUTINE_STOPS[(n.workIndex||0)%ROUTINE_STOPS.length];n.workIndex=(n.workIndex||0)+1;
  return schedule(g,n,'patrol',spot,4+g.random()*6,{label:spot.label==='parking lot'?'Checking parking lot':spot.label==='employee break room'?'Checking employee area':'Walking '+spot.label});
 }
@@ -104,7 +111,7 @@ function shopperDuty(g,n){
   }
   const stop=customerShopTarget(g,n);n.shoppingIndex=index+1;
   n.tripStage=index%3===1?'checkout':'browse';
-  return schedule(g,n,'browse',stop,7+g.random()*5,{label:'Browsing '+stop.department?.toLowerCase()+' products'});
+  return schedule(g,n,'browse',stop,7+g.random()*5,{shelfId:stop.shelfId,label:'Browsing '+stop.department?.toLowerCase()+' products'});
  }
  if(n.tripStage==='checkout'){
   n.tripStage='leaving';const counter=fixture(g,'checkout',(n.parkingIndex||0)%3);
@@ -138,7 +145,7 @@ export function updateRoutine(g,n,dt){
  const task=n.task;
  const animate={
   cashier:'scan',service:'type',patrol:'inspect',help:'offerHelp',helped:'talk',
-  break:'drink',enter:'look',browse:'inspect',garden:'inspect',checkout:'wait',
+  break:'drink',restock:'stock',enter:'look',browse:'inspect',garden:'inspect',checkout:'wait',
   leave:'walk',parking:'look'
  };
  if(task.phase==='walking'){
@@ -162,6 +169,22 @@ export function updateRoutine(g,n,dt){
   }
  }
  if(task.until>g.elapsed)return;
+ if(task.kind==='browse'){
+  const shelf=g.world.fixtures.find(f=>f.id===task.shelfId);
+  if(shelf&&shelf.stock>0&&n.inventory.length<4){
+   const categoryItems={PAINT:'paint',TOOLS:'hammer',ELECTRICAL:'flashlight',PLUMBING:'wrench',HARDWARE:'gloves'};
+   n.inventory.push(categoryItems[shelf.department]||'wrench');shelf.stock--;
+   n.activity='Picked up '+(shelf.department||'hardware').toLowerCase()+' products';
+  }
+ }
+ if(task.kind==='checkout'){
+  n.purchases=(n.purchases||0)+1;
+  if(g.random()<.32){g.log.unshift({time:Math.floor(g.elapsed),text:n.name+' checked out at a register.'});g.log.length=Math.min(g.log.length,100)}
+ }
+ if(task.kind==='restock'){
+  const shelf=g.world.fixtures.find(f=>f.id===task.shelfId);
+  if(shelf){shelf.stock=Math.min(shelf.capacity||12,(shelf.stock||0)+5);shelf.restockingBy=null}
+ }
  if(task.kind==='helped')n.helpedBy=null;
  if(task.kind==='help'){
   const c=g.npcs.find(c=>c.id===task.customerId);
