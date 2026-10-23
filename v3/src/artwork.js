@@ -897,9 +897,44 @@ export function createArtwork(ctx,project,getZoom){
    for(const yy of [left,right])line(P(back,yy,8),P(back,yy,54),'#465957',4.2);
    for(let i=0;i<6;i++){
     const yy=y-.25+i*.31,shovel=i%2===0,metal=shovel?'#82989b':'#9cafb1';
-    // Steel pegs stick out from the wall to hold natural wooden handles.
+    // Matching metal wall pegs support each real hanging garden implement.
     line(P(back,yy,46),P(toolX,yy,46),'#d0d8cc',2.9);
     line(P(toolX,yy,47),P(toolX,yy,44),'#c2c6b8',2.3);
+    if(o.toolSet==='hoesLoppers'){
+     if(i%2===0){
+      // Hoe: long single wooden shaft, perpendicular steel hoe blade and
+      // bent socket near its lower end, all flat against the wall plane.
+      line(P(toolX,yy,17),P(toolX,yy,45),'#a77647',4.4);
+      line(P(toolX-.014,yy,19),P(toolX-.014,yy,42),'#d9b07d',1.4);
+      line(P(toolX,yy,17),P(toolX-.07,yy,12.2),'#707f84',3.1);
+      poly([P(toolX-.075,yy-.125,13),P(toolX-.075,yy+.125,13),
+       P(toolX-.095,yy+.125,8.6),P(toolX-.095,yy-.125,8.6)],
+       '#899ba0','#475a5c',1);
+      line(P(toolX-.105,yy-.116,10),P(toolX-.105,yy+.116,10),
+       '#c1ccca',1);
+      const grip=P(toolX,yy,45);
+      ellipse(grip.x,grip.y,2.2,1.5,'#5f7049','#344637');
+     }else{
+      // Loppers: two long separated handles and rubber grip tips meet
+      // at a single visible pivot under opposing steel cutting jaws.
+      line(P(toolX,yy,37),P(toolX-.03,yy-.095,15),'#9c7552',4);
+      line(P(toolX,yy,37),P(toolX-.03,yy+.095,15),'#b99162',4);
+      line(P(toolX-.03,yy-.095,15),P(toolX-.03,yy-.126,7),
+       '#d48838',4.8);
+      line(P(toolX-.03,yy+.095,15),P(toolX-.03,yy+.126,7),
+       '#d48838',4.8);
+      line(P(toolX,yy,37),P(toolX-.045,yy-.075,48),
+       '#80969a',3.5);
+      line(P(toolX,yy,37),P(toolX-.045,yy+.085,47),
+       '#bac6c3',3.5);
+      poly([P(toolX-.05,yy-.076,48),P(toolX-.05,yy+.01,44),
+       P(toolX-.05,yy+.03,41),P(toolX-.05,yy-.026,44)],
+       '#c9d2ce','#53696b',1);
+      const pivot=P(toolX,yy,37);
+      ellipse(pivot.x,pivot.y,3.3,2.9,'#c9c6a2','#405557');
+     }
+     continue;
+    }
     line(P(toolX,yy,17),P(toolX,yy,43),'#a77647',4.2);
     line(P(toolX-.016,yy,18),P(toolX-.016,yy,42),'#d4ae74',1.3);
     // D-grips on the shovels, plain capped handles on the rakes.
@@ -924,6 +959,61 @@ export function createArtwork(ctx,project,getZoom){
      ellipse(top.x,top.y,2,1.45,'#394c47');
     }
    }
+  }else if(type==='ridingMower'){
+   // Two-tile ride-on lawn tractor parked with its FRONT / hood toward
+   // the shop interior (negative X), away from the garden sliding doors.
+   // Draw far tires, the cohesive deck/chassis, then near tires so all
+   // four wheels connect to the machine rather than floating beside it.
+   const tire=(xx,yy,r)=>{
+    const p=P(xx,yy,8);
+    ellipse(p.x,p.y,r,r*1.12,'#202a2b','#131b20');
+    ellipse(p.x,p.y,r*.51,r*.55,'#a0a9a1','#414d4d');
+    ellipse(p.x,p.y,r*.20,r*.22,'#4b5552');
+   };
+   for(const [xx,r] of [[x+.18,5.5],[x+1.44,8]])
+    tire(xx,y-.32,r);
+   // Low yellow-topped cutting deck reaches both sides of the tractor.
+   solid(x+.29,y+.04,1.05,.9,7,'#c9a44c','#79602c','#a78a37');
+   surface(x+.29,y+.04,1.05,.9,8,'#d9bd60','#846a35');
+   for(const xx of [x+.54,x+1.02]){
+    const p=P(xx,y+.13,9);
+    ellipse(p.x,p.y,7,3,'#a78438','#d9c16f');
+   }
+   // West-facing longitudinal frame; engine hood at the west/front end,
+   // driver seat and rear axle at the east/rear end.
+   solid(x+.39,y+.04,1.29,.75,12,'#4b7338','#2b482e','#5b7c3f');
+   solid(x+.03,y+.08,.83,.68,25,'#8ebc50','#527e33','#739e43');
+   surface(x+.10,y+.13,.65,.55,27,'#a5d16c','#527b3f');
+   for(const yy of [y+.22,y+.43]){
+    line(P(x-.36,yy,19),P(x-.36,yy+.13,19),'#354e40',2.7);
+    const lamp=P(x-.375,yy+.06,23);
+    ellipse(lamp.x,lamp.y,2.7,2.1,'#f1e7b2','#59644a');
+   }
+   // Engine ventilation grills are on the inward-facing long hood.
+   for(let i=0;i<4;i++){
+    const xx=x+.13+i*.13;
+    line(P(xx,y-.23,24),P(xx+.065,y-.23,24),'#4c7344',2.2);
+   }
+   // Steering column rises in front of the padded operator's seat.
+   line(P(x+.92,y+.12,13),P(x+.95,y+.12,32),'#374b49',3.9);
+   const steer=P(x+.95,y+.12,34);
+   ellipse(steer.x,steer.y,9,3.9,'#28383b','#697b79');
+   line(P(x+.82,y+.12,34),P(x+1.07,y+.12,34),'#5c706e',1.2);
+   // Raised single driver's seat with visible backrest and arm-length gap.
+   solid(x+1.18,y+.09,.38,.43,27,'#353e3c','#222e2e','#4c5550');
+   poly([P(x+1.50,y-.115,24),P(x+1.50,y+.26,24),
+    P(x+1.50,y+.26,45),P(x+1.50,y-.115,45)],
+    '#323b39','#1e2b2c',1.6);
+   surface(x+1.19,y+.10,.34,.39,28,'#505b52','#2a3838');
+   // Protective rear mudguards sit above the rear drive wheels.
+   for(const yy of [y-.30,y+.31]){
+    line(P(x+1.44,yy,17),P(x+1.63,yy,17),'#7ba447',5);
+   }
+   // The two near-side wheels show the mower's real wheelbase.
+   for(const [xx,r] of [[x+.18,5.5],[x+1.44,8]])
+    tire(xx,y+.37,r);
+   const exhaust=P(x+.57,y-.18,30);
+   ellipse(exhaust.x,exhaust.y,2.5,2,'#37484a','#738785');
   }else if(type==='pallet'||type==='bagPallet'){
    solid(x,y,w,h,5,'#b79566','#8a6545','#a47e58');
    for(let i=0;i<6;i++)miniBox(x+.08+i%3*.56,y+.12+Math.floor(i/3)*.36,13+i%2*5,
