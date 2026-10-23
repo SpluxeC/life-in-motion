@@ -44,7 +44,7 @@ function station(g,n){
  // Cashiers work behind the POS computer, on the south (+Y) side. Service
  // desk staff retain their existing workstation access.
  return n.duty==='cashier'?checkoutStaffPosition(f):
-  {x:f.x+Math.min(1,Math.floor(f.w/2)),y:f.y+2};
+  {x:f.x+Math.floor(f.w/2),y:f.y+1};
 }
 function parking(n){const bays=[10,18,26,34,42,50,58];return {x:bays[(n.parkingIndex||0)%bays.length],y:8}}
 function customerShopTarget(g,n){
