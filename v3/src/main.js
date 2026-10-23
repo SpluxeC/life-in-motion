@@ -126,7 +126,7 @@ function render(t){
  if(selected){const p=project(selected.x,selected.y);ctx.strokeStyle='#ffe69c';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,9*zoom,5*zoom,0,0,Math.PI*2);ctx.stroke()}
 }
 function inspect(x,y){if(!game)return;let w=game.world;let n=[...game.npcs].filter(n=>Math.hypot(n.rx-x,n.ry-y)<2).sort((a,b)=>Math.hypot(a.rx-x,a.ry-y)-Math.hypot(b.rx-x,b.ry-y))[0];
- let d=doorAt(w,x,y),f=fixtureAt(w,x,y),prop=w.props.filter(o=>Math.abs(o.x-x)<=Math.max(1,o.w||1)&&Math.abs(o.y-y)<=Math.max(1,o.h||1)).sort((a,b)=>Math.hypot(a.x-x,a.y-y)-Math.hypot(b.x-x,b.y-y))[0];let target=n||d||f||prop||{id:'tile-'+x+'-'+y,x,y,type:'tile'};selected=target;refreshHud()}
+ let d=doorAt(w,x,y),f=fixtureAt(w,x,y),prop=w.props.filter(o=>Math.abs(o.x-x)<=Math.max(1,o.w||1)&&Math.abs(o.y-y)<=Math.max(1,o.h||1)).sort((a,b)=>Math.hypot(a.x-x,a.y-y)-Math.hypot(b.x-x,b.y-y))[0];let target=n||d||f||prop||{id:'tile-'+x+'-'+y,x,y,type:'tile'};selectTarget(target)}
 function portraitHTML(n){let angry=n.emotion.anger>=55,afraid=n.emotion.fear>=55,injured=n.health<35,mood=!n.alive?'Deceased':n.unconscious>0?'Unconscious':angry?'Angry':afraid?'Afraid':injured?'In pain':n.emotion.anger>25?'Irritated':'Calm';let brow=angry?'M24 39l11 5 M65 44l11-5':afraid?'M23 40l12-4 M65 36l12 4':'M24 38h12 M64 38h12';let mouth=angry?'M37 69q13-8 26 0':afraid?'M41 64q9-14 18 0':mood==='Calm'?'M39 61q11 10 22 0':'M39 66h22';let headwear=n.role==='police'?'<path d="M23 22h54v9H23z" fill="#203d65" stroke="#111"/><path d="M30 16h40v10H30z" fill="#203d65" stroke="#111"/>':n.role==='firefighter'?'<path d="M23 27q3-28 27-28t27 28z" fill="#e1bd53" stroke="#111"/><path d="M16 25h68v8H16z" fill="#c99b38" stroke="#111"/>':n.role==='paramedic'?'<path d="M22 22q28-29 56 0v10H22z" fill="#f7f9f6" stroke="#111"/><path d="M45 8h10v19H45z M39 14h22v7H39z" fill="#b5343b"/>':n.role==='employee'?'<path d="M27 22q22-22 46 0l-4 7H31z" fill="#262d33"/>':'<path d="M27 21q20-21 46 0l-3 6H30z" fill="#1d2429"/>';let vest=n.role==='employee'?'<path d="M23 96L16 118h68L77 96l-15-8H38z" fill="#d7353b" stroke="#111" stroke-width="3"/>':'';return '<div class="npcPortrait"><svg viewBox="0 0 100 125" role="img" aria-label="Portrait expressing '+mood+'"><path d="M22 123l8-30 20-7 20 7 8 30" fill="#15191d" stroke="#090d0f" stroke-width="4"/>'+vest+'<ellipse cx="50" cy="48" rx="31" ry="37" fill="#fff" stroke="#111" stroke-width="3"/><path d="'+brow+'" stroke="#111" stroke-width="3" fill="none"/><circle cx="32" cy="50" r="3" fill="#111"/><circle cx="68" cy="50" r="3" fill="#111"/><path d="'+mouth+'" stroke="#111" stroke-width="3" fill="none"/>'+headwear+'</svg><div><strong>'+escapeHTML(n.name)+'</strong><span>'+escapeHTML(n.role)+' · '+mood+'</span></div></div>'}
 function powerUsable(p,n=null){
  return !!game&&!game.paused&&game.energy>=p.cost&&!(game.cooldowns[p.id]>game.elapsed)&&(!n||(n.alive&&!n.arrested));
@@ -204,7 +204,7 @@ function refreshHud(){
 }
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function showVictory(){const g=game;let overlay=document.createElement('div');overlay.className='screen';overlay.id='victoryOverlay';overlay.innerHTML='<div class="menuPanel"><h2>TOTAL ELIMINATION</h2><p>Every NPC on the map has died.</p><p>Deaths: '+g.stats.deaths+' · Chain reactions: '+g.stats.chains+'<br>God Powers: '+g.stats.powers+' · Time: '+Math.round(g.elapsed)+'s</p><button id="restartRound">Play Again</button><button id="freeplayRound">Continue Freeplay</button><button id="menuRound">Main Menu</button></div>';document.body.append(overlay);unlockMap('hardware-store');
- overlay.querySelector('#restartRound').onclick=()=>{overlay.remove();game=makeGame(createHardwareStore(),{staff:+$('setupStaff').value,customers:+$('setupCustomers').value});scene=game.world;resultShown=false;selected=null;centerCamera();refreshHud()};
+ overlay.querySelector('#restartRound').onclick=()=>{overlay.remove();game=makeGame(createHardwareStore(),{staff:+$('setupStaff').value,customers:+$('setupCustomers').value,clockStartMinutes:+$('setupTime').value});scene=game.world;resultShown=false;selected=null;pendingPower=null;feedback='';activateTab('world');centerCamera();refreshHud()};
  overlay.querySelector('#freeplayRound').onclick=()=>{overlay.remove();g.freeplay=true};
  overlay.querySelector('#menuRound').onclick=()=>{overlay.remove();show('mainMenu');refreshContinue()};
 }
@@ -250,13 +250,46 @@ function inspectAtScreen(sx,sy){
   if(hit!==null)add(d,hit,4);
  }
  hits.sort((a,b)=>a.d-b.d||a.priority-b.priority);
- if(hits.length){selected=hits[0].target;refreshHud();return}
- const tile=unproject(sx,sy);inspect(tile.x,tile.y)
+ const tile=unproject(sx,sy);
+ if(pendingPower){
+  const power=POWER_LIST.find(p=>p.id===pendingPower);
+  const picked=hits[0]?.target;
+  const npc=game.npcs.find(n=>n.id===picked?.id);
+  const fixture=game.world.fixtures.find(f=>f.id===picked?.id);
+  // Environmental hazards must originate on a walkable tile even when
+  // the player tapped the graphic of a neighboring fixture.
+  const target=power?.id==='hazard'?nearestOpen(world,tile.x,tile.y):
+   (npc||fixture||{type:'tile',x:tile.x,y:tile.y,id:'tile-'+tile.x+'-'+tile.y});
+  const out=applyPower(game,pendingPower,target);
+  feedback=out.message;
+  if(out.ok)pendingPower=null;
+  refreshHud();
+  return;
+ }
+ if(hits.length){selectTarget(hits[0].target);return}
+ inspect(tile.x,tile.y)
 }
 canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);drag={x:e.clientX,y:e.clientY,ox:offset.x,oy:offset.y,moved:false}});
-canvas.addEventListener('pointermove',e=>{if(!drag)return;let dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>7)drag.moved=true;offset.x=drag.ox-dx/zoom;offset.y=drag.oy-dy/zoom});
+canvas.addEventListener('pointermove',e=>{if(!drag)return;let dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>7)drag.moved=true;if(game?.npcs.some(n=>n.id===selected?.id))return;offset.x=drag.ox-dx/zoom;offset.y=drag.oy-dy/zoom});
 canvas.addEventListener('pointerup',e=>{if(!drag)return;if(!drag.moved){let rect=canvas.getBoundingClientRect(),tile=unproject(e.clientX-rect.left,e.clientY-rect.top);inspectAtScreen(e.clientX-rect.left,e.clientY-rect.top)}drag=null});
 canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=clamp(zoom*(e.deltaY>0?.91:1.1),.32,2)},{passive:false});
-function frame(now){let dt=Math.min(.08,(now-last)/1000);last=now;if(game&&!game.paused){acc+=dt*game.speed;let steps=0;while(acc>=1/30&&steps<16){updateGame(game,1/30);acc-=1/30;steps++}}render(now/1000);if(now-lastHud>300){refreshHud();lastHud=now}if(game&&!game.completed&&now-lastSave>30000){saveGame(game);lastSave=now}requestAnimationFrame(frame)}
-document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));if(!game)return;const tab=b.dataset.tab;if(tab==='people'){let n=game.npcs.find(o=>o.alive);if(n)selected=n;refreshHud()}else if(tab==='powers'){const p=game.world.fixtures.find(o=>o.type==='shelf');if(p)selected=p;refreshHud()}else if(tab==='world'){selected=null;refreshHud()}else if(tab==='events'){selected=null;refreshHud();$('inspect').scrollIntoView({block:'nearest',behavior:'smooth'})}else if(tab==='settings'){document.querySelector('#saveV3').focus();$('worldStatus').textContent='Use Save, speed controls, or Main Menu in the top bar.'}}));
+function frame(now){
+ const dt=Math.min(.08,(now-last)/1000);last=now;
+ if(game&&!game.paused){
+  acc+=dt*game.speed;let steps=0;
+  while(acc>=1/30&&steps<16){updateGame(game,1/30);acc-=1/30;steps++}
+ }
+ // Animation and clock run on simulation time. Drawing keeps refreshing but
+ // its positions and oscillations never advance while the round is paused.
+ followSelected();
+ render(game?.elapsed||0);
+ if(now-lastHud>300){refreshHud();lastHud=now}
+ if(game&&!game.completed&&now-lastSave>30000){saveGame(game);lastSave=now}
+ requestAnimationFrame(frame)
+}
+document.querySelectorAll('[data-tab]').forEach(button=>button.addEventListener('click',()=>{
+ activateTab(button.dataset.tab);
+ feedback='';
+ refreshHud();
+}));
 centerCamera();requestAnimationFrame(frame);
