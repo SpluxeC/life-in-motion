@@ -86,7 +86,7 @@ export function createHardwareStore(){
  fixture('receivingDesk',23,37,2,1,{facing:'south'});
  // Bulk warehouse packaging belongs in Receiving, leaving Lumber for timber.
  fixture('boxStack',29,42,2,1);fixture('palletStack',26,42,2,1);
- fixture('handTruck',24,35,1,1);fixture('flatCart',33,37,2,1);
+ fixture('handTruck',24,35,1,1);fixture('forklift',33,37,2,1,{facing:'west'});
  fixture('palletStack',24,42,2,1);fixture('boxStack',32,42,2,1);
  // Strapped short, medium and long dimensional lumber packs against Lumber's back wall.
  fixture('lumberBundle',5,37,2,1,{bundleSize:'short',department:'LUMBER'});
@@ -112,7 +112,7 @@ export function createHardwareStore(){
  for(let x of [4,12,20,28,36,44,52,60])props.push({id:'shrub-'+x,type:'shrub',x,y:1});
  for(let y of [12,20,28,37,45])props.push({id:'tree-'+y,type:'tree',x:60,y});
  for(let x of [51,57])for(let y of [13,25,38])props.push({id:'shrub-'+x+'-'+y,type:'shrub',x,y});
- return {id:'hardware-store',title:'Hardware Store',layoutVersion:12,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
+ return {id:'hardware-store',title:'Hardware Store',layoutVersion:13,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
 }
 export const inside=(x,y)=>x>=0&&y>=0&&x<WIDTH&&y<HEIGHT;
 export function fixtureAt(world,x,y){return world.fixtures.find(o=>x>=o.x&&x<o.x+o.w&&y>=o.y&&y<o.y+o.h)}
