@@ -181,7 +181,8 @@ const departmentSigns=[
  {x:34,y:11,name:'SERVICE',accent:'#558c9a'},
  {x:14,y:34,name:'LUMBER',accent:'#b58a5b'},
  {x:28.5,y:36.4,name:'RECEIVING',accent:'#c08b55'},
- {x:42.7,y:29,name:'GARDEN',accent:'#63905b'}
+ // Hung just inside the garden entrance, aligned with its two Y-axis sliders.
+  {x:35.2,y:30.5,name:'GARDEN',accent:'#63905b',axis:'y'}
 ];
 function render(t){
  resize();
@@ -199,7 +200,7 @@ function render(t){
     return {kind:'sign',depth,fn:()=>{
       const opacity=signOpacity(o,game?.npcs||[],project,zoom,depth,n=>renderDepth('npc',n));
       ctx.save();ctx.globalAlpha=opacity;
-      artwork.drawDepartmentSign(o.x,o.y,o.name,o.accent);
+      artwork.drawDepartmentSign(o.x,o.y,o.name,o.accent,o.axis||'x');
       ctx.restore();
     }};
   }),
