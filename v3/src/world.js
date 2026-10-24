@@ -72,7 +72,7 @@ export function createHardwareStore(){
  fixture('saw',6,35,2,1,{department:'LUMBER',facing:'south'});fixture('pallet',11,35,2,1);fixture('workbench',17,35,2,1);
  // Keep 25..32, 35..39 clear for unobstructed receiving circulation.
  fixture('lockers',43,20,2,1,{facing:'north'});fixture('office',40,13,1,1,{facing:'west'});fixture('officeChair',41,13,1,1,{facing:'west'});fixture('officePrinter',43,14,1,1,{facing:'south'});
- fixture('vending',45,18,1,1,{facing:'west'});fixture('breakTable',41,18,2,1,{facing:'south'});fixture('breakChair',41,19,1,1,{facing:'north'});fixture('breakChair',42,19,1,1,{facing:'north'});fixture('microwave',40,20,1,1,{facing:'east'});fixture('sink',40,23,1,1,{facing:'west'});fixture('restroom',41,25,1,1,{facing:'south'});fixture('restroomStall',43,25,1,1,{facing:'south'});fixture('handDryer',45,23,1,1,{facing:'west'});fixture('restroomBin',45,25,1,1);
+ fixture('vending',45,18,1,1,{facing:'west'});fixture('breakTable',41,18,2,1,{facing:'south'});fixture('breakChair',41,19,1,1,{facing:'north'});fixture('breakChair',42,19,1,1,{facing:'north'});fixture('microwave',40,20,1,1,{facing:'east'});fixture('sink',40,23,1,1,{facing:'west'});fixture('restroom',41,25,1,1,{facing:'south'});fixture('restroomStall',43,25,1,1,{facing:'south'});fixture('handDryer',45,23,1,1,{facing:'west'});fixture('restroomBin',44,26,1,1);
  fixture('plants',41,33,2,2);fixture('plants',45,35,1,2);fixture('gardenDesk',42,29,2,1);
  // Additional stocked departments and service details. Each solid asset reserves its true footprint.
  // Relocate the narrow Tools endcap from the aisle center to the Hardware department's right edge.
