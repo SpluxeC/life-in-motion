@@ -337,6 +337,11 @@ for(const type of ['receivingDesk','palletStack','boxStack','forklift',
  'birdbath','wateringStation','planter']){
  assert(extended.fixtures.some(f=>f.type===type),'Newly drawn asset present: '+type);
 }
+const renovatedRestroom=createHardwareStore();
+for(const type of ['restroom','restroomStall','handDryer','restroomBin','sink'])
+ assert(renovatedRestroom.fixtures.some(f=>f.type===type),'Restroom furnishing exists: '+type);
+assert(pathTo(renovatedRestroom,{x:37,y:24},{x:40,y:24}).length>0,
+ 'Staff restroom accessible through existing entrance');
 // Exercise both sliding leaves with a real NPC entering the garden.
 const gateGame=makeGame(extended,{staff:4,customers:2,seed:23});
 const gateWalker=gateGame.npcs[2];
@@ -375,7 +380,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===20,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===21,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(!doorAt(migrated.world,43,39)&&doorAt(migrated.world,36,31)?.type==='sliding',
