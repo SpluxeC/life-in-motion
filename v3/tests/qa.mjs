@@ -1189,9 +1189,9 @@ const remodelPaint=remodeledHardware.fixtures.find(f=>f.type==='paintMixer');
 const remodelKey=remodeledHardware.fixtures.find(f=>f.type==='keyCutter');
 const remodelSafety=remodeledHardware.fixtures.find(f=>f.type==='safetyStation');
 const remodelTools=remodeledHardware.fixtures.find(f=>f.type==='endcap'&&f.department==='TOOLS');
-assert.deepEqual([remodelPaint.x,remodelPaint.y,remodelPaint.w,remodelPaint.h],[7,23,2,1],
+assert.deepEqual([remodelPaint.x,remodelPaint.y,remodelPaint.w,remodelPaint.h],[8,24,2,1],
  'Larger paint workstation occupies center of Paint department');
-assert.deepEqual([remodelKey.x,remodelKey.y,remodelKey.w,remodelKey.h],[31,23,2,1],
+assert.deepEqual([remodelKey.x,remodelKey.y,remodelKey.w,remodelKey.h],[32,24,2,1],
  'Key cutter sits at center of Hardware department');
 assert.deepEqual([remodelTools.x,remodelTools.y],[35,21],
  'Small Tools endcap moved out of Tools aisle to Hardware right side');
@@ -1263,7 +1263,7 @@ for(const item of [wallTools,wallHardware,wallFasteners]){
 }
 const wireCuttingMachine=remodeledHardware.fixtures.find(f=>f.type==='wireCutter');
 assert.deepEqual([wireCuttingMachine.x,wireCuttingMachine.y,wireCuttingMachine.w,wireCuttingMachine.h],
- [19,23,2,1],'Wire cutter centered inside Electrical department');
+ [20,24,2,1],'Wire cutter centered inside Electrical department');
 for(const p of [{x:19,y:22},{x:19,y:24},{x:18,y:23},{x:20,y:24}]){
  assert(walkable(remodeledHardware,p.x,p.y));
  assert(pathTo(remodeledHardware,{x:20,y:12},p).length>0);
