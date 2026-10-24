@@ -91,11 +91,24 @@ export function createHardwareStore(){
  // Safety station stays wall-side, SOUTH of the employee door, well clear of the Service sign.
  fixture('safetyStation',35,19,1,1,{facing:'west'});fixture('utilityCart',4,16,1,1,{stock:4});
  fixture('hardwareBins',35,23,1,2,{department:'FASTENERS',stock:8,facing:'west'});
- // Working receiving area: keep x=27..30 and y=35..43 free for hand trucks and NPCs.
+ // Receiving supervisor's enclosed office: rear wall uses the existing
+ // store exterior, with glazed north/east walls and one store-side door.
+ for(let xx=20;xx<=26;xx++)wall(xx,35,'receivingOffice','x');
+ for(let yy=35;yy<=38;yy++){
+  wall(20,yy,'receivingOffice','y');
+  wall(26,yy,'receivingOffice','y');
+ }
+ walls.delete(key(22,35));
+ door(22,35,'hinged','Receiving office door','x');
+ for(const [wx,wy] of [[24,35],[25,35],[26,37]])walls.get(key(wx,wy)).window='office';
+ // Desk and chair face one another within the walkable office interior.
  fixture('receivingDesk',23,37,2,1,{facing:'south'});
+ fixture('officeChair',24,38,1,1,{facing:'north'});
+ // The receiving floor and double roll-up door stay unobstructed.
+
  // Bulk warehouse packaging belongs in Receiving, leaving Lumber for timber.
  fixture('boxStack',29,42,2,1);fixture('palletStack',26,42,2,1);
- fixture('handTruck',24,35,1,1);fixture('forklift',33,37,2,1,{facing:'west'});
+ fixture('handTruck',27,35,1,1);fixture('forklift',33,37,2,1,{facing:'west'});
  fixture('palletStack',24,42,2,1);fixture('boxStack',32,42,2,1);
  // Strapped short, medium and long dimensional lumber packs against Lumber's back wall.
  fixture('lumberBundle',5,37,2,1,{bundleSize:'short',department:'LUMBER'});
@@ -121,7 +134,7 @@ export function createHardwareStore(){
  for(let x of [4,12,20,28,36,44,52,60])props.push({id:'shrub-'+x,type:'shrub',x,y:1});
  for(let y of [12,20,28,37,45])props.push({id:'tree-'+y,type:'tree',x:60,y});
  for(let x of [51,57])for(let y of [13,25,38])props.push({id:'shrub-'+x+'-'+y,type:'shrub',x,y});
- return {id:'hardware-store',title:'Hardware Store',layoutVersion:18,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
+ return {id:'hardware-store',title:'Hardware Store',layoutVersion:19,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
 }
 export const inside=(x,y)=>x>=0&&y>=0&&x<WIDTH&&y<HEIGHT;
 export function fixtureAt(world,x,y){return world.fixtures.find(o=>x>=o.x&&x<o.x+o.w&&y>=o.y&&y<o.y+o.h)}
