@@ -1119,7 +1119,7 @@ assert(toolRackArt.includes('type===\'toolCabinet\'')&&
 // roll-up, store-side doorway, windows and stockroom access usable.
 const receivingOffice=createHardwareStore();
 const officeDesk=receivingOffice.fixtures.find(o=>o.type==='receivingDesk');
-const officeChair=receivingOffice.fixtures.find(o=>o.type==='officeChair');
+const officeChair=receivingOffice.fixtures.find(o=>o.type==='officeChair'&&o.x===24&&o.y===38);
 assert.deepEqual([officeDesk.x,officeDesk.y,officeDesk.w,officeDesk.h],[23,37,2,1]);
 assert.deepEqual([officeChair.x,officeChair.y,officeChair.w,officeChair.h],[24,38,1,1]);
 assert(receivingOffice.doors.some(d=>d.x===22&&d.y===35&&d.label==='Receiving office door'));
