@@ -357,6 +357,26 @@ assert(managerOffice.fixtures.some(o=>o.type==='officeChair'&&o.x===41&&o.y===13
 assert(managerOffice.fixtures.some(o=>o.type==='officePrinter'&&o.x===43&&o.y===14));
 assert(pathTo(managerOffice,{x:38,y:12},{x:42,y:13}).length>0,
  'Manager office door and walkable desk approach remain accessible');
+// Staff hall: shop-facing wall, room-facing wall, and north/south end caps
+// are complete, excluding only the actual doorways.
+const staffHall=createHardwareStore();
+assert(!staffHall.doors.some(d=>d.x===42&&(d.y===16||d.y===21)),
+ 'Inter-room doors have been removed');
+for(const yy of [16,21])assert(staffHall.walls.has('42,'+yy),
+ 'Former inner doorway is now a wall');
+for(let yy=11;yy<=26;yy++){
+ assert.equal(staffHall.ground.find(t=>t.x===37&&t.y===yy)?.area,'store',
+  'Employee hallway floor matches store at row '+yy);
+ if(yy!==17)assert(staffHall.walls.has('36,'+yy),
+  'No missing shop-side corridor wall at row '+yy);
+ if(![12,19,24].includes(yy))assert(staffHall.walls.has('38,'+yy),
+  'No missing room-side corridor wall at row '+yy);
+}
+for(const yy of [10,27])assert(staffHall.walls.has('37,'+yy),
+ 'Staff hallway end cap wall complete');
+for(const yy of [12,19,24])
+ assert(pathTo(staffHall,{x:37,y:yy},{x:40,y:yy}).length>0,
+  'Independent room entrance accessible from hallway at row '+yy);
 // Exercise both sliding leaves with a real NPC entering the garden.
 const gateGame=makeGame(extended,{staff:4,customers:2,seed:23});
 const gateWalker=gateGame.npcs[2];
@@ -395,7 +415,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===23,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===24,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(!doorAt(migrated.world,43,39)&&doorAt(migrated.world,36,31)?.type==='sliding',
