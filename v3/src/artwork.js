@@ -1538,27 +1538,75 @@ export function createArtwork(ctx,project,getZoom){
  }
  function drawVehicle(v,t){
   if(v.type==='tree'||v.type==='shrub'){drawFoliage(v);return}
-  let {x,y}=v,w=v.w||2,h=v.h||(v.emergency&&v.color==='#b9594d'?4:3);
-  shadow(x,y,w,h,1.15);
-  // Tire locations, bumpers and roof use the same physical world footprint.
-  for(const pos of [[-.25,.16],[w-.75,.16],[-.25,h-.7],[w-.75,h-.7]]){
-   const p=P(x+pos[0],y+pos[1]);ellipse(p.x,p.y,7,4,'#1b292c','#101a1d');
-  }
+  const {x,y}=v,w=v.w||2,h=v.h||(v.emergency&&v.color==='#b9594d'?4:3);
   const body=v.emergency?(v.color==='#b9594d'?'#bf4d43':v.color==='#dfd8be'?'#e0e1d9':'#4a7395'):(v.color||'#81969a');
-  solid(x,y,w,h,13,body,'#465f66','#70838a');
-  solid(x+.23,y+.55,1.53,Math.max(1.4,h-1.45),22,body,'#4e646a','#6c8790');
-  surface(x+.35,y+.63,1.3,.55,22,'#33545b','#6d8990');
-  surface(x+.35,y+h-1.25,1.3,.5,22,'#375d66','#5c7980');
-  for(let side=0;side<2;side++){
-   const head=P(x-.25+side*(w-.5),y+.08,13);
-   ellipse(head.x,head.y,4,2,'#ede1bb','#928f7d');
-   const rear=P(x-.25+side*(w-.5),y+h-.67,13);ellipse(rear.x,rear.y,3,2,'#b14e44');
+  // Different parked silhouettes without changing footprints or vehicle IDs.
+  const kind=v.emergency?'service':(['sedan','crossover','compact','pickup'][Math.abs(Math.round(x))%4]);
+  const roofHeight=kind==='compact'?21:kind==='crossover'||kind==='service'?29:kind==='pickup'?25:24;
+  const roofStart=kind==='pickup'?.55:kind==='compact'?.78:.75;
+  const roofEnd=kind==='pickup'?1.72:kind==='compact'?h-.53:h-.72;
+  shadow(x,y,w,h,1.05);
+  const wheel=(xx,yy)=>{
+   const p=P(xx,yy,6);
+   ellipse(p.x,p.y,7.5,6.2,'#202b30','#0c1619');
+   ellipse(p.x,p.y,3.7,3.2,'#b3bdbb','#5e6d71');
+   ellipse(p.x,p.y,1.2,1,'#657577');
+  };
+  // Rear wheel sets sit behind the body; two nearest tires remain exposed.
+  for(const yy of [y+.46,y+h-.55])wheel(x+w-.18,yy);
+  // Lower rocker/chassis and shaped hood and trunk sections.
+  solid(x+.09,y+.08,w-.18,h-.16,12,body,'#475963','#677f84');
+  surface(x+.15,y+.11,w-.30,roofStart-.05,13,body,'#4e6269');
+  surface(x+.15,y+roofEnd,w-.30,h-roofEnd-.14,13,body,'#586e75');
+  // Raised cabin uses sloped glass areas, a solid roof and window pillars.
+  solid(x+.25,y+roofStart,w-.50,Math.max(.45,roofEnd-roofStart),roofHeight,
+   body,'#50636b','#778b8d');
+  const windshield=P(x+.04,y+roofStart+.08,roofHeight-5);
+  const wind2=P(x+w-.05,y+roofStart+.08,roofHeight-5);
+  poly([P(x+.28,y+roofStart+.16,roofHeight-1),
+    P(x+w-.28,y+roofStart+.16,roofHeight-1),
+    P(x+w-.07,y+roofStart-.04,14),
+    P(x+.07,y+roofStart-.04,14)],'#507987','#c0d4d2',1.1);
+  poly([P(x+.29,y+roofEnd-.18,roofHeight-1),
+    P(x+w-.29,y+roofEnd-.18,roofHeight-1),
+    P(x+w-.07,y+roofEnd+.05,14),
+    P(x+.07,y+roofEnd+.05,14)],'#426a79','#a4bfc1',1.1);
+  surface(x+.37,y+roofStart+.17,w-.74,Math.max(.20,roofEnd-roofStart-.34),
+   roofHeight+.5,body,'#d0d6ce');
+  // Near side: separated side windows divided by a clear B pillar.
+  const sideX=x-.255,midY=y+(roofStart+roofEnd)/2;
+  for(const [ay,by] of [[y+roofStart+.13,midY-.08],[midY+.08,y+roofEnd-.12]]){
+   poly([P(sideX,ay,roofHeight-5),P(sideX,by,roofHeight-5),
+    P(sideX,by,16),P(sideX,ay,16)],'#436b78','#a9c3c5',.9);
+  }
+  line(P(sideX,midY,16),P(sideX,midY,roofHeight-3),'#d3d1c5',2.6);
+  // Doors, handles, mirror and two near-side rubber tires.
+  for(const yy of [y+roofStart+.29,y+roofEnd-.28]){
+   line(P(x-.39,yy,13),P(x-.24,yy,13),'#d2d6cc',1.4);
+  }
+  line(P(x-.39,y+roofStart+.03,12),P(x-.39,y+roofEnd+.01,12),'#5d6c72',1.3);
+  const mirror=P(x-.39,y+roofStart+.18,19);
+  ellipse(mirror.x,mirror.y,3.4,2.2,'#31434b','#8ba0a3');
+  for(const yy of [y+.46,y+h-.55])wheel(x-.22,yy);
+  // Bumpers, headlights and rear lamps fitted to the car ends.
+  for(const xx of [x-.27,x+w-.73]){
+   const head=P(xx,y-.30,12),tail=P(xx,y+h-.48,12);
+   ellipse(head.x,head.y,3.7,2.2,'#e6e6ca','#8e9e95');
+   ellipse(tail.x,tail.y,3.3,2.1,'#b65751','#803d3d');
+  }
+  line(P(x-.28,y-.36,9),P(x+w-.73,y-.36,9),'#384f57',3.1);
+  line(P(x-.28,y+h-.44,9),P(x+w-.73,y+h-.44,9),'#354a51',3.1);
+  if(kind==='pickup'){
+   // Open-bed cap and tailgate separate the pickup from sedans.
+   surface(x+.21,y+1.80,w-.42,h-2.00,14,'#435158','#77878a');
+   for(const xx of [x-.27,x+w-.73])
+    line(P(xx,y+1.82,15),P(xx,y+h-.40,15),body,3.1);
   }
   if(v.emergency){
-   const beacon=P(x+1,y+1.15,27),flash=Math.sin(t*9)>0;
+   const beacon=P(x+w/2-.5,y+1.25,roofHeight+3),flash=Math.sin(t*9)>0;
    ellipse(beacon.x-6*Z(),beacon.y,5,3,flash?'#f14e4a':'#8c2930');
    ellipse(beacon.x+6*Z(),beacon.y,5,3,flash?'#3b70bc':'#80b6f0');
-   if(v.color==='#b9594d')label(x+1,y+1.8,26,'FIRE','#f7f2dc','#8b3f39',31)
+   if(v.color==='#b9594d')label(x+1,y+1.8,roofHeight+2,'FIRE','#f7f2dc','#8b3f39',31);
   }
  }
  function drawFoliage(v){
