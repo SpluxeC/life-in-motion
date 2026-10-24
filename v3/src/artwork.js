@@ -1090,11 +1090,63 @@ export function createArtwork(ctx,project,getZoom){
    solid(x,y,w,h,17,'#aa8968','#6b5949');for(let i=0;i<2;i++)miniCan(x+.4+i*.8,y+.4,21,'#d5d8cb',3);
    for(let i=0;i<2;i++)solid(x+i*1.3,y+.42,.44,.34,10,'#5b6e71')
   }else if(type==='sink'){
-   solid(x,y,w,h,27,'#c9d0c8','#8c9a95');const p=P(x+.5,y+.4,29);ellipse(p.x,p.y,10,5,'#8ca7a9','#e4eee8');
-   line(P(x+.47,y+.32,34),P(x+.47,y+.32,44),'#bfcac8',2);line(P(x+.47,y+.32,44),P(x+.57,y+.43,44),'#bcc8c7',2)
-  }else if(type==='restroom'){
-   solid(x,y,1,1,11,'#e9e7db','#b7bdb8');ellipse(P(x+.45,y+.5,15).x,P(x+.45,y+.5,15).y,9,5,'#ecefe9','#819a9b');
-   solid(x+.1,y+.7,.8,.2,25,'#ecf0e9')
+   // Commercial restroom vanity: sturdy cabinet, recessed porcelain bowl,
+   // broad mirror, chrome faucet and soap pump, all physically supported.
+   solid(x,y,w,h,23,'#aab8b5','#657574','#879a96');
+   surface(x+.04,y+.04,.92,.92,24,'#d8dcd5','#8d9b98');
+   const basin=P(x+.02,y+.07,25);
+   ellipse(basin.x,basin.y,10.5,5.6,'#f1f1e8','#758d91');
+   ellipse(basin.x,basin.y-1.1*Z(),7.0,3.7,'#a8c1c1','#e8eeea');
+   line(P(x-.05,y-.30,25),P(x-.05,y-.30,36),'#afc1c1',2.7);
+   line(P(x-.05,y-.30,36),P(x+.10,y-.20,36),'#cdd7d3',2.7);
+   line(P(x+.10,y-.20,36),P(x+.10,y-.20,32),'#bdcdca',2.3);
+   // Framed wall mirror lies flat on the back wall, not floating.
+   poly([P(x-.38,y-.44,34),P(x+.38,y-.44,34),
+    P(x+.38,y-.44,63),P(x-.38,y-.44,63)],
+    '#87a8b1','#d4e0dc',2.7);
+   line(P(x-.31,y-.45,56),P(x+.18,y-.45,39),'#e6f1ef66',2);
+   solid(x+.27,y+.18,.12,.13,27,'#d5e0d7','#80958d');
+   line(P(x+.33,y+.20,29),P(x+.33,y+.20,33),'#83988f',1.5);
+  }else if(type==='restroom'||type==='restroomStall'){
+   // Framed privacy stall with toilet pedestal, cistern, paper holder,
+   // raised partition and a clear open doorway toward the approach side.
+   shadow(x,y,1,1,.62);
+   const back=y-.37,front=y+.33;
+   solid(x-.06,y-.18,.45,.53,8,'#d9ddda','#a5b2ae','#c5ccc7');
+   const bowl=P(x+.06,y+.05,12);
+   ellipse(bowl.x,bowl.y,8.5,5,'#f7f7f0','#91a8a7');
+   ellipse(bowl.x,bowl.y-1.2*Z(),5.1,3.0,'#a9c3c1','#e4e9e3');
+   solid(x-.10,back,.36,.22,27,'#eaede5','#afbeba','#c9d2cb');
+   // Raised stall partition: sides grounded, entry deliberately open.
+   for(const xx of [x-.43,x+.43]){
+    line(P(xx,back,3),P(xx,front,3),'#7f9697',2.6);
+    poly([P(xx,back,7),P(xx,front,7),P(xx,front,48),P(xx,back,48)],
+     '#b5c9c785','#6f8588',1.5);
+    line(P(xx,back,48),P(xx,front,48),'#e6ece6',2);
+   }
+   line(P(x-.43,back,48),P(x+.43,back,48),'#859b9a',2.7);
+   const paper=P(x+.37,y+.17,25);
+   ellipse(paper.x,paper.y,3.5,3,'#e8e5da','#93a39b');
+   ellipse(paper.x,paper.y,1.1,1,'#84908b');
+   // The stall door is half open, attached to the left jamb.
+   poly([P(x-.42,front,5),P(x-.05,front+.08,5),
+    P(x-.05,front+.08,43),P(x-.42,front,43)],
+    '#c5d3cf','#788f8d',1.5);
+  }else if(type==='handDryer'){
+   // Wall-mounted hand dryer on the restroom's eastern wall.
+   poly([P(x+.30,y-.30,31),P(x+.30,y+.25,31),
+    P(x+.30,y+.25,46),P(x+.30,y-.30,46)],
+    '#e0e7e2','#7a918f',2);
+   line(P(x+.315,y-.20,34),P(x+.315,y+.15,34),'#768f90',2);
+   const sensor=P(x+.32,y+.01,38);
+   ellipse(sensor.x,sensor.y,2,1.4,'#3e6d78');
+  }else if(type==='restroomBin'){
+   // Floor-standing stainless waste basket with inset dark opening.
+   shadow(x,y,.65,.65,.6);
+   solid(x-.25,y-.25,.50,.50,17,'#aebcb9','#64787a','#889c9a');
+   surface(x-.22,y-.22,.44,.44,18,'#374e50','#aebdb9');
+   for(const yy of [y-.10,y+.08])
+    line(P(x-.37,yy,3),P(x-.37,yy,15),'#d2dcd6',1.3);
   }else if(type==='plants'||type==='gardenDesk'){
    const isPlants=type==='plants',height=isPlants?10:19;
    // Continuous table surface supports the actual underside of every pot.
