@@ -1,3 +1,4 @@
+import {floorRoomName} from './world.js?v=door-room-map25-20261024';
 // Canvas picking utilities shared with QA. A floor click has a ground-space
 // footprint; tall fixtures are hit by their real projected silhouette rather
 // than a giant bounding rectangle that swallows neighboring aisle tiles.
@@ -38,9 +39,9 @@ export function isGroundTileTap(world,x,y,sx,sy,project,zoom=1){
 const displayName=text=>String(text||'').replace(/([a-z])([A-Z])/g,'$1 $2').replace(/[_-]/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
 export function selectionLabel(world,selected){
  if(!selected)return '';
+ if(selected.id?.startsWith('door-'))return selected.label||'Door';
  if(selected.type==='tile'){
-  const ground=world?.ground?.find(t=>t.x===selected.x&&t.y===selected.y);
-  const label=ground?.area==='store'?'Store Aisle':displayName(ground?.area||'Ground');
+  const label=floorRoomName(world,selected.x,selected.y);
   return label+' Tile ('+selected.x+', '+selected.y+')';
  }
  const namedMachines={paintMixer:'Paint Mixer',keyCutter:'Key Cutting Machine',wireCutter:'Wire Cutting Machine',forklift:'Forklift',handTruck:'Hand Truck',bucketStack:'Paint Buckets',ridingMower:'Riding Lawn Mower'};
@@ -52,4 +53,17 @@ export function selectionLabel(world,selected){
  if(selected.type==='gardenToolsRack')return 'Garden Tools';
  if(selected.department)return displayName(selected.department)+' Shelf';
  return displayName(selected.type||'Selection');
+}
+
+// A double door is one inspectable selection even though its leaves remain
+// independent animation/collision entries in the world model.
+export function doorSelectionTarget(world,door){
+ if(!door?.pairId)return door;
+ const leaves=world.doors.filter(d=>d.pairId===door.pairId);
+ if(leaves.length<2)return door;
+ const x=Math.min(...leaves.map(d=>d.x)),y=Math.min(...leaves.map(d=>d.y));
+ const x2=Math.max(...leaves.map(d=>d.x+(d.w||1)));
+ const y2=Math.max(...leaves.map(d=>d.y+(d.h||1)));
+ return {...leaves[0],id:'door-group-'+door.pairId,x,y,w:x2-x,h:y2-y,
+  label:leaves[0].label};
 }
