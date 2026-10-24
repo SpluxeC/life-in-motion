@@ -55,41 +55,39 @@ export function createArtwork(ctx,project,getZoom){
  }
  // Deterministic botanical clusters: tapered branching stems, varied
  // foliage silhouettes, terracotta pots and occasional flower heads.
- function plants(x,y,z=0,qty=3){
-  const palette=['#355f40','#47774b','#638e53','#749a5b','#2e654b'];
+ // Pots use actual table coordinates and sit at the supporting tabletop Z.
+ function plants(x,y,z=0,qty=3,w=1,h=1){
+  const greens=['#355f40','#47774b','#638e53','#749a5b','#2e654b'];
+  const cols=Math.max(1,Math.min(4,Math.ceil(Math.sqrt(qty*w/Math.max(.5,h))))),rows=Math.ceil(qty/cols);
   for(let i=0;i<qty;i++){
-   const col=i%3,row=Math.floor(i/3),px=x+col*.40,py=y+row*.40;
-   const height=12+(i*7)%12,base=P(px,py,z);
-   ellipse(base.x,base.y,5,2.5,'#8a6045','#4e4234');
-   // Tapered flower pots with a dark soil opening.
-   poly([P(px-.10,py-.10,z+2),P(px+.10,py-.10,z+2),
-    P(px+.085,py+.10,z+2),P(px-.085,py+.10,z+2)],
-    '#b67851','#62452f',.65);
-   const rim=P(px,py,z+3);
-   ellipse(rim.x,rim.y,5.6,2.6,'#c88962','#634735');
-   ellipse(rim.x,rim.y-1*Z(),3.6,1.5,'#463c2d');
-   for(let b=0;b<3;b++){
-    const spread=(b-1)*.115,tipZ=z+height-(b%2)*3;
-    line(P(px,py,z+3),P(px+spread,py+(b===1?-.08:.08),tipZ),
-     '#416b3e',1.5);
+   const col=i%cols,row=Math.floor(i/cols);
+   const px=x-.5+(col+.5)*w/cols,py=y-.5+(row+.5)*h/rows;
+   const growth=10+(i*5)%11;
+   const base=P(px,py,z);
+   // Pot body rises directly FROM tabletop, not above it or outside it.
+   poly([P(px-.09,py-.09,z),P(px+.09,py-.09,z),
+    P(px+.105,py+.09,z+5),P(px-.105,py+.09,z+5)],
+    '#b67851','#62452f',.75);
+   const rim=P(px,py,z+5);
+   ellipse(rim.x,rim.y,5.4,2.5,'#c88962','#634735');
+   ellipse(rim.x,rim.y-.6*Z(),3.4,1.35,'#453b2d');
+   for(let branch=0;branch<3;branch++){
+    const sx=(branch-1)*.1,sy=(branch%2?-.05:.05),top=z+growth+4-branch%2*3;
+    line(P(px,py,z+5),P(px+sx,py+sy,top),'#416b3e',1.5);
     for(let leaf=0;leaf<3;leaf++){
-     const sz=z+6+leaf*(height-8)/3;
-     const yy=py+(b===1?-.08:.08)*leaf/3;
-     const dx=spread*(leaf+1)/3;
-     for(const side of [-1,1]){
-      const p=P(px+dx+side*.09,yy+(leaf%2)*.04,sz);
-      ellipse(p.x,p.y,3.3+(i%2),1.8+(leaf%2)*.5,palette[(i+b+leaf+side+5)%palette.length]);
-     }
+     const q=P(px+sx*(leaf+1)/3+(leaf%2?.06:-.06),py+sy*(leaf+1)/3,
+      z+7+leaf*(growth-4)/3);
+     ellipse(q.x,q.y,3+(i%2),1.8,greens[(i+branch+leaf)%greens.length]);
     }
    }
    if(i%3===0){
-    const q=P(px,py-.07,z+height+1),petals=['#e9b871','#e3a9a6','#e2c8da'];
+    const top=P(px,py,z+growth+6),petals=['#e9b871','#e3a9a6','#e2c8da'];
     for(let k=0;k<5;k++){
-     const angle=k*Math.PI*2/5;
-     ellipse(q.x+Math.cos(angle)*3.1*Z(),q.y+Math.sin(angle)*2.5*Z(),
-      2.1,1.5,petals[(i/3)%3]);
+     const theta=k*Math.PI*2/5;
+     ellipse(top.x+Math.cos(theta)*3*Z(),top.y+Math.sin(theta)*2.3*Z(),
+      2,1.5,petals[Math.floor(i/3)%3]);
     }
-    ellipse(q.x,q.y,1.5,1.2,'#dfbb61');
+    ellipse(top.x,top.y,1.4,1.1,'#dfbb61');
    }
   }
  }
@@ -1087,12 +1085,14 @@ export function createArtwork(ctx,project,getZoom){
    solid(x,y,1,1,11,'#e9e7db','#b7bdb8');ellipse(P(x+.45,y+.5,15).x,P(x+.45,y+.5,15).y,9,5,'#ecefe9','#819a9b');
    solid(x+.1,y+.7,.8,.2,25,'#ecf0e9')
   }else if(type==='plants'||type==='gardenDesk'){
-   // Low slatted garden-center display table with individual potted foliage.
    const isPlants=type==='plants',height=isPlants?10:19;
+   // Continuous table surface supports the actual underside of every pot.
    solid(x,y,w,h,height,isPlants?'#947657':'#829784','#5e5546','#816d54');
-   for(let yy=y-.28;yy<y+h-.55;yy+=.34)
-    line(P(x-.38,yy,height+.2),P(x+w-.62,yy,height+.2),'#c0a17a',1.2);
-   plants(x+.06,y+.07,height+2,Math.min(9,Math.round(w*h*2)+2));
+   surface(x+.04,y+.04,w-.08,h-.08,height+.3,'#c1a07b','#77624c');
+   for(let yy=y-.28;yy<y+h-.49;yy+=.32)
+    line(P(x-.36,yy,height+.5),P(x+w-.64,yy,height+.5),'#a98560',1);
+   // A display's tile dimensions determine grid spacing; no overflow.
+   plants(x,y,height+.5,Math.min(9,Math.round(w*h*2)+2),w-.25,h-.25);
   }else if(type==='endcap'){
    o.facing==='west'?westWallDisplay(o):endcapDisplay(o);
   }else if(type==='hardwareBins'){
@@ -1333,16 +1333,42 @@ export function createArtwork(ctx,project,getZoom){
     ctx.fillStyle='#4d8260';ctx.fillRect(q.x-3.5*Z(),q.y+1*Z(),7*Z(),3*Z());
    }
   }else if(type==='pottingBench'){
-   // Wood top, sink tub, plant pots and under-bench shelves.
-   solid(x,y,w,h,20,'#bc9368','#73593c','#956c49');
-   solid(x+.10,y+.13,w-.20,h-.22,6,'#ad855b','#755638');
-   const p=P(x-.13,y-.18,22);ellipse(p.x,p.y,8,4,'#8b9c96','#dddbbf');
+   // Working nursery potting bench: four load-bearing legs, slatted bench
+   // surface, lower storage shelf, actual basin, hand tools and stacked pots.
+   const top=25;
+   for(const px of [x-.34,x+w-.66])for(const py of [y-.30,y+.30])
+    line(P(px,py,0),P(px,py,top),'#70533e',4);
+   solid(x+.06,y+.08,w-.12,h-.16,8,'#826248','#614834','#967553');
    for(let i=0;i<3;i++){
-    const q=P(x+.4+i*.39,y-.12,25);
-    ellipse(q.x,q.y,6,3,'#a86b50','#58493e');
-    line(q,{x:q.x,y:q.y-8*Z()},'#477949',1.8);
-    ellipse(q.x-2*Z(),q.y-9*Z(),4,2.5,'#5b8d55');
-    ellipse(q.x+3*Z(),q.y-12*Z(),4,2.5,'#6b985e');
+    const bx=x+.18+i*.41;
+    miniBox(bx,y+.03,11,['#7a6448','#63704e','#947b5c'][i],.28,.23,8);
+   }
+   solid(x,y,w,h,top,'#a88260','#70523b','#92704e');
+   surface(x+.04,y+.05,w-.08,h-.10,top+.5,'#c6a17a','#77583f');
+   for(let yy=y-.25;yy<y+.29;yy+=.18)
+    line(P(x-.35,yy,top+.7),P(x+w-.65,yy,top+.7),'#987352',1.2);
+   // A low galvanized potting tray contains its visible soil.
+   solid(x+.12,y+.06,.62,.42,top+4,'#899a97','#596a68','#a1b2ad');
+   surface(x+.16,y+.10,.54,.34,top+4.4,'#4e4537','#777064');
+   // Real nursery pots, supported ON the tabletop, never in midair.
+   for(let i=0;i<3;i++){
+    const xx=x+.93+i*.25,yy=y+.16;
+    poly([P(xx-.09,yy-.08,top+.5),P(xx+.09,yy-.08,top+.5),
+     P(xx+.10,yy+.08,top+7),P(xx-.10,yy+.08,top+7)],
+     '#aa714e','#634937',.8);
+    const rim=P(xx,yy,top+7);
+    ellipse(rim.x,rim.y,5,2.4,'#c28c65','#6b4c35');
+    ellipse(rim.x,rim.y-.6*Z(),3.1,1.35,'#493b2d');
+   }
+   // Backboard and a continuous tool rail, rooted at tabletop height.
+   for(const xx of [x-.31,x+1.29])
+    line(P(xx,y-.28,top),P(xx,y-.28,top+27),'#705741',3.5);
+   line(P(x-.31,y-.28,top+24),P(x+1.29,y-.28,top+24),'#ac8764',4);
+   for(let i=0;i<4;i++){
+    const xx=x-.13+i*.39;
+    line(P(xx,y-.29,top+24),P(xx,y-.29,top+11),'#94704b',2);
+    const q=P(xx,y-.29,top+11);
+    ellipse(q.x,q.y,2.4,1.4,'#8d9c9b','#586766');
    }
   }else if(type==='gardenBench'){
    solid(x,y,w,h,12,'#b49066','#74634d','#926e50');
