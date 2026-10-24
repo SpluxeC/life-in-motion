@@ -375,7 +375,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===18,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===19,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(!doorAt(migrated.world,43,39)&&doorAt(migrated.world,36,31)?.type==='sliding',
@@ -1095,6 +1095,22 @@ assert(toolRackArt.includes('type===\'toolCabinet\'')&&
  toolRackArt.includes('Upright punched steel peg panels')&&
  toolRackArt.includes('Hanging hammer and wrench silhouettes'),
  'Detailed industrial red shelf contains tools and a real frame');
+// Receiving office must enclose the desk and chair yet keep the loading
+// roll-up, store-side doorway, windows and stockroom access usable.
+const receivingOffice=createHardwareStore();
+const officeDesk=receivingOffice.fixtures.find(o=>o.type==='receivingDesk');
+const officeChair=receivingOffice.fixtures.find(o=>o.type==='officeChair');
+assert.deepEqual([officeDesk.x,officeDesk.y,officeDesk.w,officeDesk.h],[23,37,2,1]);
+assert.deepEqual([officeChair.x,officeChair.y,officeChair.w,officeChair.h],[24,38,1,1]);
+assert(receivingOffice.doors.some(d=>d.x===22&&d.y===35&&d.label==='Receiving office door'));
+assert.equal(receivingOffice.walls.has('22,35'),false);
+assert([[24,35],[25,35],[26,37]].every(([x,y])=>receivingOffice.walls.get(x+','+y)?.window==='office'));
+assert(pathTo(receivingOffice,{x:22,y:34},{x:22,y:37}).length>0,
+ 'NPCs can reach receiving office through store-side door');
+assert(receivingOffice.doors.some(d=>d.type==='rollup'&&d.x===28&&d.y===39),
+ 'Receiving truck access remains intact');
+const receivingArt=readFileSync(new URL('../src/artwork.js',import.meta.url),'utf8');
+assert(receivingArt.includes("type==='officeChair'")&&receivingArt.includes("o.window==='office'"));
 // Hardware department remodeling: center-mounted key duplicator, two-tile
 // paint tinting desk, wall-side first aid and relocated right-hand endcap.
 const remodeledHardware=createHardwareStore();
