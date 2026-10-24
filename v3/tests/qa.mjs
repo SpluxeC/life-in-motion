@@ -1264,7 +1264,7 @@ for(const item of [wallTools,wallHardware,wallFasteners]){
 const wireCuttingMachine=remodeledHardware.fixtures.find(f=>f.type==='wireCutter');
 assert.deepEqual([wireCuttingMachine.x,wireCuttingMachine.y,wireCuttingMachine.w,wireCuttingMachine.h],
  [20,24,2,1],'Wire cutter centered inside Electrical department');
-for(const p of [{x:19,y:22},{x:19,y:24},{x:18,y:23},{x:20,y:24}]){
+for(const p of [{x:19,y:22},{x:19,y:24},{x:18,y:23},{x:20,y:25}]){
  assert(walkable(remodeledHardware,p.x,p.y));
  assert(pathTo(remodeledHardware,{x:20,y:12},p).length>0);
 }
