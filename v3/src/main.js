@@ -1,4 +1,4 @@
-import {createHardwareStore,doorAt,fixtureAt,nearestOpen,walkable,key} from './world.js?v=receiving-office-map19-20261024';
+import {createHardwareStore,doorAt,fixtureAt,nearestOpen,walkable,key} from './world.js?v=lumber-rack-no-handtrucks-20261024';
 import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v=receiving-office-map19-20261024';
 import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js?v=receiving-office-map19-20261024';
 import {createArtwork} from './artwork.js?v=lumber-rack-no-handtrucks-20261024';
