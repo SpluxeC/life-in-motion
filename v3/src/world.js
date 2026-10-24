@@ -118,7 +118,7 @@ export function createHardwareStore(){
  // Employee rooms: fixtures face the approachable side, not the wall behind them.
  fixture('filingCabinet',44,12,1,1,{facing:'west'});
  fixture('noticeBoard',45,14,1,1,{facing:'west'});
- fixture('coffeeStation',44,20,1,1,{facing:'west'});
+ fixture('coffeeStation',45,20,1,1,{facing:'west'});
  fixture('coatRack',39,18,1,1,{facing:'east'});
  fixture('storageShelves',45,25,1,1,{facing:'west'});
  fixture('supplyCabinet',39,25,1,1,{facing:'west'});
