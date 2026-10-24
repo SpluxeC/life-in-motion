@@ -390,7 +390,7 @@ function inspectAtScreen(sx,sy){
  }
  // Open floor tiles win over the projected *upper part* of adjacent shelves.
  // Actual NPC taps are still first priority, so selection/follow feels natural.
- if(!hits.some(hit=>hit.priority===0)&&
+ if(!hits.some(hit=>hit.priority===0||hit.priority===1)&&
     isGroundTileTap(world,tile.x,tile.y,sx,sy,project,zoom)){
   inspect(tile.x,tile.y);return;
  }
