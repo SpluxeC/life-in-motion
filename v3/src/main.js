@@ -352,6 +352,18 @@ function inspectAtScreen(sx,sy){
   const p=project(n.rx,n.ry,19),d=Math.hypot(sx-p.x,sy-p.y);
   if(d<Math.max(16,24*zoom))add(n,d*.3,0);
  }
+ // Hanging signs have a physical projected panel, not a floor-tile hitbox.
+ for(const sign of departmentSigns){
+  const axis=sign.axis||'x',span=axis==='y'?1.06:(sign.name.length>=9?2.28:1.78);
+  const q=(u,z)=>axis==='y'?project(sign.x-.12,sign.y-u,z):project(sign.x+u,sign.y-.12,z);
+  const a=q(-span,70),b=q(span,70),c=q(span,44),d=q(-span,44);
+  const cross=(p1,p2,p)=> (p2.x-p1.x)*(p.y-p1.y)-(p2.y-p1.y)*(p.x-p1.x);
+  const vertices=[a,b,c,d],orient=cross(a,b,c);
+  if(vertices.every((p,i)=>cross(p,vertices[(i+1)%4],{x:sx,y:sy})*orient>=-1.5*zoom)){
+   const mid={x:(a.x+b.x+c.x+d.x)/4,y:(a.y+b.y+c.y+d.y)/4};
+   add({id:'department-sign-'+sign.name,type:'departmentSign',name:sign.name+' Sign',x:sign.x,y:sign.y},Math.hypot(sx-mid.x,sy-mid.y)/Math.max(zoom,1),1);
+  }
+ }
  for(const d of world.doors){
   const hit=boxHit(d,d.type==='rollup'?53:48,10);
   if(hit!==null)add(doorSelectionTarget(world,d),hit,1);
@@ -371,7 +383,7 @@ function inspectAtScreen(sx,sy){
  }
  // If an NPC and a tall fixture overlap on screen, favor the nearby NPC.
  // This makes tapping a person reliably open their overview/follow mode.
- hits.sort((a,b)=>(a.priority===0?0:1)-(b.priority===0?0:1)||a.d-b.d||a.priority-b.priority);
+ hits.sort((a,b)=>(a.priority===0?0:1)-(b.priority===0?0:1)||a.priority-b.priority||a.d-b.d);
  const tile=unproject(sx,sy);
  if(pendingPower){
   const power=POWER_LIST.find(p=>p.id===pendingPower);
@@ -390,7 +402,7 @@ function inspectAtScreen(sx,sy){
  }
  // Open floor tiles win over the projected *upper part* of adjacent shelves.
  // Actual NPC taps are still first priority, so selection/follow feels natural.
- if(!hits.some(hit=>hit.priority===0||hit.priority===1)&&
+ if(!hits.some(hit=>hit.priority<=2)&&
     isGroundTileTap(world,tile.x,tile.y,sx,sy,project,zoom)){
   inspect(tile.x,tile.y);return;
  }
