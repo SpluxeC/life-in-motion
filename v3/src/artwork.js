@@ -179,6 +179,17 @@ export function createArtwork(ctx,project,getZoom){
    line(top,end,o.section==='staff'?'#ede9dc':'#e7e5d5',3);
    // North elevation faces the parking lot. Glass and mullions stay inside
    // the physical wall segment; no window occupies either main entry tile.
+   if(o.window==='office'){
+    const left=-.37,right=.37,topZ=44,bottomZ=18;
+    const p1=axis==='x'?P(o.x+left,o.y-.51,topZ):P(o.x-.51,o.y+left,topZ);
+    const p2=axis==='x'?P(o.x+right,o.y-.51,topZ):P(o.x-.51,o.y+right,topZ);
+    const p3=axis==='x'?P(o.x+right,o.y-.51,bottomZ):P(o.x-.51,o.y+right,bottomZ);
+    const p4=axis==='x'?P(o.x+left,o.y-.51,bottomZ):P(o.x-.51,o.y+left,bottomZ);
+    poly([p1,p2,p3,p4],'#739da684','#dce9e4',1.7);
+    line(P(axis==='x'?o.x:o.x-.51,axis==='x'?o.y-.51:o.y,topZ),
+     P(axis==='x'?o.x:o.x-.51,axis==='x'?o.y-.51:o.y,bottomZ),'#e3ebe6',1.4);
+    line(p4,p3,'#708e90',2);
+   }
    if(o.window==='storefront'&&o.y===10&&axis==='x'){
     const left=o.x-.38,right=o.x+.38,front=o.y-.51;
     const topZ=43,bottomZ=14;
@@ -1209,11 +1220,49 @@ export function createArtwork(ctx,project,getZoom){
    const p=P(x+(w-1)/2,y,25);
    line({x:p.x-9*Z(),y:p.y},{x:p.x+9*Z(),y:p.y},'#866744',1);
   }else if(type==='receivingDesk'){
-   solid(x,y,w,h,22,'#b2aa92','#6e746f','#91988e');
-   surface(x+.07,y+.08,w-.14,h-.16,23,'#ddd0b2','#8b8c7a');
-   miniBox(x-.29,y-.15,24,'#c9d2ca',.4,.30,2);
-   for(let i=0;i<4;i++)line(P(x+.2+i*.17,y-.23,26),P(x+.2+i*.17,y+.10,26),'#586a6d',.8);
-   const p=P(x+1.05,y-.15,33);ellipse(p.x,p.y,4,3,'#384f5a');
+   // Real receiving manager workstation, solid drawer pedestals below a
+   // continuous laminate worktop, computer, keyboard and delivery paperwork.
+   shadow(x,y,w,h,1.02);
+   for(const xx of [x+.06,x+1.37]){
+    solid(xx,y+.06,.43,.70,22,'#777f81','#4f5b61','#647277');
+    for(const z of [6,13,19]){
+     line(P(xx-.30,y+.23,z),P(xx-.06,y+.23,z),'#bec7c6',1.8);
+     const knob=P(xx-.18,y+.23,z);
+     ellipse(knob.x,knob.y,1.2,.8,'#333e46');
+    }
+   }
+   solid(x,y,w,h,26,'#aa805b','#695445','#86674e');
+   surface(x+.02,y+.03,w-.04,h-.06,27,'#d9c5a4','#8a785f');
+   // Computer screen is mounted on the far edge, facing the office chair.
+   line(P(x+.59,y-.20,28),P(x+.59,y-.20,36),'#505f66',3);
+   poly([P(x+.31,y-.20,36),P(x+.88,y-.20,36),
+    P(x+.88,y-.20,52),P(x+.31,y-.20,52)],'#2d424c','#889ca1',2);
+   const screen=P(x+.59,y-.20,44);
+   ellipse(screen.x,screen.y,2,1.4,'#7ab4bb');
+   surface(x+.32,y+.20,.57,.20,28,'#6c7776','#435156');
+   for(let i=0;i<6;i++)
+    line(P(x+.37+i*.08,y+.19,28.5),P(x+.37+i*.08,y+.26,28.5),'#c9d1cd',.8);
+   // Clipboard and stacked packing slips beside the monitor.
+   miniBox(x+1.13,y-.13,27.4,'#e4dfc9',.41,.31,2);
+   line(P(x+1.24,y-.13,30),P(x+1.40,y-.13,30),'#4d6270',1.5);
+   for(let i=0;i<3;i++)
+    line(P(x+1.18,y-.06+i*.045,30),P(x+1.44,y-.06+i*.045,30),'#879693',.8);
+  }else if(type==='officeChair'){
+   // One-tile cushioned swivel office chair, tucked behind the desk.
+   shadow(x,y,1,1,.64);
+   for(const [dx,dy] of [[-.19,0],[.19,0],[0,-.19],[0,.19]]){
+    line(P(x,y,4),P(x+dx,y+dy,4),'#48575c',2.7);
+    const p=P(x+dx,y+dy,3);
+    ellipse(p.x,p.y,2.8,2.4,'#273539','#6c7b80');
+   }
+   line(P(x,y,5),P(x,y,18),'#737e80',3.5);
+   solid(x-.25,y-.25,.50,.50,20,'#384957','#242f39','#526572');
+   // Back cushion is supported by the rear seat frame, not floating.
+   line(P(x,y-.20,18),P(x,y-.20,39),'#485962',3.4);
+   poly([P(x-.23,y-.24,22),P(x+.23,y-.24,22),
+    P(x+.23,y-.24,43),P(x-.23,y-.24,43)],'#374a59','#1d303c',1.7);
+   for(const side of [-.25,.25])
+    line(P(x+side,y+.02,23),P(x+side,y+.19,23),'#687a80',2.3);
   }else if(type==='handTruck'){
    // Hand dolly depth order: far tire and rear rail first, platform and
    // braces next, and near tire / near rail last. No wheel crosses a rail.
