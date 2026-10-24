@@ -1,6 +1,6 @@
 // Life in Motion v3 — deterministic, inspectable daily routines on the real world grid.
 // A routine reserves no collision tiles, follows existing pathfinding and survives saves.
-import {nearestOpen,pathTo,walkable} from './world.js?v=mower-select-signs-map26-20261024';
+import {nearestOpen,pathTo,walkable} from './world.js?v=center-machines-map27-20261024';
 import {departmentItem} from './merchandise.js?v=driver-side-forklift-wheels-20261023-1';
 import {checkoutStaffPosition,checkoutCustomerPosition} from './checkout-layout.js?v=driver-side-forklift-wheels-20261023-1';
 
