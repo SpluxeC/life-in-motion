@@ -960,86 +960,56 @@ export function createArtwork(ctx,project,getZoom){
     }
    }
   }else if(type==='ridingMower'){
-   // Two-tile ride-on lawn tractor parked with its FRONT / hood toward
-   // the shop interior (negative X), away from the garden sliding doors.
-   // Draw far tires, the cohesive deck/chassis, then near tires so all
-   // four wheels connect to the machine rather than floating beside it.
-   const tire=(xx,yy,r)=>{
-    const p=P(xx,yy,8);
-    ellipse(p.x,p.y,r,r*1.12,'#202a2b','#131b20');
-    ellipse(p.x,p.y,r*.51,r*.55,'#a0a9a1','#414d4d');
-    ellipse(p.x,p.y,r*.20,r*.22,'#4b5552');
-    for(let t=0;t<7;t++){
-     const a=t*Math.PI*2/7;
-     const v={x:p.x+Math.cos(a)*r*.82*Z(),y:p.y+Math.sin(a)*r*.93*Z()};
-     ellipse(v.x,v.y,1.05,1.1,'#3e4948');
-    }
+   // Cohesive west-facing lawn tractor, painted back-to-front. Keep all
+   // geometry within the two-tile parking footprint; no floating trim.
+   shadow(x,y,w,h,1.12);
+   const wheel=(xx,yy,r)=>{
+    const p=P(xx,yy,7);
+    ellipse(p.x,p.y,r,r*.95,'#25302f','#151d1e');
+    ellipse(p.x,p.y,r*.46,r*.46,'#a5aaa0','#586361');
    };
-   for(const [xx,r] of [[x+.18,5.5],[x+1.44,8]])
-    tire(xx,y-.32,r);
-   // Low yellow-topped cutting deck reaches both sides of the tractor.
-   solid(x+.29,y+.04,1.05,.9,7,'#c9a44c','#79602c','#a78a37');
-   surface(x+.29,y+.04,1.05,.9,8,'#d9bd60','#846a35');
-   for(const xx of [x+.54,x+1.02]){
-    const p=P(xx,y+.13,9);
-    ellipse(p.x,p.y,7,3,'#a78438','#d9c16f');
-   }
-   // Real tractor proportions: front grille, formed rear fenders, exposed
-   // mower deck spindle housings, footwell and black rubber tires.
-   // West-facing longitudinal frame; engine hood at the west/front end,
-   // driver seat and rear axle at the east/rear end.
-   solid(x+.39,y+.04,1.29,.75,12,'#4b7338','#2b482e','#5b7c3f');
-   solid(x+.03,y+.08,.83,.68,25,'#8ebc50','#527e33','#739e43');
-   surface(x+.10,y+.13,.65,.55,27,'#a5d16c','#527b3f');
-   for(const yy of [y+.22,y+.43]){
-    line(P(x-.36,yy,19),P(x-.36,yy+.13,19),'#354e40',2.7);
-    const lamp=P(x-.375,yy+.06,23);
-    ellipse(lamp.x,lamp.y,2.7,2.1,'#f1e7b2','#59644a');
-   }
-   // Engine ventilation grills are on the inward-facing long hood.
+   // Far-side wheels disappear behind the integrated tractor body.
+   wheel(x+.23,y-.22,5.8);
+   wheel(x+1.43,y-.22,8.2);
+   // Cutting deck and chute form a low single connected underside.
+   solid(x+.38,y+.01,1.01,.75,8,'#b9993d','#806b2b','#a98e35');
+   solid(x+.76,y+.30,.42,.19,8,'#c9a84c','#826c2c','#ac9137');
+   // Entire main chassis is one continuous green mass.
+   solid(x+.31,y+.01,1.34,.70,15,'#538039','#36572f','#628a46');
+   // Hood remains at the western/inside-store end.
+   solid(x+.03,y+.06,.77,.61,25,'#8bb953','#4b7937','#74a34d');
+   surface(x+.09,y+.10,.63,.50,26,'#acd176','#5d8845');
+   // Nose face, headlights and grill occupy one physical nose plane.
+   poly([P(x-.46,y-.24,14),P(x-.46,y+.22,14),
+    P(x-.46,y+.22,23),P(x-.46,y-.24,23)],'#3b5145','#25392f',1.2);
    for(let i=0;i<4;i++){
-    const xx=x+.13+i*.13;
-    line(P(xx,y-.23,24),P(xx+.065,y-.23,24),'#4c7344',2.2);
+    const yy=y-.16+i*.105;
+    line(P(x-.466,yy,16),P(x-.466,yy,20),'#9da9a2',1.3);
    }
-   // Rear axle fenders wrap around the drive wheels.
-   for(const yy of [y-.27,y+.29]){
-    solid(x+1.17,yy,.49,.22,19,'#79a947','#436b34','#5b8a3b');
-    line(P(x+1.18,yy,19),P(x+1.59,yy,19),'#d2e2ad',1.2);
+   for(const yy of [y-.19,y+.16]){
+    const p=P(x-.47,yy,22);
+    ellipse(p.x,p.y,2.5,1.8,'#eee4b8','#68766a');
    }
-   // Open textured rubber foot platform between engine and seat.
-   surface(x+.80,y+.04,.38,.72,15,'#313d3b','#172729');
-   for(let i=0;i<4;i++)line(P(x+.86+i*.07,y-.20,16),P(x+.86+i*.07,y+.17,16),'#768079',.8);
-   // Steering column rises in front of the padded operator's seat.
-   line(P(x+.92,y+.12,13),P(x+.95,y+.12,32),'#374b49',3.9);
-   const steer=P(x+.95,y+.12,34);
-   ellipse(steer.x,steer.y,9,3.9,'#28383b','#697b79');
-   line(P(x+.82,y+.12,34),P(x+1.07,y+.12,34),'#5c706e',1.2);
-   // Raised single driver's seat with visible backrest and arm-length gap.
-   solid(x+1.18,y+.09,.38,.43,27,'#353e3c','#222e2e','#4c5550');
-   poly([P(x+1.50,y-.115,24),P(x+1.50,y+.26,24),
-    P(x+1.50,y+.26,45),P(x+1.50,y-.115,45)],
-    '#323b39','#1e2b2c',1.6);
-   surface(x+1.19,y+.10,.34,.39,28,'#505b52','#2a3838');
-   // Protective rear mudguards sit above the rear drive wheels.
-   for(const yy of [y-.30,y+.31]){
-    line(P(x+1.44,yy,17),P(x+1.63,yy,17),'#7ba447',5);
+   // The ribbed footwell separates the engine hood from the rear seat.
+   surface(x+.84,y+.06,.27,.57,16,'#303f3c','#182826');
+   for(let i=0;i<3;i++){
+    const xx=x+.88+i*.075;
+    line(P(xx,y-.16,17),P(xx,y+.16,17),'#849083',1.2);
    }
-   // Contrasting nose grille and twin headlamp bezels make the hood read
-   // as a real front-facing engine compartment rather than a green box.
-   poly([P(x-.405,y-.19,13),P(x-.405,y+.21,13),
-    P(x-.405,y+.21,23),P(x-.405,y-.19,23)],'#324941','#1f3433',1.2);
-   for(let i=0;i<5;i++){
-    const yy=y-.13+i*.069;
-    line(P(x-.415,yy,14),P(x-.415,yy,21),'#a3b0a5',.9);
-   }
-   // Deck discharge chute leads toward the store-facing lateral side.
-   solid(x+.64,y+.34,.53,.19,6,'#8b9d4a','#465f38','#6a8240');
-   line(P(x+.66,y+.43,7),P(x+1.12,y+.43,7),'#d7c86d',1.3);
-   // The two near-side wheels show the mower's real wheelbase.
-   for(const [xx,r] of [[x+.18,5.5],[x+1.44,8]])
-    tire(xx,y+.37,r);
-   const exhaust=P(x+.57,y-.18,30);
-   ellipse(exhaust.x,exhaust.y,2.5,2,'#37484a','#738785');
+   // A single steering wheel ahead of the seat, with no hood intersection.
+   line(P(x+.98,y+.05,17),P(x+.98,y+.05,32),'#435550',3.2);
+   const steering=P(x+.98,y+.05,34);
+   ellipse(steering.x,steering.y,7,3.2,'#273636','#8d9992');
+   // Seat cushion is on chassis, seatback rises behind it.
+   solid(x+1.20,y+.09,.33,.36,27,'#353f3d','#26312e','#505a55');
+   poly([P(x+1.49,y-.11,26),P(x+1.49,y+.23,26),
+    P(x+1.49,y+.23,40),P(x+1.49,y-.11,40)],'#333e3d','#23312e',1.4);
+   // Near-side fender is behind the wheels rather than drawn across tires.
+   line(P(x+1.18,y+.29,20),P(x+1.65,y+.29,20),'#83ac4d',4);
+   wheel(x+.23,y+.35,5.8);
+   wheel(x+1.43,y+.35,8.2);
+   const exhaust=P(x+.61,y-.22,29);
+   ellipse(exhaust.x,exhaust.y,2.2,1.6,'#354748','#72817b');
   }else if(type==='pallet'||type==='bagPallet'){
    solid(x,y,w,h,5,'#b79566','#8a6545','#a47e58');
    for(let i=0;i<6;i++)miniBox(x+.08+i%3*.56,y+.12+Math.floor(i/3)*.36,13+i%2*5,
@@ -1196,81 +1166,49 @@ export function createArtwork(ctx,project,getZoom){
    // Axle is confined to the underside, not drawn through the handle.
    line(P(x+.30,rear,5),P(x+.30,front,5),'#60747b',2);
   }else if(type==='forklift'){
-   // Painter-ordered industrial forklift. Far wheels and back safety posts
-   // first, then body/seat, near wheels, overhead guard and forward mast.
+   // Clean forklift silhouette: body first, near-side tires, four guard
+   // supports tied to the chassis, then the forward load-lift assembly.
    shadow(x,y,w,h,1.12);
-   // Passenger-side wheels are fully hidden; only the two driver-side
-   // tires on the near Y face are exposed.
+   const cabLeft=x+.76,cabRight=x+1.55,cabRear=y-.22,cabFront=y+.22;
+   // One chassis, integrated counterweight and raised rear engine cowling.
+   solid(x+.67,y-.22,1.04,.67,18,'#d89439','#85542e','#ba7934');
+   solid(x+1.30,y-.17,.34,.57,24,'#e5a347','#905c2d','#ca8535');
+   surface(x+.94,y-.12,.56,.43,20,'#bc7b31','#7c542f');
+   // Low driver seat and steering inside the guard, not above roof.
+   solid(x+1.08,y-.07,.29,.31,29,'#34474a','#233539','#53666a');
+   line(P(x+.94,y+.06,20),P(x+.92,y+.06,38),'#596e73',2.8);
+   const steering=P(x+.92,y+.06,39);
+   ellipse(steering.x,steering.y,5.5,3.5,'#293b40','#a5b6b3');
+   // Precisely two visible driver-side tires below chassis line.
    const axleX=[x+.84,x+1.47],driverY=y+.36;
-   // Chassis and orange body exactly occupy the cab support footprint.
-   const cabLeft=x+.75,cabRight=x+1.57,cabRear=y-.24,cabFront=y+.24;
-   solid(x+.68,y-.25,1.02,.72,18,'#da9538','#84532d','#b77730');
-   solid(x+1.03,y-.18,.62,.59,26,'#e9b34c','#916233','#d8953f');
-   surface(x+1.08,y-.16,.51,.48,27,'#c98a3d','#865a32');
-   solid(x+1.05,y-.10,.28,.29,33,'#34454c','#24343b','#5c7074');
-   line(P(x+.94,y+.12,28),P(x+.90,y+.12,41),'#60747c',3);
-   const steering=P(x+.90,y+.12,41);
-   ellipse(steering.x,steering.y,6,4,'#293941','#acbab6');
-   // Engine counterweight and ventilation at the rear of the lift.
-   solid(x+1.38,y-.17,.25,.54,28,'#c17c32','#764826','#e8a84d');
-   for(let i=0;i<4;i++)line(P(x+1.59,y-.10+i*.10,21),
-    P(x+1.59,y-.10+i*.10,25),'#414a47',2.2);
-   // Driver footwell, pedals and seated operator controls.
-   surface(x+.87,y+.10,.25,.30,21,'#344345','#6a7470');
-   for(const xx of [x+.92,x+1.04]){
-    line(P(xx,y+.29,22),P(xx+.025,y+.29,25),'#b4bab0',2);
-   }
-   // Exactly two visible driver-side tires, mounted below the chassis.
    for(const xx of axleX){
     const p=P(xx,driverY,6);
-    ellipse(p.x,p.y,10,9,'#253138','#61767b');
-    ellipse(p.x,p.y,4,3.5,'#b8c6c2');
-    ellipse(p.x,p.y,1.6,1.45,'#657474');
-    for(let t=0;t<6;t++){
-     const a=t*Math.PI/3;
-     ellipse(p.x+Math.cos(a)*7.5*Z(),p.y+Math.sin(a)*6.6*Z(),1.6,1.3,'#374448');
-    }
+    ellipse(p.x,p.y,10,8.6,'#263235','#64777a');
+    ellipse(p.x,p.y,4.2,3.6,'#b6c3be');
    }
-   // All four cage legs START on the forklift body surface at Z=18.
-   // Roof corners use precisely the same XY points as their feet.
+   // All four support legs start at chassis top and meet the same canopy.
    for(const xx of [cabLeft,cabRight]){
     for(const yy of [cabRear,cabFront]){
-     line(P(xx,yy,18),P(xx,yy,62),'#435b65',5);
-     const mount=P(xx,yy,18);
-     ellipse(mount.x,mount.y,3.2,2.3,'#63767c');
+     line(P(xx,yy,18),P(xx,yy,62),'#455e68',5);
     }
    }
    surface(cabLeft,cabRear,cabRight-cabLeft,cabFront-cabRear,62,
-    '#364e56','#6d8284');
-   // Cab roof has visible perimeter lips, brackets and a rear grab handle.
-   for(const yy of [cabRear,cabFront])
-    line(P(cabLeft,yy,63),P(cabRight,yy,63),'#839698',2.3);
-   line(P(cabRight,y-.26,43),P(cabRight+.12,y-.26,43),'#829296',2);
-   // The forward mast stays in the foreground and tines emerge at its base.
-   for(const yy of [y-.26,y+.28])
-    line(P(x+.29,yy,7),P(x+.29,yy,78),'#2c434d',6.8);
-   for(const z of [19,43,76])
-    line(P(x+.29,y-.26,z),P(x+.29,y+.28,z),'#a1b2b7',3.8);
-   // Chain guides, lift carriage and hydraulic cylinder run inside mast.
-   for(const yy of [y-.12,y+.12]){
-    line(P(x+.32,yy,20),P(x+.32,yy,71),'#9cadab',1.5);
-    for(let z=22;z<70;z+=6){const p=P(x+.32,yy,z);ellipse(p.x,p.y,1.1,1.05,'#3a5055');}
+    '#354e56','#798b8b');
+   // Forward mast stays outside the cab and carries a single carriage.
+   for(const yy of [y-.24,y+.24]){
+    line(P(x+.27,yy,7),P(x+.27,yy,77),'#304850',6);
    }
-   solid(x+.36,y-.10,.12,.34,59,'#6f8791','#405b65','#8ba1a8');
-   for(const z of [20,34])line(P(x+.12,y-.28,z),P(x+.12,y+.30,z),'#5b7278',4);
-   solid(x+.18,y-.12,.22,.53,13,'#556f77','#334b54','#72888c');
-   for(const yy of [y-.20,y+.18]){
-    surface(x-.36,yy,.63,.10,6,'#bac6c4','#485c63');
-    line(P(x-.38,yy+.05,6),P(x+.20,yy+.05,6),'#364c54',3);
+   for(const z of [18,44,75]){
+    line(P(x+.27,y-.24,z),P(x+.27,y+.24,z),'#9aafb2',3);
    }
-   // Fork heel transitions into horizontal load-bearing steel tines.
-   for(const yy of [y-.20,y+.18]){
-    line(P(x+.08,yy,12),P(x-.38,yy,6),'#65777b',3.4);
-    line(P(x-.36,yy,6),P(x-.43,yy,6),'#c9d3ce',2);
+   solid(x+.21,y-.10,.13,.36,44,'#697f88','#39545c','#80979a');
+   // Fork blades emerge horizontally from the low carriage to the west.
+   for(const yy of [y-.17,y+.16]){
+    line(P(x+.22,yy,13),P(x+.22,yy,6),'#61767b',4);
+    surface(x-.37,yy,.60,.10,6,'#b1bfbe','#4f666d');
    }
-   // Safety lamp goes on top, not behind the mast.
-   const warning=P(x+1.45,y-.24,67);
-   ellipse(warning.x,warning.y,5,3,'#e8ae45','#a7682f');
+   const beacon=P(x+1.43,y-.19,66);
+   ellipse(beacon.x,beacon.y,4.4,2.8,'#e9b14f','#925d2d');
   }else if(type==='filingCabinet'||type==='supplyCabinet'||type==='storageShelves'){
    const metal=type==='filingCabinet';
    solid(x,y,w,h,metal?36:40,metal?'#9aa8ae':'#b6bcb1',metal?'#657b82':'#707b75');
