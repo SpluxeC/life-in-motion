@@ -410,7 +410,7 @@ assert.deepEqual([mowerV26.x,mowerV26.y,mowerV26.w,mowerV26.h],[34,33,2,1]);
 assert(walkable(createHardwareStore(),35,32));
 const restroomV28=createHardwareStore();
 for(const [type,x,y] of [['sink',40,23],['restroom',41,25],
- ['restroomStall',43,25],['handDryer',45,23],['restroomBin',45,25]])
+ ['restroomStall',43,25],['handDryer',45,23],['restroomBin',44,26]])
  assert(restroomV28.fixtures.some(o=>o.type===type&&o.x===x&&o.y===y),
   'Restroom fixtures follow a realistic wall-side layout: '+type);
 for(const [x,y] of [[39,24],[40,24],[41,24],[42,24],[43,24],[44,24],[45,24]])
