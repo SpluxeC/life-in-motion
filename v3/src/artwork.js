@@ -53,12 +53,44 @@ export function createArtwork(ctx,project,getZoom){
  function bolt(x,y,z,c='#bcc7c5'){
   const p=P(x,y,z);ellipse(p.x,p.y,2.3,2,c,'#536365');line({x:p.x-4*Z(),y:p.y+4*Z()},{x:p.x+5*Z(),y:p.y-4*Z()},'#758483',2)
  }
+ // Deterministic botanical clusters: tapered branching stems, varied
+ // foliage silhouettes, terracotta pots and occasional flower heads.
  function plants(x,y,z=0,qty=3){
+  const palette=['#355f40','#47774b','#638e53','#749a5b','#2e654b'];
   for(let i=0;i<qty;i++){
-   const px=x+(i%3)*.4,py=y+Math.floor(i/3)*.4,p=P(px,py,z);
-   ellipse(p.x,p.y,5,3,'#8e664a','#524935');
-   line({x:p.x,y:p.y},{x:p.x,y:p.y-11*Z()},'#517d49',1.8);
-   for(let k=0;k<4;k++){ellipse(p.x+Math.cos(k*1.6+i)*5*Z(),p.y-9*Z()+Math.sin(k*1.7)*3*Z(),4,3,['#356b49','#568a4b','#799e53'][k%3])}
+   const col=i%3,row=Math.floor(i/3),px=x+col*.40,py=y+row*.40;
+   const height=12+(i*7)%12,base=P(px,py,z);
+   ellipse(base.x,base.y,5,2.5,'#8a6045','#4e4234');
+   // Tapered flower pots with a dark soil opening.
+   poly([P(px-.10,py-.10,z+2),P(px+.10,py-.10,z+2),
+    P(px+.085,py+.10,z+2),P(px-.085,py+.10,z+2)],
+    '#b67851','#62452f',.65);
+   const rim=P(px,py,z+3);
+   ellipse(rim.x,rim.y,5.6,2.6,'#c88962','#634735');
+   ellipse(rim.x,rim.y-1*Z(),3.6,1.5,'#463c2d');
+   for(let b=0;b<3;b++){
+    const spread=(b-1)*.115,tipZ=z+height-(b%2)*3;
+    line(P(px,py,z+3),P(px+spread,py+(b===1?-.08:.08),tipZ),
+     '#416b3e',1.5);
+    for(let leaf=0;leaf<3;leaf++){
+     const sz=z+6+leaf*(height-8)/3;
+     const yy=py+(b===1?-.08:.08)*leaf/3;
+     const dx=spread*(leaf+1)/3;
+     for(const side of [-1,1]){
+      const p=P(px+dx+side*.09,yy+(leaf%2)*.04,sz);
+      ellipse(p.x,p.y,3.3+(i%2),1.8+(leaf%2)*.5,palette[(i+b+leaf+side+5)%palette.length]);
+     }
+    }
+   }
+   if(i%3===0){
+    const q=P(px,py-.07,z+height+1),petals=['#e9b871','#e3a9a6','#e2c8da'];
+    for(let k=0;k<5;k++){
+     const angle=k*Math.PI*2/5;
+     ellipse(q.x+Math.cos(angle)*3.1*Z(),q.y+Math.sin(angle)*2.5*Z(),
+      2.1,1.5,petals[(i/3)%3]);
+    }
+    ellipse(q.x,q.y,1.5,1.2,'#dfbb61');
+   }
   }
  }
  function drawFloor(world,viewport){
@@ -1055,8 +1087,12 @@ export function createArtwork(ctx,project,getZoom){
    solid(x,y,1,1,11,'#e9e7db','#b7bdb8');ellipse(P(x+.45,y+.5,15).x,P(x+.45,y+.5,15).y,9,5,'#ecefe9','#819a9b');
    solid(x+.1,y+.7,.8,.2,25,'#ecf0e9')
   }else if(type==='plants'||type==='gardenDesk'){
-   solid(x,y,w,h,type==='plants'?9:19,type==='plants'?'#a38b68':'#829784','#615c48');
-   plants(x+.17,y+.18,type==='plants'?13:23,Math.min(9,Math.round(w*h*2)+2))
+   // Low slatted garden-center display table with individual potted foliage.
+   const isPlants=type==='plants',height=isPlants?10:19;
+   solid(x,y,w,h,height,isPlants?'#947657':'#829784','#5e5546','#816d54');
+   for(let yy=y-.28;yy<y+h-.55;yy+=.34)
+    line(P(x-.38,yy,height+.2),P(x+w-.62,yy,height+.2),'#c0a17a',1.2);
+   plants(x+.06,y+.07,height+2,Math.min(9,Math.round(w*h*2)+2));
   }else if(type==='endcap'){
    o.facing==='west'?westWallDisplay(o):endcapDisplay(o);
   }else if(type==='hardwareBins'){
@@ -1242,19 +1278,50 @@ export function createArtwork(ctx,project,getZoom){
    }
    solid(x-.24,y-.25,.48,.48,3,'#84684c');
   }else if(type==='flowerBed'||type==='planter'){
-   const pot=type==='planter',height=pot?19:10;
-   solid(x,y,w,h,height,pot?'#a57b55':'#bc996d','#755e49','#8c7053');
-   surface(x+.08,y+.08,w-.16,h-.16,height+.5,'#523e32','#8e6e4c');
-   for(let i=0;i<(pot?4:12);i++){
-    const xx=x-.30+(i%4)*(w-.30)/4,yy=y-.25+Math.floor(i/4)*(h-.12)/3;
-    const q=P(xx,yy,height+9+(i%2)*3);
-    line(P(xx,yy,height+1),q,'#43754e',1.2);
-    for(const k of [0,1,2,3]){
-     const r=k*Math.PI/2;
-     ellipse(q.x+Math.cos(r)*3.5*Z(),q.y+Math.sin(r)*3*Z(),2.7,2.1,
-      ['#e5bb58','#f0a5a6','#e1a6d4','#a7badc'][i%4]);
+   const pot=type==='planter',height=pot?18:8;
+   // Staggered wooden edging, dark loamy soil and scattered mulch avoid
+   // the old identical-row flowerbed look.
+   solid(x,y,w,h,height,pot?'#a8815e':'#937650','#634a38','#876b4c');
+   surface(x+.08,y+.08,w-.16,h-.16,height+.8,'#493c2d','#785c44');
+   for(let i=0;i<15;i++){
+    const xx=x-.30+((i*7)%13)/13*(w-.40);
+    const yy=y-.29+((i*5)%11)/11*(h-.43);
+    const p=P(xx,yy,height+1);
+    line({x:p.x-2*Z(),y:p.y},{x:p.x+2*Z(),y:p.y-1*Z()},
+     i%3?'#987553':'#be9a6a',1.5);
+   }
+   const count=pot?5:Math.max(7,Math.round(w*h*6));
+   for(let i=0;i<count;i++){
+    const col=i%5,row=Math.floor(i/5);
+    const xx=x-.30+(col+.2+(row%2)*.32)*(w-.34)/5;
+    const yy=y-.31+(row+.42)*(h-.34)/Math.max(2,Math.ceil(count/5));
+    const stalk=9+(i*3)%10,flower=i%4!==1;
+    const top=P(xx,yy,height+stalk);
+    // Multiple angled leaves give each stem a natural branching silhouette.
+    line(P(xx,yy,height+1),top,'#476b3f',1.6);
+    for(const zf of [.38,.66]){
+     const hz=height+stalk*zf;
+     for(const side of [-1,1]){
+      const tip=P(xx+side*(.06+(i%3)*.013),yy+(zf-.5)*.07,hz+2);
+      const root=P(xx,yy,hz-2);
+      line(root,tip,'#4a7846',1.4);
+      ellipse(tip.x,tip.y,3.1,1.7,['#477b47','#668b4d','#396846'][i%3]);
+     }
     }
-    ellipse(q.x,q.y,1.2,1.1,'#efdc8b');
+    if(flower){
+     const colors=['#e4a6a0','#e6cb76','#c4a3cc','#f0d9bd','#b0bfdc'];
+     for(let petal=0;petal<5;petal++){
+      const angle=petal*Math.PI*2/5;
+      ellipse(top.x+Math.cos(angle)*3.1*Z(),top.y+Math.sin(angle)*2.5*Z(),
+       2.4,1.6,colors[(i+Math.floor(x))%colors.length]);
+     }
+     ellipse(top.x,top.y,1.6,1.25,'#e4bc63');
+    }else{
+     for(let k=0;k<4;k++){
+      const q=P(xx+(k%2?-.06:.06),yy+(k<2?-.05:.05),height+stalk-2+k);
+      ellipse(q.x,q.y,3.6,2.1,['#487345','#6c9254','#3f714c'][k%3]);
+     }
+    }
    }
   }else if(type==='seedDisplay'){
    solid(x,y,w,h,33,'#809781','#526b63');
