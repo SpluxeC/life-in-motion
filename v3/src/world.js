@@ -34,7 +34,7 @@ export function createHardwareStore(){
  for(let x of [19,20])walls.delete(key(x,10));
  for(let x of [28,29])walls.delete(key(x,39));
  for(let y of [17,30,31])walls.delete(key(36,y));
- door(19,10,'sliding','Main entrance');door(20,10,'sliding','Main entrance','x',1,'end');
+ door(19,10,'sliding','Main entrance','x',1,'start','main-double');door(20,10,'sliding','Main entrance','x',1,'end','main-double');
  door(28,39,'rollup','Receiving double-wide roll-up door','x',2);
  // Two opposing glass leaves form the garden-to-store double sliding entrance.
  door(36,17,'hinged','Employee access','y');
@@ -46,6 +46,9 @@ export function createHardwareStore(){
  for(let x=39;x<=45;x++)for(let y of [16,21])wall(x,y,'staff');
  // Hallway between the shop and staff wing is enclosed at both ends.
  wall(37,10,'staff');wall(37,27,'staff');
+ // Join the store's south-west corridor corner to the hallway end cap.
+ // The x-facing leg was missing behind the garden-tools wall display.
+ wall(36,27,'staff','x');
  for(let y of [12,19,24])walls.delete(key(38,y));
  // Both interior staff-room partitions are solid; rooms enter only from the hallway.
  door(38,12,'hinged','Staff office door','y');door(38,19,'hinged','Break room door','y');door(38,24,'hinged','Restroom door','y');
@@ -133,7 +136,7 @@ export function createHardwareStore(){
  for(let x of [4,12,20,28,36,44,52,60])props.push({id:'shrub-'+x,type:'shrub',x,y:1});
  for(let y of [12,20,28,37,45])props.push({id:'tree-'+y,type:'tree',x:60,y});
  for(let x of [51,57])for(let y of [13,25,38])props.push({id:'shrub-'+x+'-'+y,type:'shrub',x,y});
- return {id:'hardware-store',title:'Hardware Store',layoutVersion:24,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
+ return {id:'hardware-store',title:'Hardware Store',layoutVersion:25,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
 }
 export const inside=(x,y)=>x>=0&&y>=0&&x<WIDTH&&y<HEIGHT;
 export function fixtureAt(world,x,y){return world.fixtures.find(o=>x>=o.x&&x<o.x+o.w&&y>=o.y&&y<o.y+o.h)}
@@ -150,4 +153,25 @@ export function pathTo(world,from,to){
  for(let [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){let x=cur.x+dx,y=cur.y+dy,k=key(x,y);if(!walkable(world,x,y)||closed.has(k))continue;let hazard=world.hazards.some(h=>h.x===x&&h.y===y&&h.kind==='fire'&&h.life>0)?12:0,g=cur.g+1+hazard;if(g>=(cost.get(k)??Infinity))continue;cost.set(k,g);prev.set(k,ck);open.push({x,y,g,f:g+Math.abs(x-goal.x)+Math.abs(y-goal.y)})}
  }
  return [];
+}
+
+// Room names are independent of floor artwork so the staff hallway can
+// share the main store floor material without losing its identity.
+export function floorRoomName(world,x,y){
+ if(x===37&&y>=11&&y<=26)return 'Employee Hallway';
+ if(x>=39&&x<=45&&y>=11&&y<=15)return 'Manager Office';
+ if(x>=39&&x<=45&&y>=17&&y<=20)return 'Break Room';
+ if(x>=39&&x<=45&&y>=22&&y<=26)return 'Restroom';
+ if(x>=21&&x<=25&&y>=36&&y<=38)return 'Receiving Office';
+ if(x>=38&&x<=46&&y>=28&&y<=39)return 'Garden Center';
+ if(x>=25&&x<=35&&y>=34&&y<=43)return 'Receiving';
+ if(x>=3&&x<=35&&y>=33&&y<=38)return 'Lumber';
+ if(x>=3&&x<=35&&y>=11&&y<=16)return 'Sales Floor';
+ if(x>=3&&x<=10&&y>=17&&y<=32)return 'Paint';
+ if(x>=11&&x<=16&&y>=17&&y<=32)return 'Tools';
+ if(x>=17&&x<=22&&y>=17&&y<=32)return 'Electrical';
+ if(x>=23&&x<=28&&y>=17&&y<=32)return 'Plumbing';
+ if(x>=29&&x<=36&&y>=17&&y<=32)return 'Hardware';
+ const ground=world?.ground?.find(t=>t.x===x&&t.y===y);
+ return ({store:'Sales Floor',employee:'Employee Area',garden:'Garden Center',loading:'Receiving',parking:'Parking Lot',sidewalk:'Sidewalk',road:'Road',landscape:'Landscaping',grass:'Grass'})[ground?.area]||'Ground';
 }
