@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {createHardwareStore,walkable,pathTo,doorAt} from '../src/world.js';
+import {createHardwareStore,walkable,pathTo,doorAt,floorRoomName} from '../src/world.js';
 import {makeGame,applyPower,updateGame,addHazard,POWER_LIST,ITEMS} from '../src/simulation.js';
 import {updateRoutine} from '../src/routines.js';
 import {departmentProducts,departmentItem,visibleShelfCount,DEPARTMENT_PRODUCTS} from '../src/merchandise.js';
@@ -10,7 +10,7 @@ import {saveGame,loadGame} from '../src/persistence.js';
 import {createArtwork} from '../src/artwork.js';
 import {renderDepth,compareRenderDepth} from '../src/render-depth.js';
 import {signOpacity,signCoversNpc,signFace} from '../src/sign-visibility.js';
-import {hitProjectedFixture,isGroundTileTap,selectionLabel} from '../src/selection.js';
+import {hitProjectedFixture,isGroundTileTap,selectionLabel,doorSelectionTarget} from '../src/selection.js';
 import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness,HAIR_COLORS,HAIR_STYLES} from '../src/hud.js';
 import {readFileSync} from 'node:fs';
 import {pinchCamera} from '../src/pinch-zoom.js';
@@ -377,6 +377,33 @@ for(const yy of [10,27])assert(staffHall.walls.has('37,'+yy),
 for(const yy of [12,19,24])
  assert(pathTo(staffHall,{x:37,y:yy},{x:40,y:yy}).length>0,
   'Independent room entrance accessible from hallway at row '+yy);
+// Garden-side back corner includes both orthogonal wall legs.
+const corner=world.walls.get('36,27');
+assert(corner?.axes.includes('x')&&corner?.axes.includes('y'),
+ 'Hallway back corner behind garden tools is fully joined');
+for(const [x,y,name] of [[37,18,'Employee Hallway'],[40,12,'Manager Office'],
+ [40,18,'Break Room'],[40,23,'Restroom'],[23,36,'Receiving Office'],
+ [12,24,'Tools'],[8,25,'Paint'],[31,25,'Hardware']]){
+ assert.equal(floorRoomName(world,x,y),name);
+ assert(selectionLabel(world,{type:'tile',x,y}).startsWith(name+' Tile'));
+}
+for(const [pairId,count] of [['main-double',2],['garden-double',2]]){
+ const leaves=world.doors.filter(d=>d.pairId===pairId);
+ assert.equal(leaves.length,count);
+ const first=doorSelectionTarget(world,leaves[0]);
+ assert.equal(first.id,doorSelectionTarget(world,leaves[1]).id);
+ assert.equal(first.w*first.h,2,'Paired door selection covers both tiles');
+ assert.equal(selectionLabel(world,first),leaves[0].label);
+}
+for(const d of world.doors){
+ assert(selectionLabel(world,doorSelectionTarget(world,d)).includes('door')||
+  selectionLabel(world,doorSelectionTarget(world,d)).includes('entrance')||
+  selectionLabel(world,doorSelectionTarget(world,d)).includes('access')||
+  selectionLabel(world,doorSelectionTarget(world,d)).includes('Door')||
+  selectionLabel(world,doorSelectionTarget(world,d)).includes('entrance')||
+  selectionLabel(world,doorSelectionTarget(world,d)).includes('gate'),
+ 'All doors show their actual name');
+}
 // Exercise both sliding leaves with a real NPC entering the garden.
 const gateGame=makeGame(extended,{staff:4,customers:2,seed:23});
 const gateWalker=gateGame.npcs[2];
@@ -415,7 +442,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===24,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===25,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(!doorAt(migrated.world,43,39)&&doorAt(migrated.world,36,31)?.type==='sliding',
