@@ -1215,8 +1215,8 @@ assert(signBounds.r<=safetyBounds.l||safetyBounds.r<=signBounds.l||
  'Relocated safety cabinet is not projected behind Service sign');
 const remodelEmployeeDoor=doorAt(remodeledHardware,36,17);
 for(const location of [{x:35,y:16},{x:35,y:17},{x:35,y:18},
- {x:35,y:20},{x:6,y:23},{x:8,y:22},{x:8,y:24},
- {x:31,y:22},{x:31,y:24},{x:33,y:23},{x:33,y:24},{x:34,y:24}]){
+ {x:35,y:20},{x:6,y:23},{x:8,y:22},{x:8,y:25},
+ {x:31,y:22},{x:31,y:24},{x:33,y:23},{x:33,y:25},{x:34,y:25}]){
  assert(walkable(remodeledHardware,location.x,location.y),
   'Door, department aisles and workstation access clear at '+location.x+','+location.y);
  assert(pathTo(remodeledHardware,{x:20,y:12},location).length>0,
