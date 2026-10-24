@@ -354,7 +354,7 @@ function inspectAtScreen(sx,sy){
  }
  // Hanging signs have a physical projected panel, not a floor-tile hitbox.
  for(const sign of departmentSigns){
-  const axis=sign.axis||'x',span=axis==='y'?1.06:(sign.name.length>=9?2.28:1.78);
+  const axis=sign.axis||'x',span=axis==='y'?1.06:Math.max(.72,Math.min(1.62,.40+sign.name.length*.105));
   const q=(u,z)=>axis==='y'?project(sign.x-.12,sign.y-u,z):project(sign.x+u,sign.y-.12,z);
   const a=q(-span,70),b=q(span,70),c=q(span,44),d=q(-span,44);
   const cross=(p1,p2,p)=> (p2.x-p1.x)*(p.y-p1.y)-(p2.y-p1.y)*(p.x-p1.x);
