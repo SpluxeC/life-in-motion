@@ -88,7 +88,7 @@ export function createHardwareStore(){
  fixture('gardenToolsRack',35,28,1,2,{department:'GARDEN',stock:9,facing:'west',toolSet:'shovelsRakes'});
  // A two-tile riding mower sits beyond the doorway on the interior side;
  // its hood points west, toward the store aisles, not out into the garden.
- fixture('ridingMower',34,32,2,1,{department:'GARDEN',facing:'west'});
+ fixture('ridingMower',33,32,2,1,{department:'GARDEN',facing:'west'});
  fixture('drinkCooler',43,19,1,1,{department:'REFRESHMENTS',stock:8});
  // Safety station stays wall-side, SOUTH of the employee door, well clear of the Service sign.
  fixture('safetyStation',35,19,1,1,{facing:'west'});fixture('utilityCart',4,16,1,1,{stock:4});
@@ -136,7 +136,7 @@ export function createHardwareStore(){
  for(let x of [4,12,20,28,36,44,52,60])props.push({id:'shrub-'+x,type:'shrub',x,y:1});
  for(let y of [12,20,28,37,45])props.push({id:'tree-'+y,type:'tree',x:60,y});
  for(let x of [51,57])for(let y of [13,25,38])props.push({id:'shrub-'+x+'-'+y,type:'shrub',x,y});
- return {id:'hardware-store',title:'Hardware Store',layoutVersion:25,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
+ return {id:'hardware-store',title:'Hardware Store',layoutVersion:26,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
 }
 export const inside=(x,y)=>x>=0&&y>=0&&x<WIDTH&&y<HEIGHT;
 export function fixtureAt(world,x,y){return world.fixtures.find(o=>x>=o.x&&x<o.x+o.w&&y>=o.y&&y<o.y+o.h)}
