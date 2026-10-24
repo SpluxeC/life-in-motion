@@ -1784,7 +1784,7 @@ export function createArtwork(ctx,project,getZoom){
   // entrance runs along world Y while ordinary department signs run along X.
   // Both render as properly tilted *vertical* isometric panels.
   const title=String(name).toUpperCase();
-  const span=axis==='y'?1.06:(title.length>=9?2.28:1.78),z=70;
+  const span=axis==='y'?1.06:Math.max(.72,Math.min(1.62,.40+title.length*.105)),z=70;
   const point=(along,height,offset=-.12)=>
    axis==='y'?P(x+offset,y-along,height):P(x+along,y+offset,height);
   const a=point(-span,z),b=point(span,z),
