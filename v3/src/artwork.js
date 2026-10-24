@@ -1055,10 +1055,43 @@ export function createArtwork(ctx,project,getZoom){
    solid(x,y,w,h,5,'#b79566','#8a6545','#a47e58');
    for(let i=0;i<6;i++)miniBox(x+.08+i%3*.56,y+.12+Math.floor(i/3)*.36,13+i%2*5,
      type==='bagPallet'?'#d8cab1':['#a9936b','#b7a383','#989b89'][i%3],.48,.32,10);
-  }else if(type==='workbench'||type==='office'){
+  }else if(type==='workbench'){
    solid(x,y,w,h,19,'#b9946b','#776049','#8f7255');
-   if(type==='office'){miniBox(x+.07,y+.3,26,'#465860',.45,.3,8);miniBox(x+.57,y+.3,23,'#d7d7ca',.24,.28,2)}
-   else{for(let i=0;i<4;i++)drawItem(['hammer','wrench','flashlight','gloves'][i],x+.3+i*.37,y+.4,24)}
+   for(let i=0;i<4;i++)drawItem(['hammer','wrench','flashlight','gloves'][i],x+.3+i*.37,y+.4,24);
+  }else if(type==='office'){
+   // Compact manager office: wood worktop, drawer pedestal and computer.
+   shadow(x,y,w,h,.8);
+   solid(x,y,w,h,25,'#b48a66','#74543d','#987251');
+   surface(x+.04,y+.04,w-.08,h-.08,26,'#d1ad88','#826044');
+   solid(x+.12,y+.12,.27,.58,22,'#8e735b','#594b3d','#79634e');
+   for(const z of [8,15,20])line(P(x-.33,y+.18,z),P(x-.14,y+.18,z),'#c2b5a5',1.6);
+   line(P(x+.03,y-.16,27),P(x+.03,y-.16,33),'#4e6069',3);
+   poly([P(x-.25,y-.25,33),P(x+.30,y-.25,33),
+    P(x+.30,y-.25,48),P(x-.25,y-.25,48)],'#304c5c','#718a91',2.2);
+   surface(x+.05,y+.15,.46,.21,27,'#687478','#485a60');
+   miniBox(x+.42,y-.15,27,'#e6e2d6',.26,.22,2);
+  }else if(type==='officeChair'){
+   // One-tile ergonomic swivel chair with casters and upholstered back.
+   shadow(x,y,1,1,.6);
+   for(const [dx,dy] of [[-.20,0],[.20,0],[0,-.19],[0,.19]]){
+    line(P(x,y,4),P(x+dx,y+dy,4),'#52656b',2.8);
+    const p=P(x+dx,y+dy,3);ellipse(p.x,p.y,2.4,1.9,'#253238');
+   }
+   line(P(x,y,4),P(x,y,18),'#7b8787',3);
+   solid(x-.25,y-.23,.50,.46,20,'#3f5563','#273943','#596f79');
+   for(const xx of [x-.21,x+.21])
+    line(P(xx,y+.14,21),P(xx,y+.14,28),'#677983',2.2);
+   line(P(x+.19,y,18),P(x+.24,y,37),'#556e79',3);
+   poly([P(x+.24,y-.24,22),P(x+.24,y+.24,22),
+    P(x+.24,y+.24,43),P(x+.24,y-.24,43)],'#3b5261','#233845',1.6);
+  }else if(type==='officePrinter'){
+   // Low document cabinet with a copier and realistic paper trays.
+   solid(x,y,w,h,22,'#87948f','#586963','#768581');
+   solid(x+.08,y+.08,.84,.78,33,'#d0d5cf','#7b8e8d','#afbcb6');
+   surface(x+.13,y+.16,.68,.58,34,'#384b52','#a9b7b4');
+   miniBox(x+.20,y+.22,34,'#eeeade',.43,.25,2);
+   for(let i=0;i<3;i++)
+    line(P(x-.37,y-.21+i*.16,13),P(x-.37,y-.06+i*.16,13),'#d4dcd4',1.3);
   }else if(type==='lockers'){
    solid(x,y,w,h,48,'#91a5ac','#667b80','#81979a');
    // Tall double-bank doors follow the cabinet plane, not the camera.
