@@ -345,16 +345,16 @@ assert(pathTo(renovatedRestroom,{x:37,y:24},{x:40,y:24}).length>0,
 // Lockers belong to break room, not the first staff office.
 const breakRoom=createHardwareStore();
 const movedLockers=breakRoom.fixtures.find(o=>o.type==='lockers');
-assert.deepEqual([movedLockers.x,movedLockers.y,movedLockers.w,movedLockers.h],[43,20,2,1]);
+assert.deepEqual([movedLockers.x,movedLockers.y,movedLockers.w,movedLockers.h],[44,20,2,1]);
 assert(breakRoom.fixtures.some(o=>o.type==='breakTable'&&o.x===41&&o.y===18));
 assert.equal(breakRoom.fixtures.filter(o=>o.type==='breakChair').length,2);
-assert(breakRoom.fixtures.some(o=>o.type==='microwave'&&o.x===40&&o.y===20));
+assert(breakRoom.fixtures.some(o=>o.type==='microwave'&&o.x===40&&o.y===17));
 assert(pathTo(breakRoom,{x:38,y:19},{x:43,y:18}).length>0,
  'Staff can enter break room and walk to lockers and refreshments');
 const managerOffice=createHardwareStore();
-assert(managerOffice.fixtures.some(o=>o.type==='office'&&o.x===40&&o.y===13));
-assert(managerOffice.fixtures.some(o=>o.type==='officeChair'&&o.x===41&&o.y===13));
-assert(managerOffice.fixtures.some(o=>o.type==='officePrinter'&&o.x===43&&o.y===14));
+assert(managerOffice.fixtures.some(o=>o.type==='office'&&o.x===40&&o.y===12));
+assert(managerOffice.fixtures.some(o=>o.type==='officeChair'&&o.x===41&&o.y===12));
+assert(managerOffice.fixtures.some(o=>o.type==='officePrinter'&&o.x===45&&o.y===12));
 assert(pathTo(managerOffice,{x:38,y:12},{x:42,y:13}).length>0,
  'Manager office door and walkable desk approach remain accessible');
 // Staff hall: shop-facing wall, room-facing wall, and north/south end caps
@@ -417,8 +417,8 @@ for(const [x,y] of [[39,24],[40,24],[41,24],[42,24],[43,24],[44,24],[45,24]])
  assert(walkable(restroomV28,x,y),'Restroom central walkway remains clear '+x+','+y);
 assert(pathTo(restroomV28,{x:37,y:24},{x:44,y:24}).length>0);
 const cornerArtSource=readFileSync(new URL('../src/artwork.js',import.meta.url),'utf8');
-assert(cornerArtSource.includes('isOuterCorner')&&cornerArtSource.includes('neighbor(o.x+1'),
- 'Outer wall corners trim excess projected segments');
+assert(!cornerArtSource.includes('isOuterCorner'),
+ 'Original full exterior corner wall rendering restored');
 // Exercise both sliding leaves with a real NPC entering the garden.
 const gateGame=makeGame(extended,{staff:4,customers:2,seed:23});
 const gateWalker=gateGame.npcs[2];
@@ -457,7 +457,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===28,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===29,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(!doorAt(migrated.world,43,39)&&doorAt(migrated.world,36,31)?.type==='sliding',
