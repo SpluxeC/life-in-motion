@@ -1169,9 +1169,13 @@ export function createArtwork(ctx,project,getZoom){
      const yy=rear+.12+row*.24;
      for(let layer=0;layer<2;layer++){
       const bz=z+2+layer*5;
-      solid(x+.08,yy,w-.16,.18,4,
-       ['#cc9c66','#e1b984','#b98d60','#d4a776'][(tier+row+layer)%4],
-       '#946e4b','#b68a60');
+      const timber=['#cc9c66','#e1b984','#b98d60','#d4a776'][(tier+row+layer)%4];
+      poly([P(x-.40,yy-.07,bz+4),P(x+w-.60,yy-.07,bz+4),
+       P(x+w-.60,yy+.07,bz+4),P(x-.40,yy+.07,bz+4)],
+       timber,'#916d49',.8);
+      poly([P(x-.40,yy+.07,bz+4),P(x+w-.60,yy+.07,bz+4),
+       P(x+w-.60,yy+.07,bz),P(x-.40,yy+.07,bz)],
+       '#b58b5c','#8c6948',.7);
       // Upper layers are raised by their supported course, not floating.
       if(layer===1){
        const ends=[x+.08,x+w-.17];
