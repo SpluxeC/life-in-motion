@@ -406,7 +406,7 @@ for(const d of world.doors){
 }
 // Mower moves one tile west while garden entrance remains clear.
 const mowerV26=createHardwareStore().fixtures.find(f=>f.type==='ridingMower');
-assert.deepEqual([mowerV26.x,mowerV26.y,mowerV26.w,mowerV26.h],[33,32,2,1]);
+assert.deepEqual([mowerV26.x,mowerV26.y,mowerV26.w,mowerV26.h],[34,33,2,1]);
 assert(walkable(createHardwareStore(),35,32));
 // Exercise both sliding leaves with a real NPC entering the garden.
 const gateGame=makeGame(extended,{staff:4,customers:2,seed:23});
@@ -446,7 +446,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===26,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===27,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(!doorAt(migrated.world,43,39)&&doorAt(migrated.world,36,31)?.type==='sliding',
@@ -816,8 +816,8 @@ for(const yy of [30,31]){
 // west into the store and both sliding-door approaches left unobstructed.
 const mower=remodeled.fixtures.find(f=>f.type==='ridingMower');
 assert(mower,'Riding lawn mower exists in the store');
-assert.deepEqual([mower.x,mower.y,mower.w,mower.h],[33,32,2,1],
- 'Riding mower occupies exactly tiles 33,32 and 34,32');
+assert.deepEqual([mower.x,mower.y,mower.w,mower.h],[34,33,2,1],
+ 'Riding mower occupies exactly tiles 34,33 and 35,33');
 assert.equal(mower.facing,'west','Mower hood faces into the store');
 assert.equal(selectionLabel(remodeled,mower),'Riding Lawn Mower');
 assert(remodeled.ground.some(t=>t.x===34&&t.y===32&&t.area==='store'),
