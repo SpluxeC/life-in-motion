@@ -1317,7 +1317,7 @@ for(const f of [lumberShelf,emptyPallet]){
 }
 const latestArt=readFileSync(new URL('../src/artwork.js',import.meta.url),'utf8');
 assert(latestArt.includes("Flat, EMPTY shipping pallet")&&
- latestArt.includes("Exposed south-facing horizontal bays"),
+ latestArt.includes("Open heavy-duty cantilever lumber rack"),
  'New lumber artwork has flat pallet slats and aisle-facing rack bays');
 const shippingWorld=createHardwareStore();
 const forklift=shippingWorld.fixtures.find(f=>f.type==='forklift');
@@ -1325,7 +1325,7 @@ const handTrucks=shippingWorld.fixtures.filter(f=>f.type==='handTruck');
 assert.deepEqual([forklift.x,forklift.y,forklift.w,forklift.h],[33,37,2,1]);
 assert(!shippingWorld.fixtures.some(f=>f.type==='flatCart'),'Flat cart replaced by forklift');
 assert.equal(selectionLabel(shippingWorld,forklift),'Forklift');
-assert.equal(handTrucks.length,2);
+assert.equal(handTrucks.length,0,'Both hand trucks temporarily removed from map');
 for(const dolly of handTrucks)assert.equal(selectionLabel(shippingWorld,dolly),'Hand Truck');
 for(const f of [forklift,...handTrucks]){
  const count=graphicsCalls.count;
