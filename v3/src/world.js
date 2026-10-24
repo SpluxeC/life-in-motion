@@ -66,9 +66,9 @@ export function createHardwareStore(){
  for(let x of [8,14,25])fixture('checkout',x,13,2,1,{staffSide:'north',customerSide:'south',monitorFaces:'north'});
  fixture('serviceDesk',31,13,3,1,{staffSide:'north',customerSide:'south',monitorFaces:'north'});
  // The paint station and key-duplication bench occupy realistic 2-tile work counters.
- fixture('paintMixer',7,23,2,1,{department:'PAINT',facing:'south'});
- fixture('keyCutter',31,23,2,1,{department:'HARDWARE',facing:'south'});
- fixture('wireCutter',19,23,2,1,{department:'ELECTRICAL',facing:'south'});
+ fixture('paintMixer',8,24,2,1,{department:'PAINT',facing:'south'});
+ fixture('keyCutter',32,24,2,1,{department:'HARDWARE',facing:'south'});
+ fixture('wireCutter',20,24,2,1,{department:'ELECTRICAL',facing:'south'});
  fixture('saw',6,35,2,1,{department:'LUMBER',facing:'south'});fixture('pallet',11,35,2,1);fixture('workbench',17,35,2,1);
  // Keep 25..32, 35..39 clear for unobstructed receiving circulation.
  fixture('lockers',43,20,2,1,{facing:'north'});fixture('office',40,13,1,1,{facing:'west'});fixture('officeChair',41,13,1,1,{facing:'west'});fixture('officePrinter',43,14,1,1,{facing:'south'});
@@ -76,7 +76,7 @@ export function createHardwareStore(){
  fixture('plants',41,33,2,2);fixture('plants',45,35,1,2);fixture('gardenDesk',42,29,2,1);
  // Additional stocked departments and service details. Each solid asset reserves its true footprint.
  // Relocate the narrow Tools endcap from the aisle center to the Hardware department's right edge.
- fixture('endcap',35,21,1,1,{department:'TOOLS',stock:6,facing:'west'});fixture('endcap',21,23,1,1,{department:'ELECTRICAL',stock:6});
+ fixture('endcap',35,21,1,1,{department:'TOOLS',stock:6,facing:'west'});fixture('endcap',26,24,1,1,{department:'PLUMBING',stock:6});
  fixture('endcap',35,22,1,1,{department:'HARDWARE',stock:6,facing:'west'});
  fixture('bucketStack',5,16,1,1,{department:'PAINT',stock:6});
  fixture('lumberRack',14,35,2,1,{department:'LUMBER',stock:8});
@@ -88,7 +88,7 @@ export function createHardwareStore(){
  fixture('gardenToolsRack',35,28,1,2,{department:'GARDEN',stock:9,facing:'west',toolSet:'shovelsRakes'});
  // A two-tile riding mower sits beyond the doorway on the interior side;
  // its hood points west, toward the store aisles, not out into the garden.
- fixture('ridingMower',33,32,2,1,{department:'GARDEN',facing:'west'});
+ fixture('ridingMower',34,33,2,1,{department:'GARDEN',facing:'west'});
  fixture('drinkCooler',43,19,1,1,{department:'REFRESHMENTS',stock:8});
  // Safety station stays wall-side, SOUTH of the employee door, well clear of the Service sign.
  fixture('safetyStation',35,19,1,1,{facing:'west'});fixture('utilityCart',4,16,1,1,{stock:4});
@@ -136,7 +136,7 @@ export function createHardwareStore(){
  for(let x of [4,12,20,28,36,44,52,60])props.push({id:'shrub-'+x,type:'shrub',x,y:1});
  for(let y of [12,20,28,37,45])props.push({id:'tree-'+y,type:'tree',x:60,y});
  for(let x of [51,57])for(let y of [13,25,38])props.push({id:'shrub-'+x+'-'+y,type:'shrub',x,y});
- return {id:'hardware-store',title:'Hardware Store',layoutVersion:26,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
+ return {id:'hardware-store',title:'Hardware Store',layoutVersion:27,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
 }
 export const inside=(x,y)=>x>=0&&y>=0&&x<WIDTH&&y<HEIGHT;
 export function fixtureAt(world,x,y){return world.fixtures.find(o=>x>=o.x&&x<o.x+o.w&&y>=o.y&&y<o.y+o.h)}
