@@ -1,5 +1,5 @@
-import {nearestOpen,pathTo,doorAt,fixtureAt,walkable,key} from './world.js?v=break-room-map22-20261024';
-import {initializeRoutine,chooseRoutine,updateRoutine} from './routines.js?v=break-room-map22-20261024';
+import {nearestOpen,pathTo,doorAt,fixtureAt,walkable,key} from './world.js?v=manager-office-map23-20261024';
+import {initializeRoutine,chooseRoutine,updateRoutine} from './routines.js?v=manager-office-map23-20261024';
 const clamp=(n,a=0,b=100)=>Math.max(a,Math.min(b,n));
 export const POWER_LIST=[
  {id:'whisper',name:'Whisper Doubt',cost:0,targets:['npc'],cooldown:12},
