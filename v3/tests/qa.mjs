@@ -331,7 +331,7 @@ for(const fixture of extended.fixtures){
    'Decorations cannot overlap another fixture: '+fixture.id);
  }
 }
-for(const type of ['receivingDesk','palletStack','boxStack','handTruck','forklift',
+for(const type of ['receivingDesk','palletStack','boxStack','forklift',
  'filingCabinet','noticeBoard','coffeeStation','coatRack','storageShelves',
  'supplyCabinet','flowerBed','seedDisplay','pottingBench','gardenBench',
  'birdbath','wateringStation','planter']){
