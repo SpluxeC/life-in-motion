@@ -816,8 +816,8 @@ for(const yy of [30,31]){
 // west into the store and both sliding-door approaches left unobstructed.
 const mower=remodeled.fixtures.find(f=>f.type==='ridingMower');
 assert(mower,'Riding lawn mower exists in the store');
-assert.deepEqual([mower.x,mower.y,mower.w,mower.h],[34,32,2,1],
- 'Riding mower occupies exactly tiles 34,32 and 35,32');
+assert.deepEqual([mower.x,mower.y,mower.w,mower.h],[33,32,2,1],
+ 'Riding mower occupies exactly tiles 33,32 and 34,32');
 assert.equal(mower.facing,'west','Mower hood faces into the store');
 assert.equal(selectionLabel(remodeled,mower),'Riding Lawn Mower');
 assert(remodeled.ground.some(t=>t.x===34&&t.y===32&&t.area==='store'),
