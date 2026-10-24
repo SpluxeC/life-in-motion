@@ -649,7 +649,7 @@ const selectionCenter=selectProject(selectionAisle.x,selectionAisle.y);
 assert(isGroundTileTap(selectionWorld,selectionAisle.x,selectionAisle.y,selectionCenter.x,selectionCenter.y,selectProject,1),
  'Aisle floor tile is recognized before nearby shelf art');
 assert.equal(selectionLabel(selectionWorld,{id:'tile-9-20',x:9,y:20,type:'tile'}),
- 'Store Aisle Tile (9, 20)','Selected aisle tile has useful header text');
+ 'Paint Tile (9, 20)','Selected aisle tile has useful header text');
 const selectedShelf=selectionWorld.fixtures.find(f=>f.type==='shelf');
 const shelfTestTop=selectProject(selectedShelf.x,selectedShelf.y,41);
 assert(!isGroundTileTap(selectionWorld,selectedShelf.x,selectedShelf.y,shelfTestTop.x,shelfTestTop.y,selectProject,1),
