@@ -351,6 +351,12 @@ assert.equal(breakRoom.fixtures.filter(o=>o.type==='breakChair').length,2);
 assert(breakRoom.fixtures.some(o=>o.type==='microwave'&&o.x===40&&o.y===20));
 assert(pathTo(breakRoom,{x:38,y:19},{x:43,y:18}).length>0,
  'Staff can enter break room and walk to lockers and refreshments');
+const managerOffice=createHardwareStore();
+assert(managerOffice.fixtures.some(o=>o.type==='office'&&o.x===40&&o.y===13));
+assert(managerOffice.fixtures.some(o=>o.type==='officeChair'&&o.x===41&&o.y===13));
+assert(managerOffice.fixtures.some(o=>o.type==='officePrinter'&&o.x===43&&o.y===14));
+assert(pathTo(managerOffice,{x:38,y:12},{x:42,y:13}).length>0,
+ 'Manager office door and walkable desk approach remain accessible');
 // Exercise both sliding leaves with a real NPC entering the garden.
 const gateGame=makeGame(extended,{staff:4,customers:2,seed:23});
 const gateWalker=gateGame.npcs[2];
@@ -389,7 +395,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===22,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===23,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(!doorAt(migrated.world,43,39)&&doorAt(migrated.world,36,31)?.type==='sliding',
