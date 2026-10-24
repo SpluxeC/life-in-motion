@@ -1139,26 +1139,56 @@ export function createArtwork(ctx,project,getZoom){
    // Lift-truck timber skids keep each pack visibly grounded.
    for(const dx of [.22,w-.75])solid(x+dx,y+.02,.30,.78,5,'#77543a','#554333','#87654a');
   }else if(type==='lumberRack'){
-   // Exposed south-facing horizontal bays, oriented across the long edge
-   // toward customers (previous rack looked like a solid pile of blocks).
-   shadow(x,y,w,h,1.1);
-   const aisleFace=y+.52;
-   for(const xx of [x-.42,x+.44,x+w-.55]){
-    line(P(xx,aisleFace,3),P(xx,aisleFace,52),'#53646a',4.5);
-    line(P(xx,y-.36,3),P(xx,y-.36,52),'#475d63',3);
+   // Open heavy-duty cantilever lumber rack: vertical steel columns,
+   // diagonal bracing, projecting shelf arms, and real separated boards.
+   // All material rests directly on the supports inside the 2x1 footprint.
+   shadow(x,y,w,h,1.08);
+   const rear=y-.34,front=y+.30,left=x-.38,right=x+w-.62;
+   // Grounded base feet and raised rear stanchions.
+   for(const xx of [left,x+.47,right]){
+    solid(xx-.055,rear-.09,.11,.75,5,'#52636c','#354951','#657780');
+    line(P(xx,rear,3),P(xx,rear,62),'#536b76',5);
+    line(P(xx+.025,rear,4),P(xx+.025,rear,61),'#81949a',1.1);
    }
-   for(const z of [11,25,39]){
-    surface(x+.05,y-.30,w-.10,.75,z,'#667b7a','#395259');
-    line(P(x-.42,aisleFace,z),P(x+w-.53,aisleFace,z),'#d5d9d0',3.4);
-    for(let plank=0;plank<3;plank++){
-     const yy=y-.24+plank*.23;
-     solid(x+.10,yy,w-.20,.17,z+3,
-      ['#cfa36d','#ddb681','#b88b59'][plank],'#9b744f','#b48b62');
-     line(P(x+.13,yy+.08,z+3),P(x+w-.64,yy+.08,z+3),'#9a754d',.8);
+   // Diagonal stiffeners on the back of the rack keep bays open.
+   for(const [ax,bx] of [[left,x+.47],[x+.47,right]]){
+    line(P(ax,rear,12),P(bx,rear,53),'#607783',2.6);
+    line(P(ax,rear,53),P(bx,rear,12),'#465d67',2.6);
+   }
+   const tiers=[12,31,50];
+   for(let tier=0;tier<tiers.length;tier++){
+    const z=tiers[tier];
+    // Cantilever steel arms actually project forward from the posts.
+    for(const xx of [left,x+.47,right]){
+     line(P(xx,rear,z),P(xx,front,z),'#566d77',5.1);
+     line(P(xx,front,z),P(xx,front,z+4),'#e0a143',2.9);
     }
+    line(P(left,rear,z),P(right,rear,z),'#809198',3);
+    // Nested dimensional timber courses, separated by narrow dark gaps.
+    for(let row=0;row<2;row++){
+     const yy=rear+.12+row*.24;
+     for(let layer=0;layer<2;layer++){
+      const bz=z+2+layer*5;
+      solid(x+.08,yy,w-.16,.18,4,
+       ['#cc9c66','#e1b984','#b98d60','#d4a776'][(tier+row+layer)%4],
+       '#946e4b','#b68a60');
+      // Upper layers are raised by their supported course, not floating.
+      if(layer===1){
+       const ends=[x+.08,x+w-.17];
+       for(const ex of ends)
+        line(P(ex,yy-.08,bz),P(ex,yy+.08,bz),'#b18458',1.6);
+      }
+     }
+    }
+    // Bound timber bundle banding around each shelf's stack.
+    for(const xx of [x+.28,x+w-.80])
+     line(P(xx,rear+.08,z+11),P(xx,front-.07,z+11),'#385662',2.2);
    }
-   // Aisle-visible orange rack-end warning strip.
-   line(P(x-.43,aisleFace,48),P(x+w-.53,aisleFace,48),'#d8a049',4);
+   // High-visibility end guards indicate an industrial lumber rack.
+   for(const xx of [left,right]){
+    line(P(xx,front,5),P(xx,front,15),'#d7993f',3.5);
+    line(P(xx,front,6),P(xx,front,9),'#394c53',1.4);
+   }
   }else if(type==='toolCabinet'){
    // Free-standing, double-wide red steel retail tool rack. Display faces
    // the customer aisle along Y; all shelves, posts and stock share its footprint.
