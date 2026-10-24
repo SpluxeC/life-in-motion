@@ -408,6 +408,17 @@ for(const d of world.doors){
 const mowerV26=createHardwareStore().fixtures.find(f=>f.type==='ridingMower');
 assert.deepEqual([mowerV26.x,mowerV26.y,mowerV26.w,mowerV26.h],[34,33,2,1]);
 assert(walkable(createHardwareStore(),35,32));
+const restroomV28=createHardwareStore();
+for(const [type,x,y] of [['sink',40,23],['restroom',41,25],
+ ['restroomStall',43,25],['handDryer',45,23],['restroomBin',45,25]])
+ assert(restroomV28.fixtures.some(o=>o.type===type&&o.x===x&&o.y===y),
+  'Restroom fixtures follow a realistic wall-side layout: '+type);
+for(const [x,y] of [[39,24],[40,24],[41,24],[42,24],[43,24],[44,24],[45,24]])
+ assert(walkable(restroomV28,x,y),'Restroom central walkway remains clear '+x+','+y);
+assert(pathTo(restroomV28,{x:37,y:24},{x:44,y:24}).length>0);
+const cornerArtSource=readFileSync(new URL('../src/artwork.js',import.meta.url),'utf8');
+assert(cornerArtSource.includes('isOuterCorner')&&cornerArtSource.includes('neighbor(o.x+1'),
+ 'Outer wall corners trim excess projected segments');
 // Exercise both sliding leaves with a real NPC entering the garden.
 const gateGame=makeGame(extended,{staff:4,customers:2,seed:23});
 const gateWalker=gateGame.npcs[2];
@@ -446,7 +457,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===27,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===28,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(!doorAt(migrated.world,43,39)&&doorAt(migrated.world,36,31)?.type==='sliding',
