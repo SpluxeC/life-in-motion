@@ -1590,17 +1590,17 @@ export function createArtwork(ctx,project,getZoom){
   for(const yy of [y+.46,y+h-.55])wheel(x-.22,yy);
   // Bumpers, headlights and rear lamps fitted to the car ends.
   for(const xx of [x-.27,x+w-.73]){
-   const head=P(xx,y-.30,12),tail=P(xx,y+h-.48,12);
+   const head=P(xx,y-.30,12),tail=P(xx,y+h-.55,12);
    ellipse(head.x,head.y,3.7,2.2,'#e6e6ca','#8e9e95');
    ellipse(tail.x,tail.y,3.3,2.1,'#b65751','#803d3d');
   }
   line(P(x-.28,y-.36,9),P(x+w-.73,y-.36,9),'#384f57',3.1);
-  line(P(x-.28,y+h-.44,9),P(x+w-.73,y+h-.44,9),'#354a51',3.1);
+  line(P(x-.28,y+h-.55,9),P(x+w-.73,y+h-.55,9),'#354a51',3.1);
   if(kind==='pickup'){
    // Open-bed cap and tailgate separate the pickup from sedans.
    surface(x+.21,y+1.80,w-.42,h-2.00,14,'#435158','#77878a');
    for(const xx of [x-.27,x+w-.73])
-    line(P(xx,y+1.82,15),P(xx,y+h-.40,15),body,3.1);
+    line(P(xx,y+1.82,15),P(xx,y+h-.55,15),body,3.1);
   }
   if(v.emergency){
    const beacon=P(x+w/2-.5,y+1.25,roofHeight+3),flash=Math.sin(t*9)>0;
