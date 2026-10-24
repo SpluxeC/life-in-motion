@@ -1329,6 +1329,23 @@ assert(liftSection.includes("surface(cabLeft,cabRear,cabRight-cabLeft,cabFront-c
 assert(liftSection.indexOf("Exactly two visible driver-side tires")<
  liftSection.indexOf("All four cage legs START"),
  'Wheel layer is behind full-height cage posts');
+// Visual detail regression: both vehicles retain clear orientation, connected
+// chassis components and grounded industrial hardware rather than generic boxes.
+const vehicleArt=readFileSync(new URL('../src/artwork.js',import.meta.url),'utf8');
+const ridingArtwork=vehicleArt.slice(vehicleArt.indexOf("}else if(type==='ridingMower')"),
+ vehicleArt.indexOf("}else if(type==='pallet'||type==='bagPallet')"));
+const forkliftArtwork=vehicleArt.slice(vehicleArt.indexOf("}else if(type==='forklift')"),
+ vehicleArt.indexOf("}else if(type==='filingCabinet'"));
+assert(ridingArtwork.includes('Rear axle fenders wrap around the drive wheels')&&
+ ridingArtwork.includes('nose grille and twin headlamp bezels')&&
+ ridingArtwork.includes('Deck discharge chute')&&
+ ridingArtwork.includes('textured rubber foot platform'),
+ 'Riding mower has tractor-style grille, footwell, deck chute and fenders');
+assert(forkliftArtwork.includes('Engine counterweight and ventilation')&&
+ forkliftArtwork.includes('hydraulic cylinder run inside mast')&&
+ forkliftArtwork.includes('load-bearing steel tines')&&
+ forkliftArtwork.includes('Cab roof has visible perimeter lips'),
+ 'Forklift has hydraulics, carriage, forks, cabin trim and counterweight');
 // Pinch gestures scale about the same world point as the moving midpoint;
 // mouse wheel zoom, single-touch taps and NPC selection must remain intact.
 const viewport={w:800,h:500},camera={zoom:.7,offset:{x:100,y:200}};
