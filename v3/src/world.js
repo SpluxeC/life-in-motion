@@ -89,7 +89,7 @@ export function createHardwareStore(){
  // A two-tile riding mower sits beyond the doorway on the interior side;
  // its hood points west, toward the store aisles, not out into the garden.
  fixture('ridingMower',34,33,2,1,{department:'GARDEN',facing:'west'});
- fixture('drinkCooler',43,19,1,1,{department:'REFRESHMENTS',stock:8});
+ fixture('drinkCooler',44,17,1,1,{department:'REFRESHMENTS',stock:8});
  // Safety station stays wall-side, SOUTH of the employee door, well clear of the Service sign.
  fixture('safetyStation',35,19,1,1,{facing:'west'});fixture('utilityCart',4,16,1,1,{stock:4});
  fixture('hardwareBins',35,23,1,2,{department:'FASTENERS',stock:8,facing:'west'});
