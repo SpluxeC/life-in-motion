@@ -72,7 +72,7 @@ export function createHardwareStore(){
  fixture('saw',6,35,2,1,{department:'LUMBER',facing:'south'});fixture('pallet',11,35,2,1);fixture('workbench',17,35,2,1);
  // Keep 25..32, 35..39 clear for unobstructed receiving circulation.
  fixture('lockers',43,20,2,1,{facing:'north'});fixture('office',40,13,1,1,{facing:'west'});fixture('officeChair',41,13,1,1,{facing:'west'});fixture('officePrinter',43,14,1,1,{facing:'south'});
- fixture('vending',45,18,1,1,{facing:'west'});fixture('breakTable',41,18,2,1,{facing:'south'});fixture('breakChair',41,19,1,1,{facing:'north'});fixture('breakChair',42,19,1,1,{facing:'north'});fixture('microwave',40,20,1,1,{facing:'east'});fixture('sink',44,24,1,1,{facing:'west'});fixture('restroom',41,24,1,1,{facing:'west'});fixture('restroomStall',42,25,1,1,{facing:'south'});fixture('handDryer',45,23,1,1,{facing:'west'});fixture('restroomBin',44,25,1,1);
+ fixture('vending',45,18,1,1,{facing:'west'});fixture('breakTable',41,18,2,1,{facing:'south'});fixture('breakChair',41,19,1,1,{facing:'north'});fixture('breakChair',42,19,1,1,{facing:'north'});fixture('microwave',40,20,1,1,{facing:'east'});fixture('sink',40,23,1,1,{facing:'west'});fixture('restroom',41,25,1,1,{facing:'south'});fixture('restroomStall',43,25,1,1,{facing:'south'});fixture('handDryer',45,23,1,1,{facing:'west'});fixture('restroomBin',45,25,1,1);
  fixture('plants',41,33,2,2);fixture('plants',45,35,1,2);fixture('gardenDesk',42,29,2,1);
  // Additional stocked departments and service details. Each solid asset reserves its true footprint.
  // Relocate the narrow Tools endcap from the aisle center to the Hardware department's right edge.
@@ -136,7 +136,7 @@ export function createHardwareStore(){
  for(let x of [4,12,20,28,36,44,52,60])props.push({id:'shrub-'+x,type:'shrub',x,y:1});
  for(let y of [12,20,28,37,45])props.push({id:'tree-'+y,type:'tree',x:60,y});
  for(let x of [51,57])for(let y of [13,25,38])props.push({id:'shrub-'+x+'-'+y,type:'shrub',x,y});
- return {id:'hardware-store',title:'Hardware Store',layoutVersion:27,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
+ return {id:'hardware-store',title:'Hardware Store',layoutVersion:28,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
 }
 export const inside=(x,y)=>x>=0&&y>=0&&x<WIDTH&&y<HEIGHT;
 export function fixtureAt(world,x,y){return world.fixtures.find(o=>x>=o.x&&x<o.x+o.w&&y>=o.y&&y<o.y+o.h)}
