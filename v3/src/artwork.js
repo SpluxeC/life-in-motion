@@ -1086,6 +1086,37 @@ export function createArtwork(ctx,project,getZoom){
      ellipse(q.x,q.y,2.5,4,row%2?'#d9bd74':'#a8d3cf');
     }
    }
+  }else if(type==='breakTable'){
+   // Staff lunch table: dark metal legs, laminated wood surface and cups.
+   for(const xx of [x-.30,x+w-.69])for(const yy of [y-.24,y+.23])
+    line(P(xx,yy,1),P(xx,yy,23),'#5c696b',3.2);
+   solid(x,y,w,h,25,'#c9a47c','#816348','#aa865f');
+   surface(x+.05,y+.05,w-.10,h-.10,26,'#d9b993','#886b50');
+   for(const xx of [x+.26,x+1.12]){
+    const p=P(xx,y+.02,27);ellipse(p.x,p.y,5.3,2.7,'#e7e6dc','#8d9893');
+    ellipse(p.x,p.y-1*Z(),3.0,1.4,'#735847');
+   }
+  }else if(type==='breakChair'){
+   // Single tile cafe chair supported by four legs, with rear backrest.
+   shadow(x,y,1,1,.58);
+   for(const xx of [x-.22,x+.22])for(const yy of [y-.23,y+.22])
+    line(P(xx,yy,0),P(xx,yy,18),'#58696b',2.7);
+   solid(x-.22,y-.22,.44,.44,20,'#77919a','#4d6974','#607d87');
+   for(const xx of [x-.22,x+.22])
+    line(P(xx,y+.22,17),P(xx,y+.22,38),'#566d78',2.7);
+   poly([P(x-.23,y+.22,25),P(x+.23,y+.22,25),
+    P(x+.23,y+.22,39),P(x-.23,y+.22,39)],
+    '#728c96','#465d6a',1.5);
+  }else if(type==='microwave'){
+   // Counter with stainless microwave and visible control panel.
+   solid(x,y,w,h,23,'#a6a393','#6d7069','#909389');
+   solid(x+.12,y+.10,.76,.70,37,'#a4b0b2','#6b7b80','#c0c9c7');
+   poly([P(x-.36,y+.31,26),P(x+.15,y+.31,26),
+    P(x+.15,y+.31,34),P(x-.36,y+.31,34)],'#344e5c','#94a8aa',1.5);
+   for(let i=0;i<3;i++){
+    const p=P(x+.26,y+.31,28+i*3);
+    ellipse(p.x,p.y,1.3,1.2,'#e6d8b9');
+   }
   }else if(type==='table'){
    solid(x,y,w,h,17,'#aa8968','#6b5949');for(let i=0;i<2;i++)miniCan(x+.4+i*.8,y+.4,21,'#d5d8cb',3);
    for(let i=0;i<2;i++)solid(x+i*1.3,y+.42,.44,.34,10,'#5b6e71')
@@ -1441,10 +1472,18 @@ export function createArtwork(ctx,project,getZoom){
     ctx.fillRect(p.x+(-8+i*6)*Z(),p.y-4*Z(),5*Z(),8*Z());
    }
   }else if(type==='coffeeStation'){
-   solid(x,y,w,h,20,'#a58b6e','#63584e');
-   miniBox(x-.18,y-.24,21,'#343c43',.44,.43,12);
-   const cp=P(x-.10,y-.04,34);ellipse(cp.x,cp.y,5,2,'#c8d8d6');
-   for(let i=0;i<2;i++)miniCan(x+.20,y-.20+i*.3,26,'#e9e9d9',2.3);
+   // Staff coffee counter with brewer, glass carafe and cup organizer.
+   solid(x,y,w,h,24,'#b18f70','#735b46','#967759');
+   surface(x+.04,y+.04,.92,.92,25,'#d5c3a9','#826b54');
+   solid(x-.24,y-.25,.42,.40,38,'#303b42','#1f2d36','#51626a');
+   const carafe=P(x-.04,y-.04,40);
+   ellipse(carafe.x,carafe.y,4.4,3,'#a5b8b7','#455b5d');
+   ellipse(carafe.x,carafe.y+3*Z(),3.6,2,'#57433b');
+   for(let i=0;i<3;i++){
+    const q=P(x+.24,y-.19+i*.18,29);
+    ellipse(q.x,q.y,3.9,2.2,'#eeece2','#9aaca7');
+    line(P(x+.28,y-.16+i*.18,29),P(x+.33,y-.16+i*.18,32),'#d0d7d3',1.4);
+   }
   }else if(type==='coatRack'){
    line(P(x,y,0),P(x,y,47),'#6d5847',3.5);
    for(const d of [[-.22,-.20],[.20,-.15],[-.12,.20],[.22,.19]]){
