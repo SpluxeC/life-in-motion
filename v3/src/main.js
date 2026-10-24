@@ -4,7 +4,7 @@ import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js?v=staff-corr
 import {createArtwork} from './artwork.js?v=manager-office-map23-20261024';
 import {renderDepth,compareRenderDepth} from './render-depth.js?v=driver-side-forklift-wheels-20261023-1';
 import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness} from './hud.js?v=driver-side-forklift-wheels-20261023-1';
-import {hitProjectedFixture,isGroundTileTap,selectionLabel} from './selection.js?v=garden-display-mower-map17-20261023-1';
+import {hitProjectedFixture,isGroundTileTap,selectionLabel,doorSelectionTarget} from './selection.js?v=door-room-map25-20261024';
 import {signOpacity} from './sign-visibility.js?v=garden-sign-shelf-wall-map15-20261023';
 import {npcLimbPose} from './npc-pose.js?v=driver-side-forklift-wheels-20261023-1';
 import {pinchCamera} from './pinch-zoom.js?v=garden-tools-pinch-map16-20261023';
@@ -354,7 +354,7 @@ function inspectAtScreen(sx,sy){
  }
  for(const d of world.doors){
   const hit=boxHit(d,d.type==='rollup'?53:48,10);
-  if(hit!==null)add(d,hit,1);
+  if(hit!==null)add(doorSelectionTarget(world,d),hit,1);
  }
  for(const f of world.fixtures){
   const tall=['lockers','vending','drinkCooler','shelf','hardwareBins','paintMixer','keyCutter','wireCutter','saw','forklift','handTruck','gardenToolsRack','ridingMower'].includes(f.type);
