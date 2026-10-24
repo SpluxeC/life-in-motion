@@ -1371,12 +1371,31 @@ export function createArtwork(ctx,project,getZoom){
     ellipse(q.x,q.y,2.4,1.4,'#8d9c9b','#586766');
    }
   }else if(type==='gardenBench'){
-   solid(x,y,w,h,12,'#b49066','#74634d','#926e50');
-   for(let i=0;i<3;i++){
-    line(P(x-.40,y-.34+i*.30,15),P(x-.40,y+.34+i*.30,15),'#cfaa7b',2);
+   // Two-tile-long timber park bench, running north/south in world Y.
+   // Supports are rooted at ground Z=0; slats span the entire bench.
+   const xRear=x-.29,xFront=x+.23,ends=[y-.34,y+h-.67];
+   for(const yy of ends){
+    line(P(xRear,yy,0),P(xRear,yy,31),'#66503c',4.2);
+    line(P(xFront,yy,0),P(xFront,yy,17),'#66503c',4.2);
+    line(P(xRear,yy,14),P(xFront,yy,14),'#65716b',3);
+    line(P(xRear,yy,22),P(xFront,yy,22),'#816347',2.4);
    }
-   for(const side of [-.3,.3])line(P(x+side,y-.2,13),P(x+side,y-.2,28),'#89633e',3);
-   line(P(x-.35,y-.2,29),P(x+.34,y-.2,29),'#c79a64',4);
+   for(let i=0;i<4;i++){
+    const xx=x-.18+i*.105;
+    line(P(xx,y-.37,17),P(xx,y+h-.63,17),'#c49a6c',4);
+    line(P(xx,y-.37,18),P(xx,y+h-.63,18),'#e0bb88',1);
+   }
+   // Back support slopes away from the seat; no disconnected backboard.
+   for(let i=0;i<3;i++){
+    const z=23+i*4.5,xx=xRear-.035-(z-23)*.004;
+    line(P(xx,y-.37,z),P(xx,y+h-.63,z),'#b99065',4);
+    line(P(xx-.005,y-.37,z+1),P(xx-.005,y+h-.63,z+1),'#dfb484',1);
+   }
+   for(const yy of ends){
+    line(P(xRear,yy,19),P(xRear-.08,yy,35),'#76583e',3.6);
+    line(P(xRear-.06,yy,26),P(xFront,yy,26),'#987652',3.6);
+    line(P(xFront,yy,26),P(xFront,yy,16),'#78604a',2.4);
+   }
   }else if(type==='birdbath'){
    const p=P(x,y,22);
    line(P(x,y,1),p,'#adad9f',5);
@@ -1386,12 +1405,46 @@ export function createArtwork(ctx,project,getZoom){
    ellipse(bird.x,bird.y,3,3,'#788e82');
    line(P(x+.12,y-.04,30),P(x+.25,y-.04,31),'#c8bb86',1);
   }else if(type==='wateringStation'){
-   solid(x,y,w,h,13,'#859b90','#667a73');
-   miniCan(x-.16,y-.08,19,'#9aa8b1',7);
-   const q=P(x+.24,y-.24,18);
-   line(q,P(x+.24,y-.24,39),'#738b85',2.6);
-   line(P(x+.24,y-.24,39),P(x+.38,y-.24,39),'#839f9e',2.5);
-   ellipse(q.x+4*Z(),q.y-1*Z(),4,2,'#b3b5a7');
+   // Compact garden watering utility station, not the indoor sink.
+   // Four grounded metal legs, deep wash basin, hose reel and watering can.
+   for(const xx of [x-.31,x+.31])for(const yy of [y-.28,y+.28]){
+    line(P(xx,yy,0),P(xx,yy,23),'#677b78',3.2);
+    const p=P(xx,yy,1);ellipse(p.x,p.y,2.3,1.4,'#4b5e58');
+   }
+   for(const yy of [y-.25,y+.25])
+    line(P(x-.31,yy,7),P(x+.31,yy,7),'#718780',2.8);
+   for(const xx of [x-.29,x+.29])
+    line(P(xx,y-.25,7),P(xx,y+.25,7),'#718780',2.8);
+   // Galvanized countertop and inset water tub share the same footprint.
+   solid(x,y,w,h,24,'#9baba6','#657a75','#879b95');
+   surface(x+.05,y+.05,w-.10,h-.10,24.5,'#c0cdc8','#687e79');
+   const basin=P(x-.07,y+.03,25);
+   ellipse(basin.x,basin.y,10,5.8,'#657c78','#bdcac6');
+   ellipse(basin.x,basin.y-1*Z(),7.6,4.0,'#7eafb5','#d3dcd7');
+   const drain=P(x-.07,y+.03,25.3);
+   ellipse(drain.x,drain.y,1.3,1.1,'#536b6c');
+   // Upright arched faucet mounted behind the tub.
+   line(P(x-.15,y-.27,25),P(x-.15,y-.27,41),'#b8c8c3',2.6);
+   line(P(x-.15,y-.27,41),P(x-.01,y-.19,43),'#b8c8c3',2.6);
+   line(P(x-.01,y-.19,43),P(x+.03,y-.12,39),'#a8bbb7',2.3);
+   const tap=P(x-.29,y-.25,26);
+   ellipse(tap.x,tap.y,2.8,1.8,'#cbd5ce','#627874');
+   // Reel bolts to the right side of the frame; hose hangs downward.
+   const reel=P(x+.34,y-.04,18);
+   ellipse(reel.x,reel.y,7.0,5.2,'#607973','#344d48');
+   ellipse(reel.x,reel.y,5.4,3.8,'#538362','#324f3d');
+   ellipse(reel.x,reel.y,3.7,2.5,'#365b44','#6a9074');
+   ellipse(reel.x,reel.y,1.4,1.2,'#d0d3c1');
+   line(P(x+.33,y+.05,16),P(x+.28,y+.19,7),'#4e8260',2.6);
+   line(P(x+.28,y+.19,7),P(x+.15,y+.24,6),'#4e8260',2.6);
+   // Watering can rests on the tabletop instead of floating.
+   const can=P(x+.20,y+.22,29);
+   ellipse(can.x,can.y,5.4,3,'#7f9a8c','#49675f');
+   line(P(x+.16,y+.18,31),P(x+.16,y+.18,36),'#6a9484',2);
+   line(P(x+.16,y+.18,36),P(x+.25,y+.18,36),'#6a9484',2);
+   line(P(x+.23,y+.22,31),P(x+.35,y+.27,33),'#8baaa0',2.5);
+   const spout=P(x+.36,y+.27,33);
+   ellipse(spout.x,spout.y,2.6,1.4,'#d3d9cc','#687d73');
   }else{solid(x,y,w,h,20,'#a7b4ad','#6a7c7b')}
   if(o.damaged){const p=P(x+w*.5,y+h*.5,52);ellipse(p.x,p.y,5,4,'#edbb5e')}
  }
