@@ -969,6 +969,11 @@ export function createArtwork(ctx,project,getZoom){
     ellipse(p.x,p.y,r,r*1.12,'#202a2b','#131b20');
     ellipse(p.x,p.y,r*.51,r*.55,'#a0a9a1','#414d4d');
     ellipse(p.x,p.y,r*.20,r*.22,'#4b5552');
+    for(let t=0;t<7;t++){
+     const a=t*Math.PI*2/7;
+     const v={x:p.x+Math.cos(a)*r*.82*Z(),y:p.y+Math.sin(a)*r*.93*Z()};
+     ellipse(v.x,v.y,1.05,1.1,'#3e4948');
+    }
    };
    for(const [xx,r] of [[x+.18,5.5],[x+1.44,8]])
     tire(xx,y-.32,r);
@@ -979,6 +984,8 @@ export function createArtwork(ctx,project,getZoom){
     const p=P(xx,y+.13,9);
     ellipse(p.x,p.y,7,3,'#a78438','#d9c16f');
    }
+   // Real tractor proportions: front grille, formed rear fenders, exposed
+   // mower deck spindle housings, footwell and black rubber tires.
    // West-facing longitudinal frame; engine hood at the west/front end,
    // driver seat and rear axle at the east/rear end.
    solid(x+.39,y+.04,1.29,.75,12,'#4b7338','#2b482e','#5b7c3f');
@@ -994,6 +1001,14 @@ export function createArtwork(ctx,project,getZoom){
     const xx=x+.13+i*.13;
     line(P(xx,y-.23,24),P(xx+.065,y-.23,24),'#4c7344',2.2);
    }
+   // Rear axle fenders wrap around the drive wheels.
+   for(const yy of [y-.27,y+.29]){
+    solid(x+1.17,yy,.49,.22,19,'#79a947','#436b34','#5b8a3b');
+    line(P(x+1.18,yy,19),P(x+1.59,yy,19),'#d2e2ad',1.2);
+   }
+   // Open textured rubber foot platform between engine and seat.
+   surface(x+.80,y+.04,.38,.72,15,'#313d3b','#172729');
+   for(let i=0;i<4;i++)line(P(x+.86+i*.07,y-.20,16),P(x+.86+i*.07,y+.17,16),'#768079',.8);
    // Steering column rises in front of the padded operator's seat.
    line(P(x+.92,y+.12,13),P(x+.95,y+.12,32),'#374b49',3.9);
    const steer=P(x+.95,y+.12,34);
@@ -1009,6 +1024,17 @@ export function createArtwork(ctx,project,getZoom){
    for(const yy of [y-.30,y+.31]){
     line(P(x+1.44,yy,17),P(x+1.63,yy,17),'#7ba447',5);
    }
+   // Contrasting nose grille and twin headlamp bezels make the hood read
+   // as a real front-facing engine compartment rather than a green box.
+   poly([P(x-.405,y-.19,13),P(x-.405,y+.21,13),
+    P(x-.405,y+.21,23),P(x-.405,y-.19,23)],'#324941','#1f3433',1.2);
+   for(let i=0;i<5;i++){
+    const yy=y-.13+i*.069;
+    line(P(x-.415,yy,14),P(x-.415,yy,21),'#a3b0a5',.9);
+   }
+   // Deck discharge chute leads toward the store-facing lateral side.
+   solid(x+.64,y+.34,.53,.19,6,'#8b9d4a','#465f38','#6a8240');
+   line(P(x+.66,y+.43,7),P(x+1.12,y+.43,7),'#d7c86d',1.3);
    // The two near-side wheels show the mower's real wheelbase.
    for(const [xx,r] of [[x+.18,5.5],[x+1.44,8]])
     tire(xx,y+.37,r);
@@ -1185,11 +1211,25 @@ export function createArtwork(ctx,project,getZoom){
    line(P(x+.94,y+.12,28),P(x+.90,y+.12,41),'#60747c',3);
    const steering=P(x+.90,y+.12,41);
    ellipse(steering.x,steering.y,6,4,'#293941','#acbab6');
+   // Engine counterweight and ventilation at the rear of the lift.
+   solid(x+1.38,y-.17,.25,.54,28,'#c17c32','#764826','#e8a84d');
+   for(let i=0;i<4;i++)line(P(x+1.59,y-.10+i*.10,21),
+    P(x+1.59,y-.10+i*.10,25),'#414a47',2.2);
+   // Driver footwell, pedals and seated operator controls.
+   surface(x+.87,y+.10,.25,.30,21,'#344345','#6a7470');
+   for(const xx of [x+.92,x+1.04]){
+    line(P(xx,y+.29,22),P(xx+.025,y+.29,25),'#b4bab0',2);
+   }
    // Exactly two visible driver-side tires, mounted below the chassis.
    for(const xx of axleX){
     const p=P(xx,driverY,6);
     ellipse(p.x,p.y,10,9,'#253138','#61767b');
     ellipse(p.x,p.y,4,3.5,'#b8c6c2');
+    ellipse(p.x,p.y,1.6,1.45,'#657474');
+    for(let t=0;t<6;t++){
+     const a=t*Math.PI/3;
+     ellipse(p.x+Math.cos(a)*7.5*Z(),p.y+Math.sin(a)*6.6*Z(),1.6,1.3,'#374448');
+    }
    }
    // All four cage legs START on the forklift body surface at Z=18.
    // Roof corners use precisely the same XY points as their feet.
@@ -1202,15 +1242,31 @@ export function createArtwork(ctx,project,getZoom){
    }
    surface(cabLeft,cabRear,cabRight-cabLeft,cabFront-cabRear,62,
     '#364e56','#6d8284');
+   // Cab roof has visible perimeter lips, brackets and a rear grab handle.
+   for(const yy of [cabRear,cabFront])
+    line(P(cabLeft,yy,63),P(cabRight,yy,63),'#839698',2.3);
+   line(P(cabRight,y-.26,43),P(cabRight+.12,y-.26,43),'#829296',2);
    // The forward mast stays in the foreground and tines emerge at its base.
    for(const yy of [y-.26,y+.28])
     line(P(x+.29,yy,7),P(x+.29,yy,78),'#2c434d',6.8);
    for(const z of [19,43,76])
     line(P(x+.29,y-.26,z),P(x+.29,y+.28,z),'#a1b2b7',3.8);
+   // Chain guides, lift carriage and hydraulic cylinder run inside mast.
+   for(const yy of [y-.12,y+.12]){
+    line(P(x+.32,yy,20),P(x+.32,yy,71),'#9cadab',1.5);
+    for(let z=22;z<70;z+=6){const p=P(x+.32,yy,z);ellipse(p.x,p.y,1.1,1.05,'#3a5055');}
+   }
+   solid(x+.36,y-.10,.12,.34,59,'#6f8791','#405b65','#8ba1a8');
+   for(const z of [20,34])line(P(x+.12,y-.28,z),P(x+.12,y+.30,z),'#5b7278',4);
    solid(x+.18,y-.12,.22,.53,13,'#556f77','#334b54','#72888c');
    for(const yy of [y-.20,y+.18]){
     surface(x-.36,yy,.63,.10,6,'#bac6c4','#485c63');
     line(P(x-.38,yy+.05,6),P(x+.20,yy+.05,6),'#364c54',3);
+   }
+   // Fork heel transitions into horizontal load-bearing steel tines.
+   for(const yy of [y-.20,y+.18]){
+    line(P(x+.08,yy,12),P(x-.38,yy,6),'#65777b',3.4);
+    line(P(x-.36,yy,6),P(x-.43,yy,6),'#c9d3ce',2);
    }
    // Safety lamp goes on top, not behind the mast.
    const warning=P(x+1.45,y-.24,67);
