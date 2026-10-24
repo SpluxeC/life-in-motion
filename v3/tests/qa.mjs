@@ -375,7 +375,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===17,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===18,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(!doorAt(migrated.world,43,39)&&doorAt(migrated.world,36,31)?.type==='sliding',
@@ -1078,6 +1078,23 @@ updateGame(simulatedWalkerGame,1);
 assert.equal(simulatedWalker.walkDistance,walked,
  'Pausing stops the travel-driven arm and leg animation');
 
+// The red retail tools rack has moved from Receiving into the central
+// Tools aisle without blocking neighboring aisles or its stock migration.
+const centralToolRack=createHardwareStore().fixtures.find(f=>f.type==='toolCabinet');
+assert.deepEqual([centralToolRack.x,centralToolRack.y,centralToolRack.w,centralToolRack.h],
+ [14,24,2,1],'Red tools rack centered in Tools department');
+assert(!createHardwareStore().fixtures.some(f=>f.type==='toolCabinet'&&f.y===35),
+ 'Previous tool shelf near Receiving removed');
+for(const p of [{x:13,y:24},{x:16,y:24},{x:14,y:23},{x:14,y:25}]){
+ assert(walkable(createHardwareStore(),p.x,p.y),'Tools display aisle is walkable');
+ assert(pathTo(createHardwareStore(),{x:15,y:17},p).length>0,
+ 'Customers can reach all sides of centered tool rack');
+}
+const toolRackArt=readFileSync(new URL('../src/artwork.js',import.meta.url),'utf8');
+assert(toolRackArt.includes('type===\'toolCabinet\'')&&
+ toolRackArt.includes('Upright punched steel peg panels')&&
+ toolRackArt.includes('Hanging hammer and wrench silhouettes'),
+ 'Detailed industrial red shelf contains tools and a real frame');
 // Hardware department remodeling: center-mounted key duplicator, two-tile
 // paint tinting desk, wall-side first aid and relocated right-hand endcap.
 const remodeledHardware=createHardwareStore();
