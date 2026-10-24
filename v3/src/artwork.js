@@ -170,20 +170,7 @@ export function createArtwork(ctx,project,getZoom){
   // made the opposite corners look thicker than the rest of the building.
   for(const axis of dirs){
    // Slightly overlap neighboring fills to prevent antialiased pixel seams.
-   // At actual exterior corners, don't draw full outward-facing arms:
-   // each half segment joins the interior neighboring wall at the corner.
-   const isOuterCorner=dirs.length===2&&o.section!=='receivingOffice';
-   const neighbor=(xx,yy,leg)=>world?.walls.get(xx+','+yy)?.axes?.includes(leg);
-   let x0=o.x-.52,x1=o.x+.52,y0=o.y-.52,y1=o.y+.52;
-   if(isOuterCorner&&axis==='x'){
-    if(neighbor(o.x+1,o.y,'x')&&!neighbor(o.x-1,o.y,'x'))x0=o.x;
-    if(neighbor(o.x-1,o.y,'x')&&!neighbor(o.x+1,o.y,'x'))x1=o.x;
-   }
-   if(isOuterCorner&&axis==='y'){
-    if(neighbor(o.x,o.y+1,'y')&&!neighbor(o.x,o.y-1,'y'))y0=o.y;
-    if(neighbor(o.x,o.y-1,'y')&&!neighbor(o.x,o.y+1,'y'))y1=o.y;
-   }
-   const p=P(x0,y0),q=axis==='y'?P(x0,y1):P(x1,y0);
+   const p=P(o.x-.52,o.y-.52),q=axis==='y'?P(o.x-.52,o.y+.52):P(o.x+.52,o.y-.52);
    const top={x:p.x,y:p.y-z},end={x:q.x,y:q.y-z};
    const shade=axis==='y'?'#a6b7b0':'#c0c6ba';
    poly([{x:p.x+3*Z(),y:p.y+5*Z()},{x:q.x+3*Z(),y:q.y+5*Z()},
