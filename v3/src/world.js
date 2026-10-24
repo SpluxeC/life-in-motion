@@ -108,13 +108,13 @@ export function createHardwareStore(){
 
  // Bulk warehouse packaging belongs in Receiving, leaving Lumber for timber.
  fixture('boxStack',29,42,2,1);fixture('palletStack',26,42,2,1);
- fixture('handTruck',27,35,1,1);fixture('forklift',33,37,2,1,{facing:'west'});
+ fixture('forklift',33,37,2,1,{facing:'west'});
  fixture('palletStack',24,42,2,1);fixture('boxStack',32,42,2,1);
  // Strapped short, medium and long dimensional lumber packs against Lumber's back wall.
  fixture('lumberBundle',5,37,2,1,{bundleSize:'short',department:'LUMBER'});
  fixture('lumberBundle',10,37,3,1,{bundleSize:'medium',department:'LUMBER'});
  fixture('lumberBundle',15,37,4,1,{bundleSize:'long',department:'LUMBER'});
- fixture('handTruck',34,41,1,1);
+ // Hand trucks temporarily removed from Receiving.
  // Employee rooms: fixtures face the approachable side, not the wall behind them.
  fixture('filingCabinet',44,12,1,1,{facing:'west'});
  fixture('noticeBoard',45,14,1,1,{facing:'west'});
