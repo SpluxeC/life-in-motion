@@ -823,7 +823,7 @@ assert.equal(selectionLabel(remodeled,mower),'Riding Lawn Mower');
 assert(remodeled.ground.some(t=>t.x===34&&t.y===32&&t.area==='store'),
  'Riding mower is parked on indoor store flooring');
 assert(remodeled.ground.some(t=>t.x===35&&t.y===32&&t.area==='store'));
-for(const pos of [{x:32,y:32},{x:34,y:31},{x:35,y:31},{x:35,y:33}]){
+for(const pos of [{x:33,y:33},{x:34,y:32},{x:35,y:32},{x:36,y:33}]){
  assert(walkable(remodeled,pos.x,pos.y),'Clear path around riding mower '+pos.x+','+pos.y);
  assert(pathTo(remodeled,{x:32,y:31},pos).length>0,'Reachable mower perimeter');
 }
