@@ -1149,9 +1149,48 @@ export function createArtwork(ctx,project,getZoom){
    // Aisle-visible orange rack-end warning strip.
    line(P(x-.43,aisleFace,48),P(x+w-.53,aisleFace,48),'#d8a049',4);
   }else if(type==='toolCabinet'){
-   solid(x,y,w,h,33,'#a34438','#733c37','#974a3e');
-   for(let i=0;i<3;i++)line(P(x+.13,y+.1+i*.26,22),P(x+1.75,y+.1+i*.26,22),'#d0cbb4',1.5)
-
+   // Free-standing, double-wide red steel retail tool rack. Display faces
+   // the customer aisle along Y; all shelves, posts and stock share its footprint.
+   const front=y+.32,rear=y-.32,left=x-.39,right=x+w-.61;
+   for(const xx of [left,x+.50,right]){
+    for(const yy of [rear,front]){
+     line(P(xx,yy,1),P(xx,yy,54),'#8f302b',5);
+     line(P(xx-.015,yy,3),P(xx-.015,yy,52),'#cb5b47',1.7);
+    }
+   }
+   for(const z of [8,23,38,50]){
+    solid(x+.03,y+.03,w-.06,.83,z,'#c74735','#752e2b','#a63d31');
+    surface(x+.05,y+.05,w-.10,.79,z+.8,'#68727a','#43515c');
+    line(P(left,front,z+1),P(right,front,z+1),'#e16f50',3.3);
+   }
+   // Upright punched steel peg panels behind the upper tool rows.
+   poly([P(left,rear,24),P(right,rear,24),P(right,rear,51),P(left,rear,51)],
+    '#a44336','#702f2d',1);
+   for(let i=0;i<10;i++){
+    const xx=x-.25+i*.16;
+    for(const z of [30,36,43])
+     ellipse(P(xx,rear, z).x,P(xx,rear,z).y,.65,.65,'#533837');
+   }
+   // Lower shelves: drill boxes, compact tool cases and a toolbox.
+   for(let i=0;i<5;i++){
+    const xx=x-.29+i*.38;
+    miniBox(xx,y+.02,11+i%2,'#3e5359',.29,.35,10);
+    line(P(xx,y+.11,22),P(xx+.25,y+.11,22),'#d8ae69',1.6);
+   }
+   for(let i=0;i<4;i++){
+    const xx=x-.23+i*.47;
+    miniBox(xx,y+.08,26,'#b9a16d',.28,.27,9);
+    line(P(xx+.08,y+.06,36),P(xx+.20,y+.06,36),'#485b60',1.8);
+   }
+   // Hanging hammer and wrench silhouettes against the back panel.
+   for(let i=0;i<5;i++){
+    const xx=x-.23+i*.36;
+    line(P(xx,rear+.05,46),P(xx,rear+.05,40),'#c5a179',2.4);
+    if(i%2===0)
+     line(P(xx-.09,rear+.05,41),P(xx+.09,rear+.05,41),'#c5ccd0',3.4);
+    else
+     ellipse(P(xx,rear+.05,41).x,P(xx,rear+.05,41).y,2.6,1.6,'#8c9da2','#4f6067');
+   }
   }else if(type==='safetyStation'){
    safetyStation(o);
   }else if(type==='utilityCart'){
