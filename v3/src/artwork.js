@@ -1553,7 +1553,7 @@ export function createArtwork(ctx,project,getZoom){
    ellipse(p.x,p.y,1.2,1,'#657577');
   };
   // Rear wheel sets sit behind the body; two nearest tires remain exposed.
-  for(const yy of [y+.46,y+h-.55])wheel(x+w-.18,yy);
+  for(const yy of [y+.46,y+h-.55])wheel(x+w-.56,yy);
   // Lower rocker/chassis and shaped hood and trunk sections.
   solid(x+.09,y+.08,w-.18,h-.16,12,body,'#475963','#677f84');
   surface(x+.15,y+.11,w-.30,roofStart-.05,13,body,'#4e6269');
@@ -1562,14 +1562,14 @@ export function createArtwork(ctx,project,getZoom){
   solid(x+.25,y+roofStart,w-.50,Math.max(.45,roofEnd-roofStart),roofHeight,
    body,'#50636b','#778b8d');
   const windshield=P(x+.04,y+roofStart+.08,roofHeight-5);
-  const wind2=P(x+w-.05,y+roofStart+.08,roofHeight-5);
+  const wind2=P(x+w-.55,y+roofStart+.08,roofHeight-5);
   poly([P(x+.28,y+roofStart+.16,roofHeight-1),
-    P(x+w-.28,y+roofStart+.16,roofHeight-1),
-    P(x+w-.07,y+roofStart-.04,14),
+    P(x+w-.56,y+roofStart+.16,roofHeight-1),
+    P(x+w-.55,y+roofStart-.04,14),
     P(x+.07,y+roofStart-.04,14)],'#507987','#c0d4d2',1.1);
   poly([P(x+.29,y+roofEnd-.18,roofHeight-1),
-    P(x+w-.29,y+roofEnd-.18,roofHeight-1),
-    P(x+w-.07,y+roofEnd+.05,14),
+    P(x+w-.56,y+roofEnd-.18,roofHeight-1),
+    P(x+w-.55,y+roofEnd+.05,14),
     P(x+.07,y+roofEnd+.05,14)],'#426a79','#a4bfc1',1.1);
   surface(x+.37,y+roofStart+.17,w-.74,Math.max(.20,roofEnd-roofStart-.34),
    roofHeight+.5,body,'#d0d6ce');
