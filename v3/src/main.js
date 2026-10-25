@@ -228,7 +228,7 @@ function render(t){
  artwork.drawFloor(world,viewport);
  const items=[
   ...world.fixtures.map(o=>({kind:'fixture',depth:renderDepth('fixture',o),fn:()=>{
-   artwork.drawFixture(o);
+   if(o.destroyed){const p=project(o.x+(o.w||1)*.5-.5,o.y+(o.h||1)*.5-.5);ctx.save();ctx.fillStyle='#554e4a';ctx.fillRect(p.x-12*zoom,p.y-6*zoom,24*zoom,8*zoom);ctx.fillStyle='#b78365';ctx.fillRect(p.x-6*zoom,p.y-9*zoom,12*zoom,5*zoom);ctx.restore()}else artwork.drawFixture(o);
    if(o.damaged||o.powerOutUntil>(game?.elapsed||0)){
     const p=project(o.x+(o.w||1)*.5-.5,o.y+(o.h||1)*.5-.5,28);
     ctx.save();ctx.fillStyle=o.damaged?'#ec8756':'#ffe089';ctx.globalAlpha=.8;ctx.beginPath();ctx.arc(p.x,p.y,4.5*zoom,0,Math.PI*2);ctx.fill();ctx.restore();
