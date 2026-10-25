@@ -265,6 +265,127 @@ body{overflow:hidden}
  #mainMenu.screen .menuActions button{transition:none}
 }
 
+
+/* Create New World — shared cinematic palette with the main menu.
+   Color and surface styling only; layout, controls and map preview are unchanged. */
+#worldSetup.screen{
+ isolation:isolate;
+ color:#e8f1ec;
+ background:
+  radial-gradient(ellipse 72% 105% at 16% 36%,rgba(38,105,104,.30),transparent 74%),
+  radial-gradient(ellipse 68% 82% at 95% 86%,rgba(149,101,52,.19),transparent 74%),
+  linear-gradient(136deg,#07131d 0%,#102632 48%,#08141d 100%);
+}
+#worldSetup.screen::before{
+ content:"";position:absolute;inset:-30%;z-index:-1;pointer-events:none;opacity:.35;
+ background-image:
+  linear-gradient(rgba(125,177,169,.065) 1px,transparent 1px),
+  linear-gradient(90deg,rgba(125,177,169,.065) 1px,transparent 1px);
+ background-size:36px 36px;
+ transform:perspective(660px) rotateX(57deg) rotateZ(-19deg) scale(1.2);
+}
+#worldSetup.screen::after{
+ content:"";position:absolute;z-index:-1;pointer-events:none;
+ width:min(80vw,950px);aspect-ratio:1;border:1px solid rgba(137,205,185,.12);
+ border-radius:50%;right:-19vw;top:-34vw;
+ box-shadow:0 0 0 55px rgba(109,176,159,.025),0 0 0 126px rgba(109,176,159,.023),0 0 120px rgba(38,155,138,.085);
+}
+#worldSetup .setupPanel{
+ position:relative;z-index:1;
+ color:#e8f1ec;
+ border:1px solid rgba(150,192,177,.40);
+ border-radius:20px;
+ background:linear-gradient(145deg,rgba(23,49,59,.97),rgba(12,29,41,.98) 55%,rgba(12,26,36,.98));
+ box-shadow:0 26px 75px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.09),0 0 65px rgba(24,120,105,.10);
+}
+#worldSetup .setupHeader{
+ color:#a7d8c8;
+ border-bottom:1px solid rgba(152,194,177,.18);
+}
+#worldSetup #setupStepLabel{
+ color:#c1b184;letter-spacing:.075em;font-weight:700;
+}
+#worldSetup h2{
+ color:#f4f3e8;letter-spacing:-.025em;
+ text-shadow:0 3px 15px rgba(0,0,0,.26);
+}
+#worldSetup h3{color:#a7e5d3}
+#worldSetup .muted{color:#b9cecc}
+#worldSetup #setupBack{
+ color:#d5e5dc;
+ background:linear-gradient(125deg,rgba(38,74,82,.83),rgba(20,51,61,.9));
+ border:1px solid rgba(138,187,176,.34);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+}
+#worldSetup #setupBack:hover:not(:disabled){
+ background:linear-gradient(125deg,#335e64,#214c55);
+ border-color:#c0dfc9;
+}
+#worldSetup .mapChoice{
+ color:#e8f1ec;
+ background:linear-gradient(150deg,rgba(39,75,82,.93),rgba(17,40,53,.94));
+ border:1px solid rgba(138,187,176,.30);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 6px 16px rgba(0,0,0,.12);
+}
+#worldSetup button.mapChoice:hover:not(:disabled){
+ background:linear-gradient(145deg,rgba(49,103,103,.96),rgba(25,62,72,.97));
+ border-color:#c7e1c8;
+}
+#worldSetup .mapChoice.selected{
+ border-color:#9dd9bd;
+ outline:2px solid rgba(164,229,195,.73);
+ outline-offset:0;
+ box-shadow:0 0 0 1px rgba(226,204,140,.30),0 10px 24px rgba(19,126,105,.16),inset 0 1px 0 rgba(255,255,255,.1);
+}
+#worldSetup .mapChoice.locked{
+ opacity:.65;
+ background:linear-gradient(155deg,#1a303d,#10212c);
+ border-color:rgba(121,159,157,.28);
+ box-shadow:none;
+}
+#worldSetup .mapChoice strong{color:#f0f4e8}
+#worldSetup .mapChoice small{color:#bcd2cd}
+#worldSetup .mapState{color:#addfc5;font-weight:650}
+#worldSetup .mapChoice.locked .mapState{color:#b9ae8b}
+#worldSetup .mapScene:not(.hardwareScene){
+ background:
+  linear-gradient(130deg,transparent 47%,rgba(190,167,105,.18) 49%,rgba(190,167,105,.18) 51%,transparent 53%),
+  linear-gradient(145deg,#31535a,#132d3b);
+ border:1px solid rgba(150,186,174,.20);
+}
+#worldSetup .mapScene.hardwareScene{
+ background:#0d252f;
+ border-color:rgba(161,210,188,.44);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.05);
+}
+#worldSetup .setupOptions label{color:#d9e9e2;font-weight:650}
+#worldSetup .setupOptions select{
+ color:#f0f6ed;
+ background:linear-gradient(140deg,#193943,#102c39);
+ border:1px solid rgba(140,193,175,.46);
+ border-radius:8px;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+}
+#worldSetup .setupOptions select:hover{border-color:#aee2c9}
+#worldSetup .setupOptions select option{background:#102632;color:#f0f6ed}
+#worldSetup #setupLaunch{
+ color:#092a2c;font-weight:750;
+ background:linear-gradient(115deg,#97d7b9,#5bbda9);
+ border:1px solid #b6ead2;
+ box-shadow:0 8px 19px rgba(38,141,124,.20),inset 0 1px 0 rgba(255,255,255,.42);
+}
+#worldSetup #setupLaunch:hover:not(:disabled){
+ background:linear-gradient(115deg,#b7e8cd,#75d4ba);
+ border-color:#ecf5de;
+}
+#worldSetup button:focus-visible,
+#worldSetup select:focus-visible{
+ outline:2px solid #f5d8a0;outline-offset:2px;
+}
+@media (max-width:900px) and (orientation:landscape){
+ #worldSetup .setupPanel{border-radius:12px}
+}
+
 </style></head><body>
 <div id="mainMenu" class="screen">
 <div class="menuPanel menuCinematic">
