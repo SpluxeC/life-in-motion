@@ -14,7 +14,13 @@ const ROOMS=[
  {x1:37.5,y1:27.5,x2:48.5,y2:40.5,shade:.26}
 ];
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+const POWERED_FIXTURES=new Set([
+ 'checkout','serviceDesk','paintMixer','keyCutter','wireCutter','saw',
+ 'officePrinter','vending','microwave','handDryer','drinkCooler','coffeeStation',
+ 'gardenDesk','receivingDesk'
+]);
 const fixturesNear=(g,zone)=>g.world.fixtures.filter(f=>
+ POWERED_FIXTURES.has(f.type)&&
  Math.hypot(f.x+(f.w||1)*.5-.5-zone.x,f.y+(f.h||1)*.5-.5-zone.y)<ELECTRICAL_RADIUS);
 // Every falling wire owns a local outage. Recovery is sampled ONCE when the
 // wire is secured or expires, never extended by repeated render frames.
