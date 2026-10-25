@@ -16,6 +16,7 @@ import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness,HAIR_C
 import {readFileSync} from 'node:fs';
 import {pinchCamera} from '../src/pinch-zoom.js';
 import {patchPanelHTML} from '../src/panel-patch.js';
+import {initMenuAnimation} from '../src/menu-animation.js';
 const store=new Map();
 globalThis.localStorage={getItem:key=>store.get(key)||null,setItem:(key,value)=>store.set(key,value)};
 const compactHTML=readFileSync(new URL('../index.html',import.meta.url),'utf8');
@@ -39,6 +40,50 @@ for(const id of ['setupMapStep','setupOptionsStep','setupBack','setupLaunch','ma
 
 
 const cinematicMenu=compactHTML.split('<div id="mainMenu" class="screen">')[1]?.split('<div id="howToPlayScreen"')[0]||'';
+
+const animatedMainJS=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+assert(animatedMainJS.includes("initMenuAnimation($('mainMenu'))"),'Main menu eye animation is initialized at startup');
+for(const expected of [
+ 'class="menuAtmosphere"','class="menuMist menuMistOne"','class="menuParticle"',
+ 'class="menuEyePupil"','class="menuEyeLid"','class="menuString menuStringLeft"',
+ 'class="menuString menuStringCenter"','class="menuString menuStringRight"',
+ 'clip-path="url(#godEyeAperture)"','@keyframes limMenuBlink','@keyframes limMenuAutoGaze',
+ '@keyframes limMenuGridDrift','@keyframes limMenuParticleFloat',
+ '@keyframes limMenuButtonBreathe','@media (prefers-reduced-motion:reduce)'
+]){
+ assert(compactHTML.includes(expected),'Animated main menu must include '+expected);
+}
+const menuMoveHandlers=new Map(),menuEyeVars=new Map();
+const mockEye={getBoundingClientRect:()=>({left:50,top:50,width:100,height:100})};
+const mockPupil={style:{setProperty:(name,value)=>menuEyeVars.set(name,value)}};
+let menuHidden=false,reducedMotion=false,precisePointer=true;
+const mockMenu={
+ querySelector:selector=>selector==='.menuMark'?mockEye:selector==='.menuEyePupil'?mockPupil:null,
+ classList:{contains:()=>menuHidden},
+ addEventListener:(type,callback)=>menuMoveHandlers.set(type,callback),
+ removeEventListener:(type,callback)=>{if(menuMoveHandlers.get(type)===callback)menuMoveHandlers.delete(type)}
+};
+const mockWindow={matchMedia:query=>({
+ get matches(){return query.includes('reduced-motion')?reducedMotion:precisePointer},
+ addEventListener:()=>{},removeEventListener:()=>{}
+})};
+const stopMenuAnimation=initMenuAnimation(mockMenu,mockWindow);
+menuMoveHandlers.get('pointermove')({clientX:260,clientY:40});
+assert(Number.parseFloat(menuEyeVars.get('--eye-x'))>0,'Desktop eye follows cursor horizontally');
+assert(Number.parseFloat(menuEyeVars.get('--eye-y'))<0,'Desktop eye follows cursor vertically');
+reducedMotion=true;
+menuMoveHandlers.get('pointerleave')();
+menuMoveHandlers.get('pointermove')({clientX:260,clientY:40});
+assert.equal(menuEyeVars.get('--eye-x'),'0px','Reduced-motion menu stops cursor-driven eye tracking');
+reducedMotion=false;precisePointer=false;
+menuMoveHandlers.get('pointermove')({clientX:260,clientY:40});
+assert.equal(menuEyeVars.get('--eye-x'),'0px','Touch device eye does not attach cursor-style gaze');
+precisePointer=true;menuHidden=true;
+menuMoveHandlers.get('pointermove')({clientX:260,clientY:40});
+assert.equal(menuEyeVars.get('--eye-x'),'0px','Hidden main menu does not process cursor updates');
+stopMenuAnimation();
+assert(!menuMoveHandlers.has('pointermove'),'Main menu cursor handler cleans up correctly');
+
 assert(!cinematicMenu.includes('menuFootnote')&&!cinematicMenu.includes('Create a new world or continue your saved round.'),
  'Main menu no longer shows redundant instruction at the bottom');
 assert(cinematicMenu.includes('class="menuPanel menuCinematic"')&&cinematicMenu.includes('class="menuActions"'),
