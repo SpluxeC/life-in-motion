@@ -137,7 +137,7 @@ export function godPowerApply(g,id,target,detail,ctx){
    ctx.log(g,n.name+' resisted a Whisper Command.');
    return{ok:true,message:n.name+' immediately refused. '+refund+' energy refunded.'};
   }
-  const duration=option.target==='tile'?45:dangerous?90:option.target?60:25;
+  const duration=dangerous?90:option.target==='tile'?45:option.target==='object'?45:option.target==='npc'?30:25;
   n.command={action:option.id,targetId:detail?.targetId||null,x:detail?.x,y:detail?.y,dangerous,until:g.elapsed+duration,readyAt:g.elapsed+2,status:'Waiting'};
   n.task=null;n.think=3;
   ctx.memory(n,'command',null,'Felt an unusual impulse to '+option.name.toLowerCase());
@@ -200,7 +200,7 @@ export function tickGodPowers(g,dt,ctx){
   n.doubt=Math.max(0,(n.doubt||0)-dt*(n.medicalUntil?1.3:.18));
   n.suspicions=(n.suspicions||[]).filter(s=>s.until>g.elapsed);
   if(n.doubt>40)n.emotion.stress=clamp(n.emotion.stress+dt*.22);
-  if(n.doubt>74&&!n.medicalUntil&&g.random()<dt*.009){
+  if(n.doubt>74&&!n.medicalUntil&&g.npcs.some(o=>o.alive&&o.role==='paramedic'&&Math.hypot(o.x-n.x,o.y-n.y)<3)&&g.random()<dt*.035){
    n.medicalUntil=g.elapsed+30+g.random()*30;n.command=null;n.path=[];n.activity='On medical leave';
    ctx.incident(g,'injury');ctx.log(g,n.name+' left for crisis care.');
   }
