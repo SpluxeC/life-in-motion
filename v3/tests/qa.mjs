@@ -23,6 +23,24 @@ const publicLanding=readFileSync(new URL('../../index.html',import.meta.url),'ut
 assert(compactHTML.includes('<title>Life in Motion</title>'),'Game browser title omits version');
 assert(!compactHTML.includes('<title>Life in Motion v3</title>'),'V3 branding removed from browser title');
 assert(compactHTML.includes('Pull the strings. Watch the chaos unfold.'),'Main-menu slogan matches god simulator');
+
+const cinematicMenu=compactHTML.split('<div id="mainMenu" class="screen">')[1]?.split('<div id="howToPlayScreen"')[0]||'';
+assert(!cinematicMenu.includes('menuFootnote')&&!cinematicMenu.includes('Create a new world or continue your saved round.'),
+ 'Main menu no longer shows redundant instruction at the bottom');
+assert(cinematicMenu.includes('class="menuPanel menuCinematic"')&&cinematicMenu.includes('class="menuActions"'),
+ 'Main menu uses the cinematic layout while keeping the navigation buttons');
+assert(cinematicMenu.includes('id="godIris"')&&!cinematicMenu.includes('M8 28 32 8l24 20v29'),
+ 'Original house mark replaced with the new eye-and-strings god-simulator emblem');
+for(const pair of [['startGame','Create New World →'],['continueGame','Continue Saved World'],['howToPlayButton','How to Play']]){
+ const [buttonId,label]=pair;
+ assert(cinematicMenu.includes('id="'+buttonId+'"')&&cinematicMenu.includes(label),
+  'Main menu must preserve the button and its label: '+buttonId);
+}
+assert(compactHTML.includes('#mainMenu.screen .menuCinematic{')&&
+ compactHTML.includes('@media (max-width:559px) and (orientation:portrait)')&&
+ compactHTML.includes('@media (max-width:760px) and (orientation:landscape)'),
+ 'Main menu uses scoped responsive layouts for desktop, landscape and portrait');
+
 assert(compactHTML.includes('<span class="menuWorldReady">New Maps Coming Soon!</span>'),'Main-menu notice replaces old status');
 assert(compactHTML.includes('#mainMenu .menuWorldLine{justify-content:center;text-align:center}'),'Map announcement is centered without changing font size');
 assert(!compactHTML.includes('V3 PLAYABLE · MAP v39 · NAV UPDATE')&&!compactHTML.includes('5 future maps locked'),'Old status is removed');
