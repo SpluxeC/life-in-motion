@@ -670,11 +670,11 @@ assert(page.includes('id="hardwareMapPreview"'),'Hardware Store map selection di
 assert(client.includes("preview.src=canvas.toDataURL('image/jpeg'"),'Map screenshot comes from the actual canvas renderer');
 assert(client.includes("patchPanelHTML(people,html)")&&client.includes("patchPanelHTML(powers,powersHTML)")&&
  client.includes("patchPanelHTML(people,peopleListHTML)"),'People and powers buttons update without replacing their DOM nodes');
-const chosenEmployeeOptions=(page.match(/<select id="setupStaff">([\\s\\S]*?)<\\/select>/)||[])[1]||'';
-const chosenCustomerOptions=(page.match(/<select id="setupCustomers">([\\s\\S]*?)<\\/select>/)||[])[1]||'';
-assert.deepEqual([...chosenEmployeeOptions.matchAll(/value="(\\d+)"/g)].map(m=>Number(m[1])),[8,12,16],
+const chosenEmployeeOptions=page.split('<select id="setupStaff">')[1]?.split('</select>')[0]||'';
+const chosenCustomerOptions=page.split('<select id="setupCustomers">')[1]?.split('</select>')[0]||'';
+assert.deepEqual([...chosenEmployeeOptions.matchAll(/value="(\d+)"/g)].map(m=>Number(m[1])),[8,12,16],
  'Store employee setup offers only 8, 12, 16');
-assert.deepEqual([...chosenCustomerOptions.matchAll(/value="(\\d+)"/g)].map(m=>Number(m[1])),[12,16,20],
+assert.deepEqual([...chosenCustomerOptions.matchAll(/value="(\d+)"/g)].map(m=>Number(m[1])),[12,16,20],
  'Starting customer setup offers only 12, 16, 20');
 
 assert(!page.includes('id="stopFollow"')&&!client.includes('Stop Following / Unselect'),'Stop Following controls are removed');
