@@ -238,7 +238,10 @@ function render(t){
   ...[...world.walls.values()].map(o=>({kind:'wall',depth:renderDepth('wall',o),fn:()=>artwork.drawWall(o,world)})),
   ...world.props.map(o=>({kind:'vehicle',depth:renderDepth('vehicle',o),fn:()=>o.type==='wetFloorSign'?artwork.drawWetFloorSign(o.x,o.y):artwork.drawVehicle(o,t)})),
   ...(world.drops||[]).map(o=>({kind:'item',depth:renderDepth('item',o),fn:()=>artwork.drawDrop(o)})),
-  ...departmentSigns.map(o=>{
+  ...(world.damage||[]).filter(o=>o.until>(game?.elapsed||0)&&['fallenBox','fallenSign'].includes(o.kind)).map(o=>({kind:'item',depth:renderDepth('item',o),fn:()=>{
+   const p=project(o.x,o.y),z=zoom;ctx.save();ctx.fillStyle=o.kind==='fallenSign'?'#bd8353':'#ac8b67';ctx.fillRect(p.x-10*z,p.y-7*z,20*z,11*z);ctx.strokeStyle='#514539';ctx.lineWidth=1.5*z;ctx.strokeRect(p.x-10*z,p.y-7*z,20*z,11*z);ctx.restore();
+  }})),
+  ...departmentSigns.filter(o=>!(world.damage||[]).some(d=>d.kind==='fallenSign'&&d.signId==='department-sign-'+o.name&&d.until>(game?.elapsed||0))).map(o=>{
     const depth=o.name==='RECEIVING'?-1000:renderDepth('sign',o)+.1;
     return {kind:'sign',depth,fn:()=>{
       const opacity=signOpacity(o,game?.npcs||[],project,zoom,depth,n=>renderDepth('npc',n));
