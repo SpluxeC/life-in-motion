@@ -16,6 +16,12 @@ import {readFileSync} from 'node:fs';
 import {pinchCamera} from '../src/pinch-zoom.js';
 const store=new Map();
 globalThis.localStorage={getItem:key=>store.get(key)||null,setItem:(key,value)=>store.set(key,value)};
+const compactHTML=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+const compactJS=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+assert(compactHTML.includes('id="headerStatus"')&&!compactHTML.includes('V3 · TOTAL ELIMINATION'),'Header shows population and energy in place of elimination label');
+assert(!compactHTML.includes('data-speed='),'Speed selection buttons are removed');
+assert(compactJS.includes("game=restored;game.speed=1;")&&compactJS.includes("});game.speed=1;"),'New and loaded worlds use 1x speed');
+assert(compactHTML.includes('#worldSetup .mapChoices{grid-template-columns:repeat(3')&&compactHTML.includes('.screen:not(#howToPlayScreen)'),'Landscape menus and setup use compact non-scrolling layout');
 const world=createHardwareStore();
 // Landscape UI and bounded camera-angle regression checks.
 const landscapeHTML=readFileSync(new URL('../index.html',import.meta.url),'utf8');
