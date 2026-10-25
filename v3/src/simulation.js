@@ -160,7 +160,7 @@ export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
   }
   if(h.kind==='fire'){
    for(const electric of g.world.hazards)if(electric.kind==='electric'&&Math.hypot(electric.x-h.x,electric.y-h.y)<2&&g.random()<dt*.35)electric.life=0;
-   for(const v of g.world.props)if(Math.hypot(v.x-h.x,v.y-h.y)<1.5&&g.random()<dt*.17)v.damaged=true;
+   for(const v of [...g.world.props,...g.world.fixtures])if(Math.hypot(v.x-h.x,v.y-h.y)<1.6&&g.random()<dt*.17){v.damaged=true;v.destroyed=v.destroyed||g.random()<.04;v.repairUntil=Math.max(v.repairUntil||0,g.elapsed+(v.destroyed?55:25))}
   }
   if(h.tick>=1){
    h.tick=0;
