@@ -1297,7 +1297,7 @@ assert(improvedArt.includes('function wireCuttingStation(o)')&&
 // Safety-wall displays show aisle-facing merchandise rather than flat sides.
 const refreshed=createHardwareStore();
 const sideShelves=refreshed.fixtures.filter(f=>
- (f.type==='endcap'||f.type==='hardwareBins')&&f.facing==='west');
+ (f.type==='endcap'||f.type==='hardwareBins'||f.type==='departmentWallShelf')&&f.facing==='west');
 assert.equal(sideShelves.length,3,'Three wall displays retain their locations');
 for(const shelf of sideShelves){
  const before=graphicsCalls.count;
