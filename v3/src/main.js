@@ -62,8 +62,9 @@ function centerCamera(){let v=view();zoom=Math.min(.87,Math.max(.43,Math.min(v.w
 function captureHardwareMapPreview(){
  const preview=$('hardwareMapPreview');
  if(!preview||!canvas.clientWidth||!canvas.clientHeight)return;
- const beforeZoom=zoom,beforeOffset={...offset};
+ const beforeZoom=zoom,beforeOffset={...offset},beforeGame=game,beforeScene=scene;
  try{
+  // Always preview the clean current Hardware Store layout, not a previous round.\n  game=null;scene=createHardwareStore();
   // Photograph the actual rendered map and props, not a stock illustration.
   // Frame the store, parking lot and garden rather than empty outer terrain.
   const corners=[[2,4],[48,4],[2,41],[48,41]].map(([x,y])=>iso(x,y));
@@ -77,7 +78,7 @@ function captureHardwareMapPreview(){
  }catch(error){
   // Keep the fallback thumbnail if this browser disallows canvas capture.
  }finally{
-  zoom=beforeZoom;offset=beforeOffset;
+  zoom=beforeZoom;offset=beforeOffset;game=beforeGame;scene=beforeScene;
  }
 }
 
