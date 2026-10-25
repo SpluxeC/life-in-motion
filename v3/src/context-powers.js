@@ -1,6 +1,14 @@
 // Compact, target-first God Powers UI. No hover is required on touch devices.
 import {POWER_LIST,accusationsFor,COMMAND_OPTIONS} from './god-powers.js?v=god-powers-v41-20261025';
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const POWER_FLOOR_AREAS=new Set(['store','employee','garden','loading']);
+// Only playable interior/covered floor tiles offer tile-based God Powers.
+// Parking, roads, sidewalks, grass, landscape and unmapped ground stay inert.
+export function canOfferTileGodPowers(world,x,y){
+ if(!Number.isInteger(x)||!Number.isInteger(y))return false;
+ return !!world?.ground?.some(tile=>tile.x===x&&tile.y===y&&POWER_FLOOR_AREAS.has(tile.area));
+}
+
 export function createContextPowers({element,stage,getGame,apply,onMessage}){
  let target=null,position={x:0,y:0},mode=null,pick=null;
  const game=()=>getGame();
@@ -11,7 +19,7 @@ export function createContextPowers({element,stage,getGame,apply,onMessage}){
   if(t.id?.startsWith('door-'))return 'door';
   if(g.world.props.some(f=>f.id===t.id))return 'prop';
   if(t.type==='departmentSign')return 'sign';
-  return t.type==='tile'?'tile':null;
+  return t.type==='tile'&&canOfferTileGodPowers(g.world,t.x,t.y)?'tile':null;
  };
  function hide(){target=null;mode=null;element.classList.add('hidden');element.innerHTML=''}
  function action(id,detail=null){
@@ -75,7 +83,9 @@ export function createContextPowers({element,stage,getGame,apply,onMessage}){
    if(!pick)return false;
    const actor=game()?.npcs.find(n=>n.id===pick.actorId);
    const chosen=pick.target==='tile'?tile:selected;
-   const kind=typeOf(chosen);
+   // Command destinations may still be outdoor, walkable ground; filtering
+   // floor-power popups must not prevent NPC movement to those destinations.
+   const kind=pick.target==='tile'&&chosen?.type==='tile'?'tile':typeOf(chosen);
    if(!actor||pick.target==='npc'&&kind!=='npc'||pick.target==='object'&&!['fixture','door','prop'].includes(kind)||pick.target==='tile'&&kind!=='tile'){
     onMessage('Select a valid '+pick.target+' target.');return true;
    }
