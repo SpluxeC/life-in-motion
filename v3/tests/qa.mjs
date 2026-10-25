@@ -24,6 +24,20 @@ assert(compactHTML.includes('<title>Life in Motion</title>'),'Game browser title
 assert(!compactHTML.includes('<title>Life in Motion v3</title>'),'V3 branding removed from browser title');
 assert(compactHTML.includes('Pull the strings. Watch the chaos unfold.'),'Main-menu slogan matches god simulator');
 
+// Shared color treatment for both Create New World steps; keep actions and options intact.
+assert(compactHTML.includes('#worldSetup.screen{')&&
+ compactHTML.includes('#worldSetup .setupPanel{')&&
+ compactHTML.includes('#worldSetup .mapChoice.selected{')&&
+ compactHTML.includes('#worldSetup .setupOptions select{')&&
+ compactHTML.includes('#worldSetup #setupLaunch{'),
+ 'New World selection and setup share the cinematic menu palette');
+assert(compactHTML.includes('linear-gradient(136deg,#07131d 0%,#102632 48%,#08141d 100%)'),
+ 'The New World background uses the same charcoal and emerald colors as the main menu');
+for(const id of ['setupMapStep','setupOptionsStep','setupBack','setupLaunch','mapHardware','hardwareMapPreview']){
+ assert(compactHTML.includes('id="'+id+'"'),'New World controls and map preview preserved: '+id);
+}
+
+
 const cinematicMenu=compactHTML.split('<div id="mainMenu" class="screen">')[1]?.split('<div id="howToPlayScreen"')[0]||'';
 assert(!cinematicMenu.includes('menuFootnote')&&!cinematicMenu.includes('Create a new world or continue your saved round.'),
  'Main menu no longer shows redundant instruction at the bottom');
