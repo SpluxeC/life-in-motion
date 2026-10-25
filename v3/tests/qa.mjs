@@ -17,6 +17,24 @@ import {pinchCamera} from '../src/pinch-zoom.js';
 const store=new Map();
 globalThis.localStorage={getItem:key=>store.get(key)||null,setItem:(key,value)=>store.set(key,value)};
 const world=createHardwareStore();
+// Landscape UI and bounded camera-angle regression checks.
+const landscapeHTML=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+const landscapeJS=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+for(const expected of ['class="rotatePrompt"','class="cameraControls"','id="cameraAngle"','id="panelClose"','class="bottomNav"','aria-label="God Powers"','orientation:portrait']){
+ assert(landscapeHTML.includes(expected),'Landscape layout provides '+expected);
+}
+for(const expected of ["min=\"25\"","max=\"65\"","value=\"45\""]){
+ assert(landscapeHTML.includes(expected),'Camera slider bounds: '+expected);
+}
+assert(landscapeJS.includes("function unproject(sx,sy)")&&landscapeJS.includes("const {a,b,c,d}=basis(),det=a*d+b*c"),'Camera yaw includes inverse touch projection');
+assert(landscapeJS.includes("offset=npc?iso(npc.rx,npc.ry):iso(focal.x,focal.y)"),'Camera angle changes preserve map focal point');
+for(const angle of [25,35,45,55,65]){
+ const radians=angle*Math.PI/180,a=48*Math.SQRT1_2*Math.cos(radians),b=48*Math.SQRT1_2*Math.sin(radians);
+ const c=24*Math.SQRT1_2*Math.sin(radians),d=24*Math.SQRT1_2*Math.cos(radians);
+ const x=35.4,y=23.7,px=a*x-b*y,py=-c*x-d*y,det=a*d+b*c;
+ assert(Math.abs((d*px-b*py)/det-x)<1e-9&&Math.abs((-c*px-a*py)/det-y)<1e-9,'Camera projection round-trip at '+angle+' degrees');
+}
+
 assert(world.walls.has('40,27'),'Employee rear wall is continuous');
 assert(!walkable(world,5,18),'Shelves block movement');
 assert(walkable(world,28,38),'Receiving access clear');
