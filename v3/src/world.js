@@ -136,7 +136,7 @@ export function createHardwareStore(){
  for(let x of [4,12,20,28,36,44,52,60])props.push({id:'shrub-'+x,type:'shrub',x,y:1});
  for(let y of [12,20,28,37,45])props.push({id:'tree-'+y,type:'tree',x:60,y});
  for(let x of [51,57])for(let y of [13,25,38])props.push({id:'shrub-'+x+'-'+y,type:'shrub',x,y});
- return {id:'hardware-store',title:'Hardware Store',layoutVersion:31,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],sabotages:[],blocking:blocked};
+ return {id:'hardware-store',title:'Hardware Store',layoutVersion:31,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],sabotages:[],electricalZones:[],blocking:blocked};
 }
 export const inside=(x,y)=>x>=0&&y>=0&&x<WIDTH&&y<HEIGHT;
 export function fixtureAt(world,x,y){return world.fixtures.find(o=>x>=o.x&&x<o.x+o.w&&y>=o.y&&y<o.y+o.h)}
