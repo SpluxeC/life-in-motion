@@ -10,6 +10,11 @@ export function formatGameTime(game){
 export function emotionState(n){
  if(!n.alive)return 'Deceased';
  if(n.arrested)return 'Detained';
+ if(n.medicalUntil>0)return 'Recovering';
+ if(n.doubt>=75)return 'In Crisis';
+ if(n.doubt>=52)return 'Withdrawn';
+ if(n.doubt>=20)return 'Self-Doubt';
+ if(n.doubt>0)return 'Recovering';
  if(n.unconscious>0)return 'Unconscious';
  if(n.emotion?.fear>=60)return 'Terrified';
  if(n.emotion?.anger>=65)return 'Furious';
@@ -20,16 +25,12 @@ export function emotionState(n){
  return 'Calm';
 }
 export const POWER_HELP={
- whisper:['Plant an unsettling thought, causing some anger.','Choose Use Power, then tap a living NPC. Free, with a cooldown.'],
- anger:['Increase anger in targets, raising the risk of conflict.','Choose Use Power, then tap a living NPC.'],
- fear:['Make an NPC afraid and more likely to panic or flee.','Choose Use Power, then tap a living NPC.'],
- suspicion:['Increase suspicion in targets, making them distrust other people.','Choose Use Power, then tap a living NPC.'],
- trust:['Reduce trust in targets, weakening their relationships.','Choose Use Power, then tap an NPC. The game chooses a nearby person.'],
- rumor:['Spread a troubling rumor that may lead to conflict.','Choose Use Power, then tap a living NPC.'],
- item:['Influence someone to seek an item, or create an item at a fixture.','Choose Use Power, then tap an NPC or a store fixture.'],
- sabotage:['Damage a fixture and trigger an environmental problem.','Choose Use Power, then tap a machine, counter, shelf, or other fixture.'],
- hazard:['Start a random fire, spill, electrical, or falling hazard.','Choose Use Power, then tap an open floor tile or a fixture with open space nearby.'],
- lightning:['Strike an NPC with deadly lightning.','Choose Use Power, then tap a living NPC. High energy cost.']
+ suspicion:['Spread accusations about targets through nearby witnesses and ordinary conversations.','Choose a severity and accusation for a living NPC. Minor 4, Moderate 8, Serious 14, Extreme 22 energy.'],
+ anger:['Increase frustration in targets, raising stress and the risk of arguments or fights.','Select a living NPC. 6 energy; effects stack temporarily and fade.'],
+ whisper:['Undermine confidence in targets, potentially causing withdrawal or psychological crisis.','Free, 12-second global cooldown and escalating cooldown for each target. Recovery and support are possible.'],
+ command:['Strongly influence targets to act; they may refuse or reconsider as circumstances change.','Choose a command and its required target. Cost depends on the action (3–20 energy).'],
+ sabotage:['Sabotage suitable objects and fixtures; triggered accidents can cause damage and injuries.','Select machinery, shelves, signs, doors, or other suitable objects. 24 energy.'],
+ hazard:['Create a localized fire, slippery spill or overhead live wire on an empty tile.','Select fire, water or electrical hazard. 18 energy with a shared 10-second cooldown.']
 };
 
 export const HAIR_COLORS=['#211a17','#37271f','#573829','#76503a','#9b704a','#b18c60','#d3b178','#e2cf9d','#934b31','#a7a39a','#e5e1d7'];
