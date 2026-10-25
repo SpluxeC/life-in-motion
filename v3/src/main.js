@@ -58,18 +58,16 @@ function followSelected(){const n=game?.npcs.find(o=>o.id===selected?.id);if(n){
 // Restricted camera yaw: at 45° it exactly matches the original projection.
 // World coordinates and NPC pathfinding never change.
 function basis(){
- // Fixed ground projection: tiles, navigation targets, and object bases
- // always retain the original diamond layout at every slider position.
- return {a:TW*.5,b:TW*.5,c:TH*.5,d:TH*.5};
+ // Rotate the entire world plane using one shared horizontal camera yaw.
+ // All ground tiles use the same projection as fixtures and selection.
+ const yaw=cameraAngle*Math.PI/180;
+ return {a:TW*Math.SQRT1_2*Math.cos(yaw),
+         b:TW*Math.SQRT1_2*Math.sin(yaw),
+         c:TH*Math.SQRT1_2*Math.sin(yaw),
+         d:TH*Math.SQRT1_2*Math.cos(yaw)};
 }
 function iso(x,y){const {a,b,c,d}=basis();return{x:a*x-b*y,y:-c*x-d*y}}
-function project(x,y,z=0){
- const v=view(),p=iso(x,y);
- // View-dependent horizontal parallax only above the ground plane.
- // At z=0 nothing moves, so the floor and every object's base stay fixed.
- const lateral=z*Math.tan((cameraAngle-45)*Math.PI/180)*.45;
- return{x:v.w*.5+(p.x-offset.x+lateral)*zoom,y:v.h*.56+(p.y-offset.y-z)*zoom};
-}
+function project(x,y,z=0){const v=view(),p=iso(x,y);return{x:v.w*.5+(p.x-offset.x)*zoom,y:v.h*.56+(p.y-offset.y-z)*zoom}}
 function unproject(sx,sy){
  const v=view(),px=(sx-v.w*.5)/zoom+offset.x,py=(sy-v.h*.56)/zoom+offset.y;
  const {a,b,c,d}=basis(),det=a*d+b*c;
