@@ -181,6 +181,9 @@ assert.equal(lightIntensityAt(lightingGame.world,7,14,lightingGame.elapsed),1,
  'A distant light in the same store is not affected by the wire');
 assert(lightingGame.world.fixtures.some(f=>f.powerOutUntil>lightingGame.elapsed),
  'Nearby powered fixtures receive a temporary local outage');
+assert(!lightingGame.world.fixtures.some(f=>f.type==='shelf'&&f.powerOutUntil>lightingGame.elapsed),
+ 'Unpowered shelves never appear as electrically disabled');
+
 lightingGame.world.hazards.find(h=>h.kind==='electric').life=0;
 updateGame(lightingGame,1/30);
 const recoveryZone=lightingGame.world.electricalZones.find(z=>z.x===37&&z.y===20);
@@ -837,6 +840,13 @@ const recovered=loadGame();
 assert.equal(recovered.npcs[0].hairColor,appearanceGame.npcs[0].hairColor,'Hair color persists');
 assert.equal(recovered.npcs[0].hairStyle,appearanceGame.npcs[0].hairStyle,'Hair style persists');
 const currentClient=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
+assert(currentClient.includes('sceneLighting.drawFloorLightPools(world,viewport,t)')&&
+ currentClient.includes('sceneLighting.drawCastShadows(world,game?.npcs||[],viewport,t)')&&
+ currentClient.includes('sceneLighting.drawSceneLighting(world,viewport,t)'),
+ 'Lighting is rendered with the ground, actor/object shadows and full scene together');
+assert(currentClient.includes('game=null;scene=createHardwareStore();'),
+ 'Map selection screenshot uses the clean hardware-store world');
+
 assert(currentClient.includes("'<br><strong>Weakness:</strong> '"),'People list shows weakness before task');
 assert(currentClient.indexOf("'<br><strong>Weakness:</strong> '")<currentClient.indexOf("escapeHTML(p.alive?p.activity:'Deceased')"),'Weakness displayed above activity');
 assert(currentClient.includes("POWER_LIST.map(p=>{")&&currentClient.includes("open?'<div class=\"powerDescription\""),'Power explanations appear inline under selected power');
