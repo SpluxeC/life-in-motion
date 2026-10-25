@@ -420,7 +420,7 @@ body{overflow:hidden}
 #mainMenu .menuStringCenter{transform-origin:60px 72px}
 #mainMenu .menuStringRight{transform-origin:71px 76px}
 #mainMenu .menuActions button:first-child:not(:disabled)::before{
- content:"";position:absolute;inset:-3px;z-index:-1;pointer-events:none;
+ content:"";position:absolute;inset:-3px;z-index:0;pointer-events:none;
  border-radius:12px;opacity:.24;
  box-shadow:0 0 15px 3px rgba(108,228,188,.45),0 0 34px rgba(99,211,168,.2);
 }
@@ -524,10 +524,12 @@ body{overflow:hidden}
         <path d="M60 15 98 37v46L60 105 22 83V37Z" fill="#091b25" fill-opacity=".5" stroke="#bbab7c" stroke-width="1" opacity=".65"/>
         <path d="M15 59h15m60 0h15M60 7v15m0 75v16" stroke="#d2c18f" stroke-width="1.4" opacity=".85"/>
         <path d="M24 56Q60 21 96 56 60 90 24 56Z" fill="#163b42" fill-opacity=".8" stroke="url(#godEyeMetal)" stroke-width="3" stroke-linejoin="round"/>
-        <g class="menuEyePupil" clip-path="url(#godEyeAperture)">
+        <g clip-path="url(#godEyeAperture)">
+          <g class="menuEyePupil">
           <circle cx="60" cy="56" r="17" fill="url(#godIris)" stroke="#f1dfac" stroke-width="1.4"/>
           <circle cx="60" cy="56" r="9" fill="#08202c"/>
           <circle cx="56" cy="51" r="3.5" fill="#e9fff0"/>
+          </g>
         </g>
         <g class="menuEyeLids">
           <path class="menuEyeLid" d="M24 56Q60 21 96 56Q60 56 24 56Z" fill="#0b2732" stroke="#bbd9c8" stroke-width=".7"/>
