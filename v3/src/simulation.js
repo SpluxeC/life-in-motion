@@ -85,6 +85,7 @@ function choose(g,n){
  if(!n.alive||n.unconscious>0||n.arrested)return;
  const danger=w.hazards.filter(h=>h.life>0&&(n.role!=='employee'||h.kind!=='spill')&&Math.hypot(n.x-h.x,n.y-h.y)<5).sort((a,b)=>Math.hypot(n.x-a.x,n.y-a.y)-Math.hypot(n.x-b.x,n.y-b.y))[0];
  if(danger&&n.traits.bravery<55+n.emotion.fear*.25){n.task=null;n.action='panic';if(n.cleaningTarget)clearCleanup(g,n);n.emotion.fear=clamp(n.emotion.fear+24);n.panic=10;let flee=nearestOpen(w,n.x+(n.x-danger.x>0?7:-7),n.y+(n.y-danger.y>0?7:-7));goto(g,n,flee);n.activity='Fleeing '+danger.kind;return}
+ if(n.role==='employee'&&n.frustration>75&&n.emotion.anger>65&&r()<.3){n.activity='Refusing to help customers';return}
  if(n.role==='employee'&&assignSpillCleanup(g,n))return;
  if(autoSabotage(g,n,godContext))return;
  if(n.health<45&&n.inventory.includes('bandage')){n.health=clamp(n.health+16);n.bleeding=Math.max(0,n.bleeding-1);n.inventory.splice(n.inventory.indexOf('bandage'),1);n.activity='Treating injury';return}
@@ -124,7 +125,7 @@ function interact(g,n,other){if(!other||!other.alive)return;
  if(n.role==='police'&&other.emotion.anger>65&&!other.arrested){other.arrested=true;other.detention=60;other.path=[];other.activity='Detained by police';memory(other,'arrest',n.id,'Arrested',3);log(g,other.name+' was detained.');return}
  if(n.role==='paramedic'&&other.health<90){other.health=clamp(other.health+20);other.bleeding=Math.max(0,other.bleeding-3);other.unconscious=Math.max(0,other.unconscious-20);other.activity='Receiving medical care';log(g,other.name+' received treatment.');return}
  if(n.emotion.anger>55&&n.traits.aggression>35&&!other.arrested){let item=ITEMS.find(i=>i.id===n.inventory[0]);let damage=5+(item?.damage||0)+n.traits.aggression*.12;injury(g,other,damage,'fight',n);other.emotion.anger=clamp(other.emotion.anger+30);memory(other,'attack',n.id,'Attacked by '+n.name,3);n.emotion.anger=clamp(n.emotion.anger-8);reward(g,5,'fight');incident(g,'crime');return}
- let delta=n.traits.compassion>40?3:-2;n.relationships[other.id]=clamp((n.relationships[other.id]||0)+delta,-100,100);n.emotion.anger=clamp(n.emotion.anger-2);if(g.random()<.07){memory(other,'conversation',n.id,'Talked to '+n.name);log(g,n.name+' spoke with '+other.name+'.')}
+ let delta=(n.traits.compassion-(n.frustration||0)*.65)>40?3:-2;n.relationships[other.id]=clamp((n.relationships[other.id]||0)+delta,-100,100);n.emotion.anger=clamp(n.emotion.anger-2);if(g.random()<.07){memory(other,'conversation',n.id,'Talked to '+n.name);log(g,n.name+' spoke with '+other.name+'.')}
 }
 export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
  g.elapsed+=dt;g.dispatchCooldown=Math.max(0,g.dispatchCooldown-dt);
@@ -158,6 +159,7 @@ export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
    for(const f of g.world.fixtures)if(Math.hypot(f.x-h.x,f.y-h.y)<2.5&&g.random()<dt*.2)f.powerOutUntil=g.elapsed+6;
   }
   if(h.kind==='fire'){
+   for(const electric of g.world.hazards)if(electric.kind==='electric'&&Math.hypot(electric.x-h.x,electric.y-h.y)<2&&g.random()<dt*.35)electric.life=0;
    for(const v of g.world.props)if(Math.hypot(v.x-h.x,v.y-h.y)<1.5&&g.random()<dt*.17)v.damaged=true;
   }
   if(h.tick>=1){
