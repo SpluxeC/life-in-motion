@@ -19,8 +19,8 @@ function show(screen){document.body.classList.toggle('playing',!screen);for(let 
 function setup(step){show('worldSetup');$('setupMapStep').hidden=step!==1;$('setupOptionsStep').hidden=step!==2;$('setupStepLabel').textContent='STEP '+step+' OF 2 · '+(step===1?'SELECT MAP':'NEW WORLD')}
 $('startGame').onclick=()=>setup(1);$('howToPlayButton').onclick=()=>show('howToPlayScreen');$('howToBack').onclick=()=>show('mainMenu');$('setupBack').onclick=()=>{$('setupOptionsStep').hidden?show('mainMenu'):setup(1)};
 $('mapHardware').onclick=()=>setup(2);$('home').onclick=()=>{if(game&&!game.completed)saveGame(game);show('mainMenu');refreshContinue()};
-$('setupLaunch').onclick=()=>{scene=createHardwareStore();game=makeGame(scene,{staff:+$('setupStaff').value,customers:+$('setupCustomers').value,clockStartMinutes:+$('setupTime').value});selected=null;resultShown=false;pendingPower=null;feedback='';activateTab('world',false);show(null);centerCamera();refreshHud()};
-$('continueGame').onclick=()=>{let restored=loadGame();if(!restored){$('continueGame').disabled=true;return}game=restored;scene=game.world;selected=null;resultShown=false;pendingPower=null;feedback='';activateTab('world',false);show(null);centerCamera();refreshHud()};
+$('setupLaunch').onclick=()=>{scene=createHardwareStore();game=makeGame(scene,{staff:+$('setupStaff').value,customers:+$('setupCustomers').value,clockStartMinutes:+$('setupTime').value});game.speed=1;selected=null;resultShown=false;pendingPower=null;feedback='';activateTab('world',false);show(null);centerCamera();refreshHud()};
+$('continueGame').onclick=()=>{let restored=loadGame();if(!restored){$('continueGame').disabled=true;return}game=restored;game.speed=1;scene=game.world;selected=null;resultShown=false;pendingPower=null;feedback='';activateTab('world',false);show(null);centerCamera();refreshHud()};
 function refreshContinue(){$('continueGame').disabled=!hasSave()}
 refreshContinue();
 $('saveV3').onclick=()=>{if(!game)return;let ok=saveGame(game);feedback=ok?'Game saved.':'Save failed: browser storage unavailable';$('settingsFeedback').textContent=feedback;refreshContinue()};
@@ -52,7 +52,7 @@ function selectTarget(obj){
  refreshHud();
 }
 
-document.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>{if(!game)return;game.speed=+b.dataset.speed;document.querySelectorAll('[data-speed]').forEach(t=>t.classList.toggle('active',t===b))});
+
 function centerCamera(){let v=view();zoom=Math.min(.87,Math.max(.43,Math.min(v.w/1300,v.h/870)));offset=iso(36,20)}
 function followSelected(){const n=game?.npcs.find(o=>o.id===selected?.id);if(n){offset=iso(n.rx,n.ry);$('stopFollow').classList.remove('hidden')}else $('stopFollow').classList.add('hidden')}
 // Restricted camera yaw: at 45° it exactly matches the original projection.
@@ -317,7 +317,8 @@ function refreshHud(){
  $('selectedLabel').classList.toggle('hidden',!selected);
  $('gameClock').textContent=formatGameTime(g);
  $('pause').textContent=g.paused?'Resume':'Pause';
- $('worldStatus').textContent='Map v'+g.world.layoutVersion+' · Living '+alive+'/'+g.npcs.length+' · God Energy '+Math.floor(g.energy)+' · '+(g.paused?'Paused':g.speed+'×')+(pendingPower?' · Tap a target for '+POWER_LIST.find(p=>p.id===pendingPower)?.name:'');
+ $('headerStatus').textContent='Living '+alive+'/'+g.npcs.length+' · God Energy '+Math.floor(g.energy);
+ $('worldStatus').textContent=pendingPower?'Tap a target for '+POWER_LIST.find(p=>p.id===pendingPower)?.name:'Drag to pan · Wheel or pinch to zoom';
  $('stopFollow').classList.toggle('hidden',!g.npcs.some(n=>n.id===selected?.id));
  $('settingsFeedback').textContent=feedback;
  $('worldEvents').innerHTML=g.log.slice(0,12).map(e=>'<p class="personFacts">'+escapeHTML(e.text)+'</p>').join('')||'<p>No events yet.</p>';
