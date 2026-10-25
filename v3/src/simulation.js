@@ -1,4 +1,4 @@
-import {nearestOpen,pathTo,doorAt,fixtureAt,walkable,key} from './world.js?v=selection-shadows-map31-20261024';
+import {nearestOpen,pathTo,doorAt,fixtureAt,walkable,key} from './world.js?v=hardware-lighting-v48-20261025';
 import {initializeRoutine,chooseRoutine,updateRoutine} from './routines.js?v=selection-shadows-map31-20261024';
 import {POWER_LIST,godPowerApply,tickGodPowers,spreadSuspicion,autoSabotage} from './god-powers.js?v=god-powers-v41';
 import {updateElectricalZones} from './scene-lighting.js?v=hardware-lighting-v48-20261025';
