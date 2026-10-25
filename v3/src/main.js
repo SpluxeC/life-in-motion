@@ -2,6 +2,7 @@ import {createHardwareStore,doorAt,fixtureAt,nearestOpen,walkable,key} from './w
 import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v=stable-panels-map-preview-v43-20261025';
 import {createContextPowers} from './context-powers.js?v=god-powers-v41-20261025';
 import {initMenuAnimation} from './menu-animation.js?v=animated-main-menu-v47-20261025';
+import {createSceneLighting} from './scene-lighting.js?v=hardware-lighting-v48-20261025';
 import {patchPanelHTML} from './panel-patch.js?v=panel-hover-v42-20261025';
 import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js?v=landscape-camera-ui-v32-20261024';
 import {createArtwork} from './artwork.js?v=unified-floor-yaw-v37-20261024';
@@ -19,6 +20,7 @@ let cameraAngle=45,panelOpen=false;
 let game=null,scene=createHardwareStore(),zoom=.72,offset={x:0,y:0},last=performance.now(),acc=0,lastHud=0,lastSave=0,lastViewport={w:0,h:0},drag=null,selected=null,resultShown=false,activeTab='world',selectedPowerId='whisper',pendingPower=null,feedback='';
 const TW=48,TH=24,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const artwork=createArtwork(ctx,project,()=>zoom);
+const sceneLighting=createSceneLighting(ctx,project,()=>zoom);
 const contextPowers=createContextPowers({element:$('contextGodPowers'),stage:canvas.parentElement,getGame:()=>game,apply:(id,t,detail)=>applyPower(game,id,t,detail),onMessage:m=>{feedback=m;refreshHud()}});
 const view=()=>({w:canvas.clientWidth,h:canvas.clientHeight});
 function show(screen){document.body.classList.toggle('playing',!screen);for(let id of ['mainMenu','howToPlayScreen','worldSetup'])$(id).classList.toggle('hidden',id!==screen)}
@@ -254,6 +256,8 @@ function render(t){
  const viewport=view(),world=game?.world||scene;
  ctx.fillStyle='#263b39';ctx.fillRect(0,0,viewport.w,viewport.h);
  artwork.drawFloor(world,viewport);
+ sceneLighting.drawFloorLightPools(world,viewport,t);
+ sceneLighting.drawCastShadows(world,game?.npcs||[],viewport,t);
  const items=[
   ...world.fixtures.map(o=>({kind:'fixture',depth:renderDepth('fixture',o),fn:()=>{
    if(o.destroyed){const p=project(o.x+(o.w||1)*.5-.5,o.y+(o.h||1)*.5-.5);ctx.save();ctx.fillStyle='#554e4a';ctx.fillRect(p.x-12*zoom,p.y-6*zoom,24*zoom,8*zoom);ctx.fillStyle='#b78365';ctx.fillRect(p.x-6*zoom,p.y-9*zoom,12*zoom,5*zoom);ctx.restore()}else artwork.drawFixture(o);
@@ -286,6 +290,21 @@ function render(t){
   ...world.hazards.map(o=>({kind:'hazard',depth:renderDepth('hazard',o),fn:()=>drawHazard(o,t)}))
  ];
  items.sort(compareRenderDepth);for(const item of items)item.fn();
+ // The same overhead light field shades floors, objects and NPCs together.
+ // Electrical flicker remains localized to the falling wire's coverage zone.
+ sceneLighting.drawSceneLighting(world,viewport,t);
+ for(const hazard of world.hazards){
+  if(hazard.life<=0||!['electric','fire'].includes(hazard.kind))continue;
+  const pos=project(hazard.x,hazard.y,hazard.kind==='electric'?9:12);
+  const radius=(hazard.kind==='fire'?36:24)*zoom;
+  ctx.save();ctx.globalCompositeOperation='screen';
+  const glow=ctx.createRadialGradient(pos.x,pos.y,0,pos.x,pos.y,radius);
+  const color=hazard.kind==='fire'?'255,137,57':'149,201,255';
+  glow.addColorStop(0,'rgba('+color+',.28)');
+  glow.addColorStop(1,'rgba('+color+',0)');
+  ctx.fillStyle=glow;ctx.beginPath();ctx.arc(pos.x,pos.y,radius,0,Math.PI*2);ctx.fill();
+  ctx.restore();
+ }
  if(selected){
   const actor=game?.npcs.find(n=>n.id===selected.id);
   ctx.save();ctx.strokeStyle='#ffe69c';ctx.lineWidth=2*zoom;
