@@ -58,12 +58,13 @@ function followSelected(){const n=game?.npcs.find(o=>o.id===selected?.id);if(n){
 // Restricted camera yaw: at 45° it exactly matches the original projection.
 // World coordinates and NPC pathfinding never change.
 function basis(){
- const r=cameraAngle*Math.PI/180;
- return {a:TW*Math.SQRT1_2*Math.cos(r),b:TW*Math.SQRT1_2*Math.sin(r),
-         c:TH*Math.SQRT1_2*Math.sin(r),d:TH*Math.SQRT1_2*Math.cos(r)};
+ // Camera tilt never rotates world tile axes. Preserve the original diamond
+ // footprint and vary vertical height projection only.
+ return {a:TW*.5,b:TW*.5,c:TH*.5,d:TH*.5};
 }
+function cameraHeightScale(){return 1+(cameraAngle-45)/100}
 function iso(x,y){const {a,b,c,d}=basis();return{x:a*x-b*y,y:-c*x-d*y}}
-function project(x,y,z=0){let v=view(),p=iso(x,y);return{x:v.w*.5+(p.x-offset.x)*zoom,y:v.h*.56+(p.y-offset.y-z)*zoom}}
+function project(x,y,z=0){let v=view(),p=iso(x,y);return{x:v.w*.5+(p.x-offset.x)*zoom,y:v.h*.56+(p.y-offset.y-z*cameraHeightScale())*zoom}}
 function unproject(sx,sy){
  const v=view(),px=(sx-v.w*.5)/zoom+offset.x,py=(sy-v.h*.56)/zoom+offset.y;
  const {a,b,c,d}=basis(),det=a*d+b*c;
