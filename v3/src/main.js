@@ -37,10 +37,12 @@ function activateTab(tab,open=true){
 }
 $('panelClose').onclick=()=>activateTab(activeTab,false);
 $('cameraAngle').addEventListener('input',event=>{
+ // Keep the map's current focal tile under the same screen point as yaw changes.
+ const focal=unproject(view().w*.5,view().h*.56);
  cameraAngle=clamp(Number(event.target.value)||45,25,65);
  $('cameraAngleValue').textContent=cameraAngle+'°';
  const npc=game?.npcs.find(n=>n.id===selected?.id);
- if(npc)offset=iso(npc.rx,npc.ry);
+ offset=npc?iso(npc.rx,npc.ry):iso(focal.x,focal.y);
 });
 function clearSelection(){selected=null;feedback='';$('stopFollow').classList.add('hidden');refreshHud()}
 function selectTarget(obj){
