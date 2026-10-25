@@ -169,7 +169,7 @@ function stick(n,t){let p=project(n.rx,n.ry),z=zoom*(n.role==='customer'||n.role
  }
  if(n.alive&&n.unconscious<=0&&n.cleaning){artwork.drawCleaningSet(n.rx,n.ry,n.cleaningPhase||0)}
  else if(n.alive&&n.unconscious<=0&&n.inventory?.length&&(n.role!=='employee'||!['cashier','service','patrol','break','help'].includes(n.task?.kind))){artwork.drawItem(n.inventory[0],n.rx+.28,n.ry+.12,15,.66)}
- if(selected?.id===n.id){ctx.strokeStyle='#f5de79';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,14*z,7*z,0,0,7);ctx.stroke()}
+
 }
 function drawHazard(h,t){let p=project(h.x,h.y),z=zoom;ctx.save();if(h.kind==='fire'){for(let i=0;i<3;i++){ctx.fillStyle=i===0?'#ed743f':i===1?'#ffc15e':'#fae2a5';ctx.beginPath();ctx.ellipse(p.x+(i-1)*6*z,p.y-11*z-Math.sin(t*8+i)*3*z,7*z,15*z,0,0,Math.PI*2);ctx.fill()}}else if(h.kind==='spill'){ctx.fillStyle='#75bdbaad';ctx.beginPath();ctx.ellipse(p.x,p.y,19*z,6*z,0,0,7);ctx.fill()}else{ctx.strokeStyle=h.kind==='electric'?'#f4da78':'#e8b0a1';ctx.lineWidth=3*z;ctx.beginPath();ctx.moveTo(p.x-9*z,p.y);ctx.lineTo(p.x,p.y-17*z);ctx.lineTo(p.x+3*z,p.y-5*z);ctx.lineTo(p.x+14*z,p.y-20*z);ctx.stroke()}ctx.restore()}
 const departmentSigns=[
@@ -210,7 +210,29 @@ function render(t){
   ...world.hazards.map(o=>({kind:'hazard',depth:renderDepth('hazard',o),fn:()=>drawHazard(o,t)}))
  ];
  items.sort(compareRenderDepth);for(const item of items)item.fn();
- if(selected){const p=project(selected.x,selected.y);ctx.strokeStyle='#ffe69c';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(p.x,p.y,9*zoom,5*zoom,0,0,Math.PI*2);ctx.stroke()}
+ if(selected){
+  const actor=game?.npcs.find(n=>n.id===selected.id);
+  ctx.save();ctx.strokeStyle='#ffe69c';ctx.lineWidth=2*zoom;
+  ctx.beginPath();
+  if(actor){
+   // One ring, anchored to the NPC's interpolated position. Wider than
+   // the stick figure's legs to avoid cutting through the character.
+   const p=project(actor.rx,actor.ry);
+   ctx.ellipse(p.x,p.y+5*zoom,18*zoom,10*zoom,0,0,Math.PI*2);
+  }else if(selected.type==='tile'||selected.w||selected.h){
+   // Outline the complete occupied footprint, not only its first tile.
+   const x=selected.x,y=selected.y,w=selected.w||1,h=selected.h||1;
+   const outline=[project(x-.5,y-.5),project(x+w-.5,y-.5),
+    project(x+w-.5,y+h-.5),project(x-.5,y+h-.5)];
+   ctx.moveTo(outline[0].x,outline[0].y);
+   for(const p of outline.slice(1))ctx.lineTo(p.x,p.y);
+   ctx.closePath();
+  }else{
+   const p=project(selected.x,selected.y);
+   ctx.ellipse(p.x,p.y,9*zoom,5*zoom,0,0,Math.PI*2);
+  }
+  ctx.stroke();ctx.restore();
+ }
 }
 function inspect(x,y){
  if(!game)return;
