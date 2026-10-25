@@ -81,7 +81,7 @@ body{overflow:hidden}
 .navLabel{font-size:10px;font-weight:700;letter-spacing:.01em;line-height:1.1;white-space:nowrap}
 @media(max-width:800px){.bottomNav button{width:62px;min-width:62px;height:48px;min-height:48px;padding:3px 2px}.bottomNav button svg{width:18px;height:18px}.navLabel{font-size:9px}.panel{left:76px;width:min(310px,calc(100vw - 88px))}.worldInfo{left:75px}}
 
-/* v38: compact landscape menus and edge-hugging fixed game navigation */
+/* v39: compact landscape menus and flush-left fixed navigation */
 .bottomNav{left:0}
 @media(max-width:900px) and (orientation:landscape){
  .screen:not(#howToPlayScreen){padding:4px 8px;overflow:hidden}
@@ -112,12 +112,15 @@ body{overflow:hidden}
  .bottomNav button{width:55px;min-width:55px}
  .panel{left:65px;width:min(300px,calc(100vw - 75px))}
 }
-.bottomNav{left:0!important} .bottomNav .pauseNav{color:#f1e7c5;border-color:#c8ad78a0}.bottomNav .pauseNav[aria-pressed="true"]{background:#775e39e8;border-color:#e3c98c}
+.bottomNav{left:0!important;margin-left:0!important}
+@media(max-width:900px){.bottomNav{inset-inline-start:0!important}.bottomNav button{margin-left:0;border-radius:0 13px 13px 0}}
+.bottomNav .pauseNav{color:#f1e7c5;border-color:#c8ad78a0}
+.bottomNav .pauseNav[aria-pressed="true"]{background:#775e39e8;border-color:#e3c98c}
 </style></head><body>
 <div id="mainMenu" class="screen"><div class="menuPanel">
 <div class="menuMark" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M8 28 32 8l24 20v29H8Z" fill="#407b7d" stroke="#d7ece9" stroke-width="3"/><path d="M24 57V36h16v21" fill="#173843" stroke="#d7ece9" stroke-width="2"/><path d="M14 36h7v10h-7zm29 0h7v10h-7z" fill="#ebcf84"/><path d="M18 26h28" stroke="#d9e7dd" stroke-width="2"/></svg></div>
 <h2>Life <span>in Motion</span></h2><p class="menuTagline">Every person has a story. Every choice has consequences.</p>
-<div class="menuWorldLine"><span class="menuWorldReady">V3 PLAYABLE · MAP v38 · MOBILE UI</span><span>5 future maps locked</span></div>
+<div class="menuWorldLine"><span class="menuWorldReady">V3 PLAYABLE · MAP v39 · NAV UPDATE</span><span>5 future maps locked</span></div>
 <button id="startGame">Create New World →</button><button id="continueGame" disabled>Continue Saved World</button><button id="howToPlayButton">How to Play</button>
 <p class="menuFootnote">Create a new world or continue your saved round.</p></div></div>
 <div id="howToPlayScreen" class="screen hidden"><div class="menuPanel"><button id="howToBack">← Back</button><h2>How to Play</h2><p class="muted">The goal of Life in Motion v3 is to manipulate an autonomous world until nobody survives. Observe their behavior, manipulate their relationships, use God Powers, and turn environmental hazards against them. Earn God Energy through chaos and eliminate every NPC to win.</p></div></div>
@@ -146,4 +149,4 @@ body{overflow:hidden}
 </nav>
 <label class="cameraControls" for="cameraAngle">Camera <input type="range" id="cameraAngle" min="25" max="65" step="1" value="45" aria-label="Camera angle"><output id="cameraAngleValue" for="cameraAngle">45°</output></label>
 <div class="rotatePrompt" role="status"><strong>Rotate your device</strong><p>Life in Motion is played in landscape mode.</p></div>
-<script type="module" src="./src/main.js?v=compact-mobile-hud-v38-20261024"></script></body></html>
+<script type="module" src="./src/main.js?v=edge-floating-nav-v39-20261025"></script></body></html>
