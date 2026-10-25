@@ -110,7 +110,7 @@ export function godPowerApply(g,id,target,detail,ctx){
  }
  if(id==='whisper'){
   n.doubtStacks=clamp((n.doubtStacks||0)+1,0,8);
-  n.doubt=clamp((n.doubt||0)+24/(1+n.doubtStacks*.3));
+  n.doubt=clamp((n.doubt||0)+30/(1+n.doubtStacks*.16));
   n.emotion.stress=clamp(n.emotion.stress+8);
   n.doubtCooldownUntil=g.elapsed+12+n.doubtStacks*6;
   ctx.memory(n,'emotion',null,'Experienced an unsettling loss of confidence');
@@ -155,7 +155,7 @@ export function spreadSuspicion(g,speaker,listener,ctx){
   if(g.random()<odds){
    listener.suspicions.push({...suspicion,source:speaker.id,until:g.elapsed+85});
    const accused=byId(g,suspicion.subject);
-   if(accused){listener.relationships[accused.id]=clamp((listener.relationships[accused.id]||0)-5,-100,100);ctx.memory(listener,'rumor',accused.id,'Heard accusation about '+accused.name)}
+   if(accused){const impact={Minor:4,Moderate:9,Serious:15,Extreme:22}[suspicion.severity]||4;listener.relationships[accused.id]=clamp((listener.relationships[accused.id]||0)-impact,-100,100);ctx.memory(listener,'rumor',accused.id,'Heard accusation about '+accused.name)}
   }
  }
 }
@@ -186,7 +186,7 @@ export function tickGodPowers(g,dt,ctx){
   if(!near)continue;
   const obj=objById(g,s.id),explosive=/saw|mixer|cutter|mower|forklift|machine|car|vehicle|generator|electric/i.test(s.type);
   const falling=/sign|shelf|rack|pallet|stack|cabinet/i.test(s.type);
-  if(explosive&&!/Using|Working|Operating|Browsing/i.test(near.activity||''))continue;
+  if(explosive&&!/Using|Working|Operating/i.test(near.activity||''))continue;
   for(const n of g.npcs)if(n.alive&&Math.hypot(n.x-s.x,n.y-s.y)<(explosive?2.3:1.25))
    ctx.injury(g,n,(explosive?42:falling?29:15)*(.6+g.random()*.9),'sabotaged '+s.type);
   if(explosive){const at=nearestOpen(g.world,s.x+1,s.y);ctx.addHazard(g,at.x,at.y,'fire','sabotage');ctx.incident(g,'fire')}else ctx.incident(g,'injury');
@@ -197,7 +197,7 @@ export function tickGodPowers(g,dt,ctx){
  for(const n of g.npcs){
   if(!n.alive)continue;
   n.frustration=Math.max(0,(n.frustration||0)-dt*.7);
-  n.doubt=Math.max(0,(n.doubt||0)-dt*(n.medicalUntil?1.3:.18));
+  n.doubt=Math.max(0,(n.doubt||0)-dt*(n.medicalUntil?1.3:.1));
   n.suspicions=(n.suspicions||[]).filter(s=>s.until>g.elapsed);
   if(n.doubt>40)n.emotion.stress=clamp(n.emotion.stress+dt*.22);
   if(n.doubt>74&&!n.medicalUntil&&g.npcs.some(o=>o.alive&&o.role==='paramedic'&&Math.hypot(o.x-n.x,o.y-n.y)<3)&&g.random()<dt*.035){
