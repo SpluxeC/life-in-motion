@@ -1,5 +1,5 @@
 // Compact, target-first God Powers UI. No hover is required on touch devices.
-import {POWER_LIST,accusationsFor,COMMAND_OPTIONS} from './god-powers.js';
+import {POWER_LIST,accusationsFor,COMMAND_OPTIONS} from './god-powers.js?v=god-powers-v41-20261025';
 const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function createContextPowers({element,stage,getGame,apply,onMessage}){
  let target=null,position={x:0,y:0},mode=null,pick=null;
