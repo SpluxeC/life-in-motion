@@ -1357,18 +1357,59 @@ export function createArtwork(ctx,project,getZoom){
   }else if(type==='utilityCart'){
    utilityServiceCart(o);
   }else if(type==='palletStack'||type==='boxStack'){
-   // Stacked shipping loads sit square on timber skids; no floating boxes.
-   const pallet=type==='palletStack';
-   solid(x,y,w,h,pallet?6:3,'#b98f5c','#7b593d','#96714b');
-   const cols=w>1?3:2,rows=pallet?2:3;
-   for(let row=0;row<rows;row++)for(let col=0;col<cols;col++){
-    const px=x-.39+col*(w-.22)/cols,py=y-.26+(row%2)*.10;
-    const hBox=pallet?10:12;
-    miniBox(px,py,8+row*hBox,['#c4a77d','#b5956d','#9f927a'][col%3],
-     (w-.18)/cols-.04,.42,hBox-1);
+   // Receiving yard: exposed empty timber pallets versus genuine mixed-size
+   // taped shipping cartons on a single timber shipping skid.
+   const pallets=type==='palletStack';
+   shadow(x,y,w,h,.8);
+   const wood=['#b98c58','#caa374','#a47b4d','#d1a878'];
+   function skid(z,offset=0){
+    // Four deck boards with daylight gaps, visible block risers and runners.
+    for(const dy of [-.31,.20]){
+     for(const xx of [x-.34,x+.34,x+.93]){
+      solid(xx+offset,y+dy,.22,.18,3+z,'#a37a4f','#6d5038','#8b6843');
+     }
+    }
+    for(let k=0;k<4;k++){
+     const yy=y-.34+k*.23;
+     solid(x+offset,yy,w-.10,.155,5+z,wood[k%wood.length],'#84603f','#aa8055');
+     line(P(x-.42+offset,yy-.055,z+5.5),P(x+w-.59+offset,yy-.055,z+5.5),'#e0bb83',.8);
+    }
+    for(const xx of [x-.31+offset,x+.35+offset,x+w-.67+offset])
+     line(P(xx,y-.39,z+6),P(xx,y+.35,z+6),'#795638',1.5);
    }
-   const p=P(x+(w-1)/2,y,25);
-   line({x:p.x-9*Z(),y:p.y},{x:p.x+9*Z(),y:p.y},'#866744',1);
+   if(pallets){
+    // Empty pallets have a recognizable slatted silhouette, not cartons.
+    for(let layer=0;layer<3;layer++)skid(layer*7,layer%2*.015);
+    // Small lumber-end nails and dark voids between each pallet layer.
+    for(let layer=0;layer<3;layer++)
+     for(const xx of [x-.31,x+.36,x+w-.67]){
+      const q=P(xx,y+.24,layer*7+6);
+      ellipse(q.x,q.y,1.05,.7,'#626260');
+     }
+   }else{
+    skid(0);
+    // Stable mixed-size cardboard cartons with individual seams, top tape
+    // strips, orientation labels and a strapped palletized load.
+    const cartons=[
+     {cx:x-.27,cy:y-.14,w:.76,h:.59,z:6,ht:17,c:'#cba575'},
+     {cx:x+.52,cy:y-.14,w:.71,h:.59,z:6,ht:20,c:'#b9905e'},
+     {cx:x+1.17,cy:y-.14,w:.46,h:.59,z:6,ht:14,c:'#d1b186'},
+     {cx:x-.15,cy:y-.12,w:.66,h:.53,z:26,ht:13,c:'#c6a078'},
+     {cx:x+.62,cy:y-.12,w:.70,h:.53,z:29,ht:12,c:'#d6b384'}
+    ];
+    for(const box of cartons){
+     solid(box.cx,box.cy,box.w,box.h,box.z+box.ht,box.c,
+      '#8f6d4c','#ad8660');
+     const top=box.z+box.ht+.3;
+     line(P(box.cx,box.cy-.24,top),P(box.cx,box.cy+.18,top),'#ead4ae',2.2);
+     line(P(box.cx-.18,box.cy+.29,box.z+box.ht*.40),
+      P(box.cx+.18,box.cy+.29,box.z+box.ht*.40),'#6f644e',1);
+     const label=P(box.cx+.10,box.cy+.305,box.z+box.ht*.62);
+     ellipse(label.x,label.y,2.8,1.7,'#f1e5ce','#9b876c');
+    }
+    for(const xx of [x-.35,x+.95])
+     line(P(xx,y+.32,7),P(xx,y+.32,45),'#546b72',1.9);
+   }
   }else if(type==='receivingDesk'){
    // Real receiving manager workstation, solid drawer pedestals below a
    // continuous laminate worktop, computer, keyboard and delivery paperwork.
