@@ -26,6 +26,8 @@ for(const expected of ['class="rotatePrompt"','class="cameraControls"','id="came
 for(const expected of ["min=\"25\"","max=\"65\"","value=\"45\""]){
  assert(landscapeHTML.includes(expected),'Camera slider bounds: '+expected);
 }
+for(const label of ['World','People','Powers','Settings']) assert(landscapeHTML.includes('class="navLabel">'+label+'</span>'),'Navigation shows '+label+' inside button');
+assert(landscapeJS.includes('return {a:TW*.5,b:TW*.5,c:TH*.5,d:TH*.5}')&&landscapeJS.includes('z*cameraHeightScale()'),'Camera tilt preserves original ground tile axes');
 assert(landscapeJS.includes("function unproject(sx,sy)")&&landscapeJS.includes("const {a,b,c,d}=basis(),det=a*d+b*c"),'Camera yaw includes inverse touch projection');
 assert(landscapeJS.includes("offset=npc?iso(npc.rx,npc.ry):iso(focal.x,focal.y)"),'Camera angle changes preserve map focal point');
 for(const angle of [25,35,45,55,65]){
