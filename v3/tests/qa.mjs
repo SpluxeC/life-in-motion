@@ -763,7 +763,7 @@ assert(visualSource.includes("const shelfSchemes={")&&
  visualSource.includes("function endcapDisplay(o)"),
  'Department palettes and separate endcap presentation exist');
 const endcaps=fullStockWorld.fixtures.filter(f=>f.type==='endcap');
-assert(endcaps.length>=3,'Several endcaps are placed throughout the store');
+assert(endcaps.length>=1,'Plumbing endcap remains while Tools and Hardware use matching department wall shelves');
 for(const display of endcaps){
  const beforeEmptyEndcap=graphicsCalls.count;
  artwork.drawFixture({...display,stock:0});const emptyEndcapCalls=graphicsCalls.count-beforeEmptyEndcap;
