@@ -1,5 +1,5 @@
 import {createHardwareStore,doorAt,fixtureAt,nearestOpen,walkable,key} from './world.js?v=landscape-camera-ui-v32-20261024';
-import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v=god-powers-v41-20261025';
+import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v=stable-panels-map-preview-v43-20261025';
 import {createContextPowers} from './context-powers.js?v=god-powers-v41-20261025';
 import {patchPanelHTML} from './panel-patch.js?v=panel-hover-v42-20261025';
 import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js?v=landscape-camera-ui-v32-20261024';
