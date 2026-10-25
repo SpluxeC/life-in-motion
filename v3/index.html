@@ -38,11 +38,46 @@
 
 .selectedLabel{font-size:11px;font-weight:650;color:#d6e8df;max-width:215px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#213b49;border:1px solid #55777d;border-radius:7px;padding:7px 9px}
 @media(max-width:800px){.selectedLabel{max-width:125px;padding:6px;font-size:10px}}
+
+/* Landscape-first game shell; canvas extends underneath floating fixed controls. */
+body{overflow:hidden}
+.worldLayout{display:block;position:relative}
+.stage{height:calc(100dvh - 56px)!important;width:100%}
+.panel{position:absolute;z-index:3;top:0;left:68px;width:min(350px,calc(100vw - 82px));height:calc(100dvh - 56px);max-height:none!important;box-shadow:8px 8px 30px #0007;border:1px solid #486879;border-radius:10px;overflow:auto}
+.worldLayout.panelClosed .panel{display:none}
+.bottomNav{position:fixed;z-index:6;left:max(8px,env(safe-area-inset-left));top:50%;bottom:auto;right:auto;transform:translateY(-50%);display:flex;flex-direction:column;gap:9px;background:transparent;border:0;padding:0;backdrop-filter:none;pointer-events:none}
+.bottomNav button{pointer-events:auto;display:grid;place-items:center;width:46px;height:46px;min-width:46px;min-height:46px;max-width:none;flex:none;padding:8px;border-radius:13px;background:#19313fc9;box-shadow:0 3px 12px #0008;border:1px solid #78979b80}
+.bottomNav button svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.bottomNav button.active{background:#267f7be8;border-color:#d0ece0}
+.worldInfo{left:70px}
+.cameraControls{position:fixed;z-index:6;top:64px;right:12px;display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:12px;background:#19313fd9;border:1px solid #66858d;color:#e7eef0;font-size:12px}
+.cameraControls input{width:125px;accent-color:#8ccfbd;cursor:pointer}
+.cameraControls output{min-width:30px;text-align:right}
+#panelClose{float:right;padding:3px 8px;margin:0 0 8px 9px}
+.rotatePrompt{display:none;position:fixed;inset:0;z-index:100;background:#122832;place-content:center;text-align:center;padding:24px;color:#e9f3ef}
+.rotatePrompt strong{font-size:22px}
+@media(max-width:800px){
+ .gameHeader{height:45px;min-height:45px;padding:3px 8px;flex-wrap:nowrap;overflow-x:auto}
+ .gameHeader h1{font-size:12px}
+ .gameHeader small{display:none}
+ .gameHeader .controls{flex-wrap:nowrap;gap:3px}
+ .gameHeader button{padding:5px 6px;font-size:11px;white-space:nowrap}
+ .stage{height:calc(100dvh - 45px)!important}
+ .panel{left:63px;top:0;width:min(310px,calc(100vw - 75px));height:calc(100dvh - 45px);padding:10px 12px}
+ .bottomNav{gap:5px}
+ .bottomNav button{width:42px;height:42px;min-width:42px;min-height:42px}
+ .cameraControls{top:49px;right:7px;padding:5px 8px}
+ .cameraControls input{width:90px}
+ .worldInfo{left:60px;top:8px;max-width:50%;font-size:10px}
+}
+@media(orientation:portrait) and (pointer:coarse) and (max-width:900px){
+ .rotatePrompt{display:grid}
+}
 </style></head><body>
 <div id="mainMenu" class="screen"><div class="menuPanel">
 <div class="menuMark" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M8 28 32 8l24 20v29H8Z" fill="#407b7d" stroke="#d7ece9" stroke-width="3"/><path d="M24 57V36h16v21" fill="#173843" stroke="#d7ece9" stroke-width="2"/><path d="M14 36h7v10h-7zm29 0h7v10h-7z" fill="#ebcf84"/><path d="M18 26h28" stroke="#d9e7dd" stroke-width="2"/></svg></div>
 <h2>Life <span>in Motion</span></h2><p class="menuTagline">Every person has a story. Every choice has consequences.</p>
-<div class="menuWorldLine"><span class="menuWorldReady">V3 PLAYABLE · MAP v31 · SELECTION & SHADOWS</span><span>5 future maps locked</span></div>
+<div class="menuWorldLine"><span class="menuWorldReady">V3 PLAYABLE · MAP v32 · LANDSCAPE CAMERA</span><span>5 future maps locked</span></div>
 <button id="startGame">Create New World →</button><button id="continueGame" disabled>Continue Saved World</button><button id="howToPlayButton">How to Play</button>
 <p class="menuFootnote">Create a new world or continue your saved round.</p></div></div>
 <div id="howToPlayScreen" class="screen hidden"><div class="menuPanel"><button id="howToBack">← Back</button><h2>How to Play</h2><p class="muted">The goal of Life in Motion v3 is to manipulate an autonomous world until nobody survives. Observe their behavior, manipulate their relationships, use God Powers, and turn environmental hazards against them. Earn God Energy through chaos and eliminate every NPC to win.</p></div></div>
@@ -56,11 +91,18 @@
 <div class="mapChoice locked"><span class="mapScene"></span><strong>Restaurant</strong><small>Future location</small><span class="mapState">Locked · Coming later</span></div></div></div>
 <div id="setupOptionsStep" hidden><h2>Hardware Store · Game Setup</h2><p class="muted">Customize the population and begin your total-elimination round.</p><h3>World options</h3><div class="setupOptions"><label>Store employees<select id="setupStaff"><option value="4" selected>4 · Foundation</option><option value="8">8 · Busy</option></select></label><label>Starting customers<select id="setupCustomers"><option value="8" selected>8 · Foundation</option><option value="12">12 · Busy</option></select></label><label>Starting time<select id="setupTime"><option value="480">8:00 AM · Morning</option><option value="720">12:00 PM · Midday</option><option value="1020">5:00 PM · Evening</option></select></label><label>NPC starting items<select id="setupItems"><option>Occasional</option><option selected>Common</option><option>Everyone</option></select></label></div><p class="muted">All NPCs are autonomous. God Powers are earned-energy-gated, and emergency responders can join the round.</p><div class="setupFooter"><button id="setupLaunch">Start Hardware Store →</button></div></div></div></div>
 <header class="gameHeader"><div class="brandLine"><h1>Life in Motion</h1><span class="victoryBoard">V3 · TOTAL ELIMINATION</span></div><div class="controls"><span id="selectedLabel" class="selectedLabel hidden" aria-label="Selected map object"></span><span id="gameClock" class="gameClock" aria-label="In-game clock">8:00 AM</span><button id="pause">Pause</button><button data-speed="1" class="active">1×</button><button data-speed="2">2×</button><button data-speed="4">4×</button></div></header>
-<main class="worldLayout"><div class="stage"><canvas id="game" aria-label="Isometric hardware store world preview"></canvas><div class="worldInfo" id="worldStatus">Drag to pan · Wheel to zoom · Tap a person</div><button id="stopFollow" class="followStop hidden">✕ Stop Following</button></div>
-<aside class="panel" id="gamePanel" aria-live="polite">
+<main class="worldLayout" id="worldLayout"><div class="stage"><canvas id="game" aria-label="Isometric hardware store world preview"></canvas><div class="worldInfo" id="worldStatus">Drag to pan · Wheel to zoom · Tap a person</div><button id="stopFollow" class="followStop hidden">✕ Stop Following</button></div>
+<aside class="panel" id="gamePanel" aria-live="polite"><button id="panelClose" aria-label="Close panel" title="Close panel">✕</button>
  <div id="worldPanel" class="tabPane"><div class="notice">Select an NPC, fixture, or tile to inspect the world and use contextual God Powers. Earn energy through manipulation, accidents, and conflict.</div><h3>World Events</h3><div id="worldEvents"></div></div>
  <div id="peoplePanel" class="tabPane hidden"><div id="peopleContent"></div></div>
  <div id="powersPanel" class="tabPane hidden"><div id="powersContent"></div></div>
  <div id="settingsPanel" class="tabPane hidden"><h3>Settings</h3><p class="muted">Save this round or return to the main menu.</p><button id="saveV3" class="actionWide">Save Game</button><button id="home" class="actionWide">Main Menu</button><p id="settingsFeedback" class="muted" role="status"></p></div>
-</aside></main><nav class="bottomNav" aria-label="Gameplay navigation"><button data-tab="world" class="active">World</button><button data-tab="people">People</button><button data-tab="powers">God Powers</button><button data-tab="settings">Settings</button></nav>
+</aside></main><nav class="bottomNav" aria-label="Gameplay navigation">
+<button data-tab="world" class="active" aria-label="World" title="World"><svg viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"/></svg></button>
+<button data-tab="people" aria-label="People" title="People"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2M17 5a3 3 0 0 1 0 6M19 14c1.5.9 2 2.3 2 4v2"/></svg></button>
+<button data-tab="powers" aria-label="God Powers" title="God Powers"><svg viewBox="0 0 24 24"><path d="m13 2-9 12h7l-1 8 10-13h-7z"/></svg></button>
+<button data-tab="settings" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M19 5l-2 2M7 17l-2 2"/></svg></button>
+</nav>
+<label class="cameraControls" for="cameraAngle">Camera <input type="range" id="cameraAngle" min="25" max="65" step="1" value="45" aria-label="Camera angle"><output id="cameraAngleValue" for="cameraAngle">45°</output></label>
+<div class="rotatePrompt" role="status"><strong>Rotate your device</strong><p>Life in Motion is played in landscape mode.</p></div>
 <script type="module" src="./src/main.js?v=selection-shadows-map31-20261024"></script></body></html>
