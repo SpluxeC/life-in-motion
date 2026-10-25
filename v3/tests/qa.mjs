@@ -638,8 +638,8 @@ for(const id of ['peopleContent','powersContent','worldEvents','gameClock','save
  assert(page.includes('id="'+id+'"'),'Missing HUD element '+id);
 }
 assert(page.includes('data-tab="settings"')&&page.includes('data-tab="people"'));
-assert(page.includes('V3 · TOTAL ELIMINATION')&&page.indexOf('V3 · TOTAL ELIMINATION')<page.indexOf('id="game"'),
- 'Total Elimination board must be in top header');
+assert(page.includes('id="headerStatus"')&&page.indexOf('id="headerStatus"')<page.indexOf('id="game"'),
+ 'Population and God Energy board must be in top header');
 assert(client.includes('render(game?.elapsed||0)'),'Animations use simulation time, not wall time');
 assert(client.includes('offset=iso(n.rx,n.ry)'),'Camera follows selected NPC');
 assert(client.includes("activateTab('people')"),'Tapping an NPC opens overview');
