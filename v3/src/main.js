@@ -1,6 +1,7 @@
 import {createHardwareStore,doorAt,fixtureAt,nearestOpen,walkable,key} from './world.js?v=landscape-camera-ui-v32-20261024';
 import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v=stable-panels-map-preview-v43-20261025';
 import {createContextPowers} from './context-powers.js?v=god-powers-v41-20261025';
+import {initMenuAnimation} from './menu-animation.js?v=animated-main-menu-v47-20261025';
 import {patchPanelHTML} from './panel-patch.js?v=panel-hover-v42-20261025';
 import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js?v=landscape-camera-ui-v32-20261024';
 import {createArtwork} from './artwork.js?v=unified-floor-yaw-v37-20261024';
@@ -12,6 +13,8 @@ import {npcLimbPose} from './npc-pose.js?v=driver-side-forklift-wheels-20261023-
 import {pinchCamera} from './pinch-zoom.js?v=garden-tools-pinch-map16-20261023';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d');
+initMenuAnimation($('mainMenu'));
+
 let cameraAngle=45,panelOpen=false;
 let game=null,scene=createHardwareStore(),zoom=.72,offset={x:0,y:0},last=performance.now(),acc=0,lastHud=0,lastSave=0,lastViewport={w:0,h:0},drag=null,selected=null,resultShown=false,activeTab='world',selectedPowerId='whisper',pendingPower=null,feedback='';
 const TW=48,TH=24,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
