@@ -15,7 +15,7 @@ let game=null,scene=createHardwareStore(),zoom=.72,offset={x:0,y:0},last=perform
 const TW=48,TH=24,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const artwork=createArtwork(ctx,project,()=>zoom);
 const view=()=>({w:canvas.clientWidth,h:canvas.clientHeight});
-function show(screen){for(let id of ['mainMenu','howToPlayScreen','worldSetup'])$(id).classList.toggle('hidden',id!==screen)}
+function show(screen){document.body.classList.toggle('playing',!screen);for(let id of ['mainMenu','howToPlayScreen','worldSetup'])$(id).classList.toggle('hidden',id!==screen)}
 function setup(step){show('worldSetup');$('setupMapStep').hidden=step!==1;$('setupOptionsStep').hidden=step!==2;$('setupStepLabel').textContent='STEP '+step+' OF 2 · '+(step===1?'SELECT MAP':'NEW WORLD')}
 $('startGame').onclick=()=>setup(1);$('howToPlayButton').onclick=()=>show('howToPlayScreen');$('howToBack').onclick=()=>show('mainMenu');$('setupBack').onclick=()=>{$('setupOptionsStep').hidden?show('mainMenu'):setup(1)};
 $('mapHardware').onclick=()=>setup(2);$('home').onclick=()=>{if(game&&!game.completed)saveGame(game);show('mainMenu');refreshContinue()};
