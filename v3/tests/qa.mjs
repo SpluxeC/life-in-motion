@@ -19,6 +19,16 @@ import {patchPanelHTML} from '../src/panel-patch.js';
 const store=new Map();
 globalThis.localStorage={getItem:key=>store.get(key)||null,setItem:(key,value)=>store.set(key,value)};
 const compactHTML=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+const publicLanding=readFileSync(new URL('../../index.html',import.meta.url),'utf8');
+assert(compactHTML.includes('<title>Life in Motion</title>'),'Game browser title omits version');
+assert(!compactHTML.includes('<title>Life in Motion v3</title>'),'V3 branding removed from browser title');
+assert(compactHTML.includes('Pull the strings. Watch the chaos unfold.'),'Main-menu slogan matches god simulator');
+assert(compactHTML.includes('<span class="menuWorldReady">New Maps Coming Soon!</span>'),'Main-menu notice replaces old status');
+assert(compactHTML.includes('#mainMenu .menuWorldLine{justify-content:center;text-align:center}'),'Map announcement is centered without changing font size');
+assert(!compactHTML.includes('V3 PLAYABLE · MAP v39 · NAV UPDATE')&&!compactHTML.includes('5 future maps locked'),'Old status is removed');
+assert(publicLanding.includes('<iframe class="gameFrame"')&&!publicLanding.includes('location.replace('),'Public URL stays free of the internal v3 route');
+assert(publicLanding.includes('<title>Life in Motion</title>'),'Public landing page uses plain game title');
+
 const compactJS=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
 assert(compactHTML.includes('id="headerStatus"')&&!compactHTML.includes('V3 · TOTAL ELIMINATION'),'Header shows population and energy in place of elimination label');
 assert(!compactHTML.includes('data-speed='),'Speed selection buttons are removed');
