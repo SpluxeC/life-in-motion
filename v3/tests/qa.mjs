@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {createHardwareStore,walkable,pathTo,doorAt,floorRoomName} from '../src/world.js';
 import {makeGame,applyPower,updateGame,addHazard,POWER_LIST,ITEMS} from '../src/simulation.js';
+import {accusationsFor,COMMAND_OPTIONS,powerCost,SUSPICION_OPTIONS} from '../src/god-powers.js';
 import {updateRoutine} from '../src/routines.js';
 import {departmentProducts,departmentItem,visibleShelfCount,DEPARTMENT_PRODUCTS} from '../src/merchandise.js';
 import {checkoutStaffPosition,checkoutCustomerPosition,checkoutFacingIsCorrect} from '../src/checkout-layout.js';
@@ -51,6 +52,32 @@ assert(walkable(world,28,38),'Receiving access clear');
 assert(pathTo(world,{x:20,y:9},{x:41,y:13}).length>0,'Employee room reachable');
 const g=makeGame(world,{staff:4,customers:8,seed:42});
 assert.equal(g.npcs.length,12);
+
+assert.deepEqual(POWER_LIST.map(p=>p.id),['suspicion','anger','whisper','command','sabotage','hazard'],'Exactly six finalized powers');
+assert.equal(SUSPICION_OPTIONS.universal.Minor.length+SUSPICION_OPTIONS.universal.Moderate.length+
+ SUSPICION_OPTIONS.universal.Serious.length+SUSPICION_OPTIONS.universal.Extreme.length,16,'Sixteen universal accusations');
+for(const role of ['employee','customer','police','firefighter','paramedic']){
+ assert.equal(SUSPICION_OPTIONS[role].length,4,'Four role accusations for '+role);
+ assert.equal(accusationsFor({role}).length,20,'Relevant options for '+role);
+}
+assert.equal(COMMAND_OPTIONS.length,15,'All approved full behavioral commands exist');
+assert.equal(powerCost('suspicion',{severity:'Extreme'}),22);
+assert.equal(powerCost('command',{action:'attack'}),18);
+const powerCheck=makeGame(createHardwareStore(),{seed:901,staff:4,customers:8});
+powerCheck.energy=250;
+let beforePower=powerCheck.energy;
+assert(applyPower(powerCheck,'suspicion',powerCheck.npcs[0],{accusation:'universal-Extreme-0'}).ok);
+assert.equal(beforePower-powerCheck.energy,22,'Extreme suspicion charges selected severity');
+assert.equal(powerCheck.npcs.filter(n=>n.suspicions?.some(s=>s.subject===powerCheck.npcs[0].id)).length,4,'Four nearest people initially believe');
+const powerDoor=powerCheck.world.doors.find(d=>d.id==='door-19-10');
+assert(applyPower(powerCheck,'sabotage',powerDoor).ok);
+assert.equal(powerDoor.lockUntil,15,'Door sabotage locks for 15 seconds');
+assert(!applyPower(powerCheck,'hazard',{type:'tile',x:powerCheck.npcs[0].x,y:powerCheck.npcs[0].y},{kind:'fire'}).ok,'Cannot spawn hazard on an NPC');
+beforePower=powerCheck.energy;
+assert(applyPower(powerCheck,'hazard',{type:'tile',x:50,y:45},{kind:'spill'}).ok,'Object-free tile accepts a water spill');
+assert.equal(beforePower-powerCheck.energy,18,'Environmental Hazard uses updated energy cost');
+assert(!applyPower(powerCheck,'hazard',{type:'tile',x:50,y:45},{kind:'electric'}).ok,'No overlapping hazards on a tile');
+
 assert(g.npcs.every(n=>n.alive));
 assert(applyPower(g,'whisper',g.npcs[0]).ok);
 assert(!applyPower(g,'hazard',{type:'tile',x:5,y:18}).ok,'Cannot place hazard inside shelf');
@@ -632,6 +659,9 @@ assert.equal(formatGameTime(loadGame()),formatGameTime(timed),'Clock persists th
 const page=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const client=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
 assert(!page.includes('data-tab="events"'),'Events tab removed');
+assert(page.includes('id="contextGodPowers"'),'Contextual power popup is present');
+assert(!page.includes('id="stopFollow"')&&!client.includes('Stop Following / Unselect'),'Stop Following controls are removed');
+assert(page.includes('class="navLabel">God Powers</span>'),'Floating nav explicitly reads God Powers');
 assert(!page.includes('v3 · Hardware Store</small>'),'Header has no version/map subtitle');
 assert(!page.includes('<h2>Hardware Store</h2>'),'Panels have no repeated Hardware Store heading');
 for(const id of ['peopleContent','powersContent','worldEvents','gameClock','saveV3','home','contextGodPowers']){
