@@ -161,7 +161,13 @@ assert.equal(powerCost('command',{action:'attack'}),18);
 assert(CEILING_LIGHTS.length>=20&&CEILING_LIGHTS.some(l=>l.area==='store')&&
  CEILING_LIGHTS.some(l=>l.area==='employee')&&CEILING_LIGHTS.some(l=>l.area==='garden'),
  'Hardware Store uses overhead lighting across its distinct indoor areas');
-assert.equal(ELECTRICAL_RADIUS,4.6,'Electrical outages stay localized');
+assert.equal(ELECTRICAL_RADIUS,6.5,'Electrical outages stay localized to a few nearby aisles');
+const lampCoverageWorld=createHardwareStore();
+for(const tile of lampCoverageWorld.ground.filter(t=>
+ ['store','employee','garden','loading'].includes(t.area)&&walkable(lampCoverageWorld,t.x,t.y))){
+ assert(CEILING_LIGHTS.some(l=>Math.hypot(l.x-tile.x,l.y-tile.y)<ELECTRICAL_RADIUS),
+  'Every valid overhead-wire tile can affect nearby lighting ('+tile.x+','+tile.y+')');
+}
 const lightingGame=makeGame(createHardwareStore(),{seed:402,staff:8,customers:12});
 lightingGame.energy=250;
 const wirePlaced=applyPower(lightingGame,'hazard',{type:'tile',x:37,y:20},{kind:'electric'});
