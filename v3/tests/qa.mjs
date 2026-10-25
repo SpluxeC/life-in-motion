@@ -32,7 +32,7 @@ for(const expected of ['class="rotatePrompt"','class="cameraControls"','id="came
 for(const expected of ["min=\"25\"","max=\"65\"","value=\"45\""]){
  assert(landscapeHTML.includes(expected),'Camera slider bounds: '+expected);
 }
-for(const label of ['World','People','Powers','Settings']) assert(landscapeHTML.includes('class="navLabel">'+label+'</span>'),'Navigation shows '+label+' inside button');
+for(const label of ['World','People','God Powers','Settings']) assert(landscapeHTML.includes('class="navLabel">'+label+'</span>'),'Navigation shows '+label+' inside button');
 assert(landscapeJS.includes('const yaw=cameraAngle*Math.PI/180')&&landscapeJS.includes('Math.cos(yaw)')&&landscapeJS.includes('Math.sin(yaw)'),'Camera applies one horizontal rotation to the whole map');
 const floorSource=readFileSync(new URL('../src/artwork.js',import.meta.url),'utf8');
 assert(floorSource.includes('P(tile.x-.5,tile.y-.5),P(tile.x+.5,tile.y-.5)')&&!floorSource.includes('const a=24*z,b=12*z'),'All tile corners use the same projected map coordinates, not isolated diamonds');
@@ -634,7 +634,7 @@ const client=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
 assert(!page.includes('data-tab="events"'),'Events tab removed');
 assert(!page.includes('v3 · Hardware Store</small>'),'Header has no version/map subtitle');
 assert(!page.includes('<h2>Hardware Store</h2>'),'Panels have no repeated Hardware Store heading');
-for(const id of ['peopleContent','powersContent','worldEvents','gameClock','saveV3','home','stopFollow']){
+for(const id of ['peopleContent','powersContent','worldEvents','gameClock','saveV3','home','contextGodPowers']){
  assert(page.includes('id="'+id+'"'),'Missing HUD element '+id);
 }
 assert(page.includes('data-tab="settings"')&&page.includes('data-tab="people"'));
@@ -679,7 +679,7 @@ for(const seed of [447,91,2026]){
    'Starting moods persist after save and load');
  }
 }
-for(const power of ['anger','suspicion','trust']){
+for(const power of ['anger','suspicion','command']){
  const description=POWER_HELP[power][0];
  assert(description.includes('targets'),'God Power description refers to targets: '+power);
  assert(!/undefined|character/i.test(description),'God Power description has no broken apostrophe: '+power);
