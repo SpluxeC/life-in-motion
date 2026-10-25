@@ -465,7 +465,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===30,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===31,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(!doorAt(migrated.world,43,39)&&doorAt(migrated.world,36,31)?.type==='sliding',
@@ -1207,7 +1207,7 @@ const remodeledHardware=createHardwareStore();
 const remodelPaint=remodeledHardware.fixtures.find(f=>f.type==='paintMixer');
 const remodelKey=remodeledHardware.fixtures.find(f=>f.type==='keyCutter');
 const remodelSafety=remodeledHardware.fixtures.find(f=>f.type==='safetyStation');
-const remodelTools=remodeledHardware.fixtures.find(f=>f.type==='endcap'&&f.department==='TOOLS');
+const remodelTools=remodeledHardware.fixtures.find(f=>f.type==='departmentWallShelf'&&f.department==='TOOLS');
 assert.deepEqual([remodelPaint.x,remodelPaint.y,remodelPaint.w,remodelPaint.h],[8,24,2,1],
  'Larger paint workstation occupies center of Paint department');
 assert.deepEqual([remodelKey.x,remodelKey.y,remodelKey.w,remodelKey.h],[32,24,2,1],
@@ -1264,8 +1264,8 @@ assert(improvedArt.includes('function paintMixingDesk(o)')&&improvedArt.includes
 assert(improvedArt.includes("paintMixingDesk(o);")&&improvedArt.includes("keyCuttingBench(o);"),
  'Fixture dispatcher uses the new workstation renderers');
 // Three aisle displays line the same wall as the safety cabinet, facing west.
-const wallTools=remodeledHardware.fixtures.find(f=>f.type==='endcap'&&f.department==='TOOLS');
-const wallHardware=remodeledHardware.fixtures.find(f=>f.type==='endcap'&&f.department==='HARDWARE');
+const wallTools=remodeledHardware.fixtures.find(f=>f.type==='departmentWallShelf'&&f.department==='TOOLS');
+const wallHardware=remodeledHardware.fixtures.find(f=>f.type==='departmentWallShelf'&&f.department==='HARDWARE');
 const wallFasteners=remodeledHardware.fixtures.find(f=>f.type==='hardwareBins');
 const wallSafety=remodeledHardware.fixtures.find(f=>f.type==='safetyStation');
 assert.deepEqual([wallTools.x,wallTools.y],[35,21]);
