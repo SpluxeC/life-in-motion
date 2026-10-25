@@ -27,7 +27,9 @@ for(const expected of ["min=\"25\"","max=\"65\"","value=\"45\""]){
  assert(landscapeHTML.includes(expected),'Camera slider bounds: '+expected);
 }
 for(const label of ['World','People','Powers','Settings']) assert(landscapeHTML.includes('class="navLabel">'+label+'</span>'),'Navigation shows '+label+' inside button');
-assert(landscapeJS.includes('return {a:TW*.5,b:TW*.5,c:TH*.5,d:TH*.5}')&&landscapeJS.includes('const lateral=z*Math.tan((cameraAngle-45)*Math.PI/180)*.45')&&!landscapeJS.includes('cameraHeightScale()'),'Ground tiles remain fixed while elevated artwork receives horizontal parallax');
+assert(landscapeJS.includes('const yaw=cameraAngle*Math.PI/180')&&landscapeJS.includes('Math.cos(yaw)')&&landscapeJS.includes('Math.sin(yaw)'),'Camera applies one horizontal rotation to the whole map');
+const floorSource=readFileSync(new URL('../src/artwork.js',import.meta.url),'utf8');
+assert(floorSource.includes('P(tile.x-.5,tile.y-.5),P(tile.x+.5,tile.y-.5)')&&!floorSource.includes('const a=24*z,b=12*z'),'All tile corners use the same projected map coordinates, not isolated diamonds');
 assert(landscapeJS.includes("function unproject(sx,sy)")&&landscapeJS.includes("const {a,b,c,d}=basis(),det=a*d+b*c"),'Camera yaw includes inverse touch projection');
 assert(landscapeJS.includes("offset=npc?iso(npc.rx,npc.ry):iso(focal.x,focal.y)"),'Camera angle changes preserve map focal point');
 for(const angle of [25,35,45,55,65]){
