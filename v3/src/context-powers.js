@@ -77,7 +77,14 @@ export function createContextPowers({element,stage,getGame,apply,onMessage}){
  }
  return {
   hide,
-  show(t,x,y,power=null){target=t;position={x:x??stage.clientWidth*.48,y:y??stage.clientHeight*.25};mode=power;if(power&&!['suspicion','command','hazard'].includes(power)){action(power);return}draw()},
+  show(t,x,y,power=null){
+   // NPC selection never displays a power list. Person Overview launches
+   // the chosen power directly, including its required secondary options.
+   if(typeOf(t)==='npc'&&!power){hide();return}
+   target=t;position={x:x??stage.clientWidth*.48,y:y??stage.clientHeight*.25};mode=power;
+   if(power&&!['suspicion','command','hazard'].includes(power)){action(power);return}
+   draw();
+  },
   waitingForTarget(){return !!pick},
   consumeClick(selected,tile){
    if(!pick)return false;
