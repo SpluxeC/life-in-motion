@@ -30,8 +30,19 @@ export function createArtwork(ctx,project,getZoom){
   poly([topPts[0],topPts[1],base[1],base[0]],sideY,'#35474a',.7);
   poly(topPts,top,'#405354',.8);return topPts;
  }
- function shadow(x,y,w,h,scale=1){
-  const p=P(x+(w-1)*.5,y+(h-1)*.5);ellipse(p.x+4*Z(),p.y+6*Z(),Math.max(8,(w+h)*11*scale),Math.max(3,(w+h)*4*scale),'#111e203b')
+ function shadow(x,y,w,h,scale=1,shape='auto'){
+  // Broad rectangular stock and machinery cast footprint-matched shadows;
+  // compact rounded items keep the softer oval contact shadow.
+  const rectangular=shape==='rect'||(shape==='auto'&&(w>1||h>1));
+  if(rectangular){
+   const pad=.06*scale;
+   const pts=[P(x-.5-pad,y-.5-pad),P(x+w-.5+pad,y-.5-pad),
+    P(x+w-.5+pad,y+h-.5+pad),P(x-.5-pad,y+h-.5+pad)];
+   poly(pts.map(p=>({x:p.x+4*Z(),y:p.y+5*Z()})),'#111e203b');
+  }else{
+   const p=P(x+(w-1)*.5,y+(h-1)*.5);
+   ellipse(p.x+4*Z(),p.y+6*Z(),Math.max(8,(w+h)*11*scale),Math.max(3,(w+h)*4*scale),'#111e203b');
+  }
  }
  function label(x,y,z,text,ink='#f4eee2',bg='#344951',width=46){
   const p=P(x,y,z),s=Z();ctx.fillStyle=bg;ctx.fillRect(p.x-width*s*.5,p.y-7*s,width*s,11*s);
