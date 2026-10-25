@@ -1,6 +1,6 @@
 import {createHardwareStore,doorAt,fixtureAt,nearestOpen,walkable,key} from './world.js?v=hardware-lighting-v49-20261025';
 import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v=hardware-lighting-v49-20261025';
-import {createContextPowers} from './context-powers.js?v=god-powers-v41-20261025';
+import {createContextPowers} from './context-powers.js?v=target-powers-v50-20261025';
 import {initMenuAnimation} from './menu-animation.js?v=animated-main-menu-v47-20261025';
 import {createSceneLighting} from './scene-lighting.js?v=hardware-lighting-v49-20261025';
 import {patchPanelHTML} from './panel-patch.js?v=panel-hover-v42-20261025';
