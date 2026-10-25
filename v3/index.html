@@ -40,6 +40,7 @@
 @media(max-width:800px){.selectedLabel{max-width:125px;padding:6px;font-size:10px}}
 
 /* Landscape-first game shell; canvas extends underneath floating fixed controls. */
+body:not(.playing) .bottomNav,body:not(.playing) .cameraControls{visibility:hidden;pointer-events:none}
 body{overflow:hidden}
 .worldLayout{display:block;position:relative}
 .stage{height:calc(100dvh - 56px)!important;width:100%}
