@@ -203,7 +203,11 @@ function stick(n,t){let p=project(n.rx,n.ry),z=zoom*(n.role==='customer'||n.role
  else if(n.alive&&n.unconscious<=0&&n.inventory?.length&&(n.role!=='employee'||!['cashier','service','patrol','break','help'].includes(n.task?.kind))){artwork.drawItem(n.inventory[0],n.rx+.28,n.ry+.12,15,.66)}
 
 }
-function drawHazard(h,t){let p=project(h.x,h.y),z=zoom;ctx.save();if(h.kind==='fire'){for(let i=0;i<3;i++){ctx.fillStyle=i===0?'#ed743f':i===1?'#ffc15e':'#fae2a5';ctx.beginPath();ctx.ellipse(p.x+(i-1)*6*z,p.y-11*z-Math.sin(t*8+i)*3*z,7*z,15*z,0,0,Math.PI*2);ctx.fill()}}else if(h.kind==='spill'){ctx.fillStyle='#75bdbaad';ctx.beginPath();ctx.ellipse(p.x,p.y,19*z,6*z,0,0,7);ctx.fill()}else{ctx.strokeStyle=h.kind==='electric'?'#f4da78':'#e8b0a1';ctx.lineWidth=3*z;ctx.beginPath();ctx.moveTo(p.x-9*z,p.y);ctx.lineTo(p.x,p.y-17*z);ctx.lineTo(p.x+3*z,p.y-5*z);ctx.lineTo(p.x+14*z,p.y-20*z);ctx.stroke()}ctx.restore()}
+function drawHazard(h,t){let p=project(h.x,h.y),z=zoom;ctx.save();if(h.kind==='fire'){for(let i=0;i<3;i++){ctx.fillStyle=i===0?'#ed743f':i===1?'#ffc15e':'#fae2a5';ctx.beginPath();ctx.ellipse(p.x+(i-1)*6*z,p.y-11*z-Math.sin(t*8+i)*3*z,7*z,15*z,0,0,Math.PI*2);ctx.fill()}}else if(h.kind==='spill'){ctx.fillStyle='#75bdbaad';ctx.beginPath();ctx.ellipse(p.x,p.y,19*z,6*z,0,0,7);ctx.fill()}else if(h.kind==='electric'){
+ const top=project(h.x,h.y,65),tip=project(h.x,h.y,11);
+ ctx.strokeStyle='#353c47';ctx.lineWidth=3*z;ctx.beginPath();ctx.moveTo(top.x,top.y);ctx.quadraticCurveTo(p.x-7*z,tip.y-19*z,tip.x,tip.y);ctx.stroke();
+ ctx.strokeStyle='#ffe788';ctx.lineWidth=2*z;ctx.beginPath();ctx.moveTo(tip.x-10*z,tip.y+3*z);ctx.lineTo(tip.x-1*z,tip.y-5*z);ctx.lineTo(tip.x+5*z,tip.y+4*z);ctx.lineTo(tip.x+13*z,tip.y-2*z);ctx.stroke();
+ }ctx.restore()}
 const departmentSigns=[
  {x:5.5,y:16.5,name:'PAINT',accent:'#b75e4f'},
  {x:11.5,y:16.5,name:'TOOLS',accent:'#b88e56'},
@@ -223,7 +227,13 @@ function render(t){
  ctx.fillStyle='#263b39';ctx.fillRect(0,0,viewport.w,viewport.h);
  artwork.drawFloor(world,viewport);
  const items=[
-  ...world.fixtures.map(o=>({kind:'fixture',depth:renderDepth('fixture',o),fn:()=>artwork.drawFixture(o)})),
+  ...world.fixtures.map(o=>({kind:'fixture',depth:renderDepth('fixture',o),fn:()=>{
+   artwork.drawFixture(o);
+   if(o.damaged||o.powerOutUntil>(game?.elapsed||0)){
+    const p=project(o.x+(o.w||1)*.5-.5,o.y+(o.h||1)*.5-.5,28);
+    ctx.save();ctx.fillStyle=o.damaged?'#ec8756':'#ffe089';ctx.globalAlpha=.8;ctx.beginPath();ctx.arc(p.x,p.y,4.5*zoom,0,Math.PI*2);ctx.fill();ctx.restore();
+   }
+  }})),
   ...world.doors.map(o=>({kind:'door',depth:renderDepth('door',o),fn:()=>artwork.drawDoor(o,t)})),
   ...[...world.walls.values()].map(o=>({kind:'wall',depth:renderDepth('wall',o),fn:()=>artwork.drawWall(o,world)})),
   ...world.props.map(o=>({kind:'vehicle',depth:renderDepth('vehicle',o),fn:()=>o.type==='wetFloorSign'?artwork.drawWetFloorSign(o.x,o.y):artwork.drawVehicle(o,t)})),
@@ -238,7 +248,10 @@ function render(t){
     }};
   }),
   ...world.hazards.filter(h=>h.kind==='spill'&&h.beingCleaned&&h.life>0).map(h=>({kind:'sign',depth:renderDepth('sign',h)+.2,fn:()=>artwork.drawWetFloorSign(h.x,h.y)})),
-  ...(game?game.npcs.map(o=>({kind:'npc',depth:renderDepth('npc',o),fn:()=>stick(o,t)})):[]),
+  ...(game?game.npcs.filter(o=>!(o.medicalUntil>game.elapsed)).map(o=>({kind:'npc',depth:renderDepth('npc',o),fn:()=>{
+   stick(o,t);
+   if(o.command&&o.alive){const p=project(o.rx,o.ry,43);ctx.save();ctx.font='bold '+Math.max(10,13*zoom)+'px system-ui';ctx.textAlign='center';ctx.fillStyle='#ffe296';ctx.strokeStyle='#24343d';ctx.lineWidth=2.5;ctx.strokeText('✦',p.x,p.y);ctx.fillText('✦',p.x,p.y);ctx.restore()}
+  }})):[]),
   ...world.hazards.map(o=>({kind:'hazard',depth:renderDepth('hazard',o),fn:()=>drawHazard(o,t)}))
  ];
  items.sort(compareRenderDepth);for(const item of items)item.fn();
@@ -341,6 +354,7 @@ function refreshHud(){
    '</p><p><strong>Currently:</strong> '+escapeHTML(n.alive?n.activity:'Deceased')+
    '<br><strong>Role:</strong> '+escapeHTML(job)+
    '<br><strong>Health:</strong> '+Math.round(n.health)+' · Pain '+Math.round(n.pain)+
+   (n.command?'<br><strong>Whisper Command:</strong> '+escapeHTML(n.command.action)+' · '+escapeHTML(n.command.status)+' · '+Math.max(0,Math.ceil(n.command.until-g.elapsed))+'s remaining':'')+
    '</p><p><strong>Traits:</strong> '+escapeHTML(Object.entries(n.traits).map(([k,v])=>k+' '+v).join(' · '))+
    '</p><p><strong>Inventory:</strong> '+escapeHTML((n.inventory||[]).map(id=>ITEMS.find(i=>i.id===id)?.name||id).join(', ')||'Empty')+
    '</p><p><strong>Recent memory:</strong> '+escapeHTML((n.memory||[]).slice(0,3).map(m=>m.text).join(' · ')||'None')+'</p></div>';
