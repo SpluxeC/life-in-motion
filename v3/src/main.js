@@ -24,7 +24,7 @@ $('continueGame').onclick=()=>{let restored=loadGame();if(!restored){$('continue
 function refreshContinue(){$('continueGame').disabled=!hasSave()}
 refreshContinue();
 $('saveV3').onclick=()=>{if(!game)return;let ok=saveGame(game);feedback=ok?'Game saved.':'Save failed: browser storage unavailable';$('settingsFeedback').textContent=feedback;refreshContinue()};
-$('pause').onclick=()=>{if(game){game.paused=!game.paused;$('pause').textContent=game.paused?'Resume':'Pause';refreshHud()}};
+$('pause').onclick=()=>{if(game){game.paused=!game.paused;refreshHud()}};
 $('stopFollow').onclick=()=>clearSelection();
 function activateTab(tab,open=true){
  activeTab=tab;panelOpen=open;
@@ -316,9 +316,13 @@ function refreshHud(){
  $('selectedLabel').textContent=selected?(g.npcs.find(n=>n.id===selected.id)?.name||selectionLabel(g.world,selected)):'';
  $('selectedLabel').classList.toggle('hidden',!selected);
  $('gameClock').textContent=formatGameTime(g);
- $('pause').textContent=g.paused?'Resume':'Pause';
+ $('pause').querySelector('.navLabel').textContent=g.paused?'Resume':'Pause';
+ $('pause').setAttribute('aria-label',g.paused?'Resume':'Pause');
+ $('pause').title=g.paused?'Resume':'Pause';
+ $('pause').setAttribute('aria-pressed',String(g.paused));
+ $('pause').querySelector('.pauseIcon').style.display=g.paused?'none':'';
+ $('pause').querySelector('.resumeIcon').style.display=g.paused?'':'none';
  $('headerStatus').textContent='Living '+alive+'/'+g.npcs.length+' · God Energy '+Math.floor(g.energy);
- $('worldStatus').textContent=pendingPower?'Tap a target for '+POWER_LIST.find(p=>p.id===pendingPower)?.name:'Drag to pan · Wheel or pinch to zoom';
  $('stopFollow').classList.toggle('hidden',!g.npcs.some(n=>n.id===selected?.id));
  $('settingsFeedback').textContent=feedback;
  $('worldEvents').innerHTML=g.log.slice(0,12).map(e=>'<p class="personFacts">'+escapeHTML(e.text)+'</p>').join('')||'<p>No events yet.</p>';
