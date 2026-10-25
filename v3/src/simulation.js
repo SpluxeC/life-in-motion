@@ -1,6 +1,7 @@
 import {nearestOpen,pathTo,doorAt,fixtureAt,walkable,key} from './world.js?v=selection-shadows-map31-20261024';
 import {initializeRoutine,chooseRoutine,updateRoutine} from './routines.js?v=selection-shadows-map31-20261024';
 import {POWER_LIST,godPowerApply,tickGodPowers,spreadSuspicion,autoSabotage} from './god-powers.js?v=god-powers-v41';
+import {updateElectricalZones} from './scene-lighting.js?v=hardware-lighting-v48-20261025';
 export {POWER_LIST} from './god-powers.js?v=god-powers-v41';
 const clamp=(n,a=0,b=100)=>Math.max(a,Math.min(b,n));
 export const ITEMS=[
@@ -155,9 +156,7 @@ export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
  for(const h of [...g.world.hazards]){
   h.beingCleaned=false;h.life-=dt;h.tick+=dt;
   if(h.life<=0)continue;
-  if(h.kind==='electric'){
-   for(const f of g.world.fixtures)if(Math.hypot(f.x-h.x,f.y-h.y)<2.5&&g.random()<dt*.2)f.powerOutUntil=g.elapsed+6;
-  }
+  // Wire outages and light flicker are handled by shared local electrical zones.
   if(h.kind==='fire'){
    for(const electric of g.world.hazards)if(electric.kind==='electric'&&Math.hypot(electric.x-h.x,electric.y-h.y)<2&&g.random()<dt*.35)electric.life=0;
    for(const v of [...g.world.props,...g.world.fixtures])if(Math.hypot(v.x-h.x,v.y-h.y)<1.6&&g.random()<dt*.17){v.damaged=true;v.destroyed=v.destroyed||g.random()<.04;v.repairUntil=Math.max(v.repairUntil||0,g.elapsed+(v.destroyed?55:25))}
@@ -184,6 +183,7 @@ export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
   }
  }
  g.world.hazards=g.world.hazards.filter(h=>h.life>0);
+ updateElectricalZones(g);
  g.world.props=g.world.props.filter(o=>o.type!=='wetFloorSign'||o.expires>g.elapsed);
  for(let n of g.npcs){if(!n.alive){if(n.cleaningTarget)clearCleanup(g,n);continue}if(n.medicalUntil>g.elapsed)continue;n.callCooldown=Math.max(0,n.callCooldown-dt);
  n.emotion.fear=clamp(n.emotion.fear-dt*.55);n.emotion.anger=clamp(n.emotion.anger-dt*.3);n.emotion.stress=clamp(n.emotion.stress-dt*.2);
