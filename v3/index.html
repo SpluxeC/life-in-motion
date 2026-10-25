@@ -518,12 +518,13 @@ body{overflow:hidden}
         <defs>
           <linearGradient id="godEyeMetal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4dca5"/><stop offset="1" stop-color="#a2dbc9"/></linearGradient>
           <radialGradient id="godIris"><stop offset="0" stop-color="#f5eac4"/><stop offset=".45" stop-color="#79c9b4"/><stop offset="1" stop-color="#173b44"/></radialGradient>
+          <clipPath id="godEyeAperture"><path d="M24 56Q60 21 96 56 60 90 24 56Z"/></clipPath>
         </defs>
         <path d="M60 7 106 33v54L60 113 14 87V33Z" fill="none" stroke="#6b948c" stroke-width="1.2" opacity=".7"/>
         <path d="M60 15 98 37v46L60 105 22 83V37Z" fill="#091b25" fill-opacity=".5" stroke="#bbab7c" stroke-width="1" opacity=".65"/>
         <path d="M15 59h15m60 0h15M60 7v15m0 75v16" stroke="#d2c18f" stroke-width="1.4" opacity=".85"/>
         <path d="M24 56Q60 21 96 56 60 90 24 56Z" fill="#163b42" fill-opacity=".8" stroke="url(#godEyeMetal)" stroke-width="3" stroke-linejoin="round"/>
-        <g class="menuEyePupil">
+        <g class="menuEyePupil" clip-path="url(#godEyeAperture)">
           <circle cx="60" cy="56" r="17" fill="url(#godIris)" stroke="#f1dfac" stroke-width="1.4"/>
           <circle cx="60" cy="56" r="9" fill="#08202c"/>
           <circle cx="56" cy="51" r="3.5" fill="#e9fff0"/>
