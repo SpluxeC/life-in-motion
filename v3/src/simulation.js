@@ -119,6 +119,8 @@ const godContext={addHazard,injury,incident,memory,log,reward};
 export function applyPower(g,id,target,secondary=null){return godPowerApply(g,id,target,secondary,godContext)}
 function interact(g,n,other){if(!other||!other.alive)return;
  spreadSuspicion(g,n,other,godContext);spreadSuspicion(g,other,n,godContext);
+ if(n.traits.compassion>55&&other.doubt>8)other.doubt=Math.max(0,other.doubt-1.6);
+ if(other.traits.compassion>55&&n.doubt>8)n.doubt=Math.max(0,n.doubt-1.6);
  if(n.role==='police'&&other.emotion.anger>65&&!other.arrested){other.arrested=true;other.detention=60;other.path=[];other.activity='Detained by police';memory(other,'arrest',n.id,'Arrested',3);log(g,other.name+' was detained.');return}
  if(n.role==='paramedic'&&other.health<90){other.health=clamp(other.health+20);other.bleeding=Math.max(0,other.bleeding-3);other.unconscious=Math.max(0,other.unconscious-20);other.activity='Receiving medical care';log(g,other.name+' received treatment.');return}
  if(n.emotion.anger>55&&n.traits.aggression>35&&!other.arrested){let item=ITEMS.find(i=>i.id===n.inventory[0]);let damage=5+(item?.damage||0)+n.traits.aggression*.12;injury(g,other,damage,'fight',n);other.emotion.anger=clamp(other.emotion.anger+30);memory(other,'attack',n.id,'Attacked by '+n.name,3);n.emotion.anger=clamp(n.emotion.anger-8);reward(g,5,'fight');incident(g,'crime');return}
@@ -186,7 +188,7 @@ export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
  if(n.bleeding>0){n.health-=n.bleeding*dt*.09;if(n.health<=0){kill(g,n,'untreated injury');continue}}n.pain=clamp(n.pain-dt*.13);if(n.unconscious>0){if(n.cleaningTarget)clearCleanup(g,n);n.unconscious-=dt;continue}
  if(n.arrested){if(n.cleaningTarget)clearCleanup(g,n);n.detention-=dt;if(n.detention<=0){n.arrested=false;n.activity='Released from detention'}continue}
  n.think-=dt;if(n.think<=0){n.think=1.5+g.random()*2;if(!n.command)choose(g,n)}
- if(n.path.length){let next=n.path[0],entry=doorAt(g.world,next.x,next.y);if(entry&&entry.open<.65){if(!entry.locked)entry.forceUntil=g.elapsed+2;continue}let p=n.path[0],beforeX=n.rx,beforeY=n.ry,dx=p.x-n.rx,dy=p.y-n.ry,dist=Math.hypot(dx,dy),speed=(n.panic?3.6:1.65)*(n.health<50?.7:1);if(dist>.001&&Math.abs(dx-dy)>.025)n.facing=dx-dy>0?'right':'left';if(dist<=dt*speed){n.rx=p.x;n.ry=p.y;n.x=p.x;n.y=p.y;n.path.shift()}else{n.rx+=dx/dist*dt*speed;n.ry+=dy/dist*dt*speed}
+ if(n.path.length){let next=n.path[0],entry=doorAt(g.world,next.x,next.y);if(entry&&entry.open<.65){if(!entry.locked)entry.forceUntil=g.elapsed+2;else{n.emotion.anger=clamp(n.emotion.anger+dt*6);n.emotion.stress=clamp(n.emotion.stress+dt*3);n.activity='Frustrated by locked door'}continue}let p=n.path[0],beforeX=n.rx,beforeY=n.ry,dx=p.x-n.rx,dy=p.y-n.ry,dist=Math.hypot(dx,dy),speed=(n.panic?3.6:1.65)*(n.health<50?.7:1);if(dist>.001&&Math.abs(dx-dy)>.025)n.facing=dx-dy>0?'right':'left';if(dist<=dt*speed){n.rx=p.x;n.ry=p.y;n.x=p.x;n.y=p.y;n.path.shift()}else{n.rx+=dx/dist*dt*speed;n.ry+=dy/dist*dt*speed}
  // Stride phase follows distance covered, not frame time. A slow/injured
  // walker therefore swings arms more slowly than a panicking runner.
  n.walkDistance=(n.walkDistance||0)+Math.hypot(n.rx-beforeX,n.ry-beforeY);
