@@ -223,7 +223,7 @@ export function tickGodPowers(g,dt,ctx){
  }
 }
 export function autoSabotage(g,n,ctx){
- if(n.role==='paramedic'||n.role==='firefighter')return false;
+ // Any role may consider sabotage if personality, motive and opportunity justify it.
  if(n.traits.aggression<68||n.emotion.anger<72||g.random()>.018)return false;
  const nearby=g.world.fixtures.filter(f=>Math.hypot(n.x-f.x,n.y-f.y)<5&&!f.damaged&&!f.destroyed&&!g.world.sabotages?.some(s=>s.id===f.id));
  const f=nearby[Math.floor(g.random()*nearby.length)];
