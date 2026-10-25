@@ -1,14 +1,8 @@
 import {nearestOpen,pathTo,doorAt,fixtureAt,walkable,key} from './world.js?v=selection-shadows-map31-20261024';
 import {initializeRoutine,chooseRoutine,updateRoutine} from './routines.js?v=selection-shadows-map31-20261024';
+import {POWER_LIST,godPowerApply,tickGodPowers,spreadSuspicion,autoSabotage} from './god-powers.js?v=god-powers-v40';
+export {POWER_LIST} from './god-powers.js?v=god-powers-v40';
 const clamp=(n,a=0,b=100)=>Math.max(a,Math.min(b,n));
-export const POWER_LIST=[
- {id:'whisper',name:'Whisper Doubt',cost:0,targets:['npc'],cooldown:12},
- {id:'anger',name:'Increase Anger',cost:5,targets:['npc']},{id:'fear',name:'Increase Fear',cost:5,targets:['npc']},
- {id:'suspicion',name:'Plant Suspicion',cost:10,targets:['npc']},{id:'trust',name:'Alter Trust',cost:8,targets:['npc']},
- {id:'rumor',name:'Spread Rumor',cost:12,targets:['npc']},{id:'item',name:'Influence Item Interest',cost:6,targets:['npc','fixture']},
- {id:'sabotage',name:'Sabotage Equipment',cost:18,targets:['fixture']},{id:'hazard',name:'Trigger Environmental Hazard',cost:20,targets:['tile','fixture']},
- {id:'lightning',name:'Divine Lightning',cost:95,targets:['npc'],cooldown:65}
-];
 export const ITEMS=[
  {id:'hammer',name:'Hammer',kind:'tool',damage:15},{id:'wrench',name:'Wrench',kind:'tool',damage:12},{id:'broom',name:'Broom',kind:'tool',damage:7},
  {id:'flashlight',name:'Flashlight',kind:'tool',damage:5},{id:'paint',name:'Paint Can',kind:'material',damage:4},
@@ -87,10 +81,12 @@ function assignSpillCleanup(g,n){
 }
 function choose(g,n){
  const r=g.random,w=g.world;
+ if(n.command)return;
  if(!n.alive||n.unconscious>0||n.arrested)return;
  const danger=w.hazards.filter(h=>h.life>0&&(n.role!=='employee'||h.kind!=='spill')&&Math.hypot(n.x-h.x,n.y-h.y)<5).sort((a,b)=>Math.hypot(n.x-a.x,n.y-a.y)-Math.hypot(n.x-b.x,n.y-b.y))[0];
  if(danger&&n.traits.bravery<55+n.emotion.fear*.25){n.task=null;n.action='panic';if(n.cleaningTarget)clearCleanup(g,n);n.emotion.fear=clamp(n.emotion.fear+24);n.panic=10;let flee=nearestOpen(w,n.x+(n.x-danger.x>0?7:-7),n.y+(n.y-danger.y>0?7:-7));goto(g,n,flee);n.activity='Fleeing '+danger.kind;return}
  if(n.role==='employee'&&assignSpillCleanup(g,n))return;
+ if(autoSabotage(g,n,godContext))return;
  if(n.health<45&&n.inventory.includes('bandage')){n.health=clamp(n.health+16);n.bleeding=Math.max(0,n.bleeding-1);n.inventory.splice(n.inventory.indexOf('bandage'),1);n.activity='Treating injury';return}
  if(n.emotion.anger>64&&n.traits.aggression>35){let victim=nearest(g,n,o=>!o.arrested);if(victim&&Math.hypot(victim.x-n.x,victim.y-n.y)<5){goto(g,n,victim);n.activity='Confronting '+victim.name;return}}
  if(n.role==='police'){let suspect=g.npcs.find(o=>o.alive&&!o.arrested&&o!==n&&o.emotion.anger>72);if(suspect){goto(g,n,suspect);n.activity='Responding to suspect';return}}
@@ -110,34 +106,10 @@ function incident(g,kind,source){if(g.completed)return;g.stats.incidents++;if(g.
 }
 function dispatch(g,service){if(g.respondersRemaining[service]<=0)return;g.respondersRemaining[service]--;const role={fire:'firefighter',medic:'paramedic',police:'police'}[service];let n=spawnNPC(g,role);n.x=n.rx=4;n.y=n.ry=5;g.world.props.push({id:'response-'+n.id,type:'car',x:1,y:5,targetX:5+(g.nextId%4)*3,targetY:5,emergency:true,color:service==='fire'?'#b9594d':service==='police'?'#668ba9':'#dfd8be'});n.inventory=service==='medic'?['bandage']:service==='police'?['flashlight']:['water'];n.relationships={};log(g,role+' '+n.name+' arrived. '+g.respondersRemaining[service]+' reserve teams remain.')}
 export function addHazard(g,x,y,kind='fire',source='god'){const w=g.world;if(!walkable(w,x,y))return false;if(w.hazards.some(h=>h.x===x&&h.y===y&&h.life>0))return false;w.hazards.push({id:'haz-'+(g.elapsed.toFixed(3))+'-'+(w.hazards.length+1),x,y,kind,life:kind==='fire'?48:kind==='spill'?65:30,tick:0,source,spread:0});log(g,'A '+kind+' hazard appeared.');incident(g,kind==='fire'?'fire':'injury');return true}
-export function applyPower(g,id,target,secondary=null){const p=POWER_LIST.find(o=>o.id===id);if(!p)return{ok:false,message:'Unknown power'};
- if(g.paused)return{ok:false,message:'Resume time to activate powers'};
- if(g.completed&&!g.freeplay)return{ok:false,message:'Round completed'};
- if(g.energy<p.cost)return{ok:false,message:'Not enough God Energy'};
- if(g.cooldowns[id]>g.elapsed)return{ok:false,message:'Power is cooling down'};
- let n=g.npcs.find(n=>n.id===target?.id),f=g.world.fixtures.find(f=>f.id===target?.id),x=target?.x,y=target?.y;
- let type=n?'npc':f?'fixture':'tile';if(!p.targets.includes(type))return{ok:false,message:'Invalid target'};
- // Target validation always happens before paying energy.
- if(id==='hazard'&&!walkable(g.world,x,y))return{ok:false,message:'Choose open ground'};
- g.energy-=p.cost;g.stats.powers++;if(p.cooldown)g.cooldowns[id]=g.elapsed+p.cooldown;
- if(n){const roll=g.random()*100,resistance=n.traits.suspicion*.3+n.traits.bravery*.25+(100-n.emotion.stress)*.1;
- if(roll<resistance*.42){log(g,n.name+' resisted '+p.name+'.');return{ok:true,message:n.name+' resisted the influence.'}}
- if(id==='whisper'){n.emotion.anger=clamp(n.emotion.anger+14);memory(n,'rumor',null,'An unsettling thought took hold');reward(g,4,'whispered doubt')}
- if(id==='anger')n.emotion.anger=clamp(n.emotion.anger+44);
- if(id==='fear'){n.emotion.fear=clamp(n.emotion.fear+50);n.panic=12}
- if(id==='suspicion'){n.traits.suspicion=clamp(n.traits.suspicion+28);memory(n,'rumor',secondary?.id||null,'Someone may be untrustworthy',2)}
- if(id==='trust'){let other=secondary?.id||nearest(g,n)?.id;if(other)n.relationships[other]=clamp((n.relationships[other]||0)-45,-100,100)}
- if(id==='rumor'){n.emotion.anger=clamp(n.emotion.anger+24);memory(n,'rumor',secondary?.id||null,'Heard a dangerous rumor',2)}
- if(id==='item'){n.activity='Searching for a useful item';n.inventory.push(ITEMS[Math.floor(g.random()*ITEMS.length)].id);n.inventory=n.inventory.slice(-4)}
- if(id==='lightning')injury(g,n,120,'divine lightning');
- if(id!=='lightning')reward(g,2,'successful manipulation');
- }
- if(id==='sabotage'&&f){const point=nearestOpen(g.world,f.x+1,f.y+1);addHazard(g,point.x,point.y,g.random()<.5?'electric':'fire');f.damaged=true}
- if(id==='hazard')addHazard(g,x,y,['fire','spill','electric','falling'][Math.floor(g.random()*4)]);
- if(id==='item'&&f){let d=nearestOpen(g.world,f.x+1,f.y);g.world.drops.push({id:'drop-'+g.elapsed,item:ITEMS[Math.floor(g.random()*ITEMS.length)].id,x:d.x,y:d.y})}
- log(g,'God Power: '+p.name);return{ok:true,message:p.name+' activated'};
-}
+const godContext={addHazard,injury,incident,memory,log,reward};
+export function applyPower(g,id,target,secondary=null){return godPowerApply(g,id,target,secondary,godContext)}
 function interact(g,n,other){if(!other||!other.alive)return;
+ spreadSuspicion(g,n,other,godContext);spreadSuspicion(g,other,n,godContext);
  if(n.role==='police'&&other.emotion.anger>65&&!other.arrested){other.arrested=true;other.detention=60;other.path=[];other.activity='Detained by police';memory(other,'arrest',n.id,'Arrested',3);log(g,other.name+' was detained.');return}
  if(n.role==='paramedic'&&other.health<90){other.health=clamp(other.health+20);other.bleeding=Math.max(0,other.bleeding-3);other.unconscious=Math.max(0,other.unconscious-20);other.activity='Receiving medical care';log(g,other.name+' received treatment.');return}
  if(n.emotion.anger>55&&n.traits.aggression>35&&!other.arrested){let item=ITEMS.find(i=>i.id===n.inventory[0]);let damage=5+(item?.damage||0)+n.traits.aggression*.12;injury(g,other,damage,'fight',n);other.emotion.anger=clamp(other.emotion.anger+30);memory(other,'attack',n.id,'Attacked by '+n.name,3);n.emotion.anger=clamp(n.emotion.anger-8);reward(g,5,'fight');incident(g,'crime');return}
@@ -145,6 +117,7 @@ function interact(g,n,other){if(!other||!other.alive)return;
 }
 export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
  g.elapsed+=dt;g.dispatchCooldown=Math.max(0,g.dispatchCooldown-dt);
+ tickGodPowers(g,dt,godContext);
  for(let k of Object.keys(g.cooldowns))if(g.cooldowns[k]<g.elapsed)delete g.cooldowns[k];
  for(let d of g.world.doors){
   // A door begins opening as the character approaches its planned doorway,
@@ -161,7 +134,7 @@ export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
     cells.some(c=>Math.hypot(n.rx-c.x,n.ry-c.y)<2.4||
        (n.path||[]).slice(0,4).some(p=>p.x===c.x&&p.y===c.y&&Math.hypot(n.rx-c.x,n.ry-c.y)<4.8)));
   if(approaching)d.forceUntil=Math.max(d.forceUntil||0,g.elapsed+1.7);
-  d.target=approaching||(d.forceUntil||0)>g.elapsed?1:0;
+  d.target=d.locked?0:(approaching||(d.forceUntil||0)>g.elapsed?1:0);
   d.open=clamp(d.open+(d.target-d.open)*Math.min(1,dt*(d.target?3.7:2.2)),0,1);
 }
  for(let v of g.world.props){if(v.targetX!==undefined){let dx=v.targetX-v.x,dy=v.targetY-v.y,dist=Math.hypot(dx,dy);if(dist>.04){v.x+=dx/dist*Math.min(dist,dt*2);v.y+=dy/dist*Math.min(dist,dt*2)}}}
@@ -176,8 +149,8 @@ export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
  n.emotion.fear=clamp(n.emotion.fear-dt*.55);n.emotion.anger=clamp(n.emotion.anger-dt*.3);n.emotion.stress=clamp(n.emotion.stress-dt*.2);
  if(n.bleeding>0){n.health-=n.bleeding*dt*.09;if(n.health<=0){kill(g,n,'untreated injury');continue}}n.pain=clamp(n.pain-dt*.13);if(n.unconscious>0){if(n.cleaningTarget)clearCleanup(g,n);n.unconscious-=dt;continue}
  if(n.arrested){if(n.cleaningTarget)clearCleanup(g,n);n.detention-=dt;if(n.detention<=0){n.arrested=false;n.activity='Released from detention'}continue}
- n.think-=dt;if(n.think<=0){n.think=1.5+g.random()*2;choose(g,n)}
- if(n.path.length){let next=n.path[0],entry=doorAt(g.world,next.x,next.y);if(entry&&entry.open<.65){entry.forceUntil=g.elapsed+2;continue}let p=n.path[0],beforeX=n.rx,beforeY=n.ry,dx=p.x-n.rx,dy=p.y-n.ry,dist=Math.hypot(dx,dy),speed=(n.panic?3.6:1.65)*(n.health<50?.7:1);if(dist>.001&&Math.abs(dx-dy)>.025)n.facing=dx-dy>0?'right':'left';if(dist<=dt*speed){n.rx=p.x;n.ry=p.y;n.x=p.x;n.y=p.y;n.path.shift()}else{n.rx+=dx/dist*dt*speed;n.ry+=dy/dist*dt*speed}
+ n.think-=dt;if(n.think<=0){n.think=1.5+g.random()*2;if(!n.command)choose(g,n)}
+ if(n.path.length){let next=n.path[0],entry=doorAt(g.world,next.x,next.y);if(entry&&entry.open<.65){if(!entry.locked)entry.forceUntil=g.elapsed+2;continue}let p=n.path[0],beforeX=n.rx,beforeY=n.ry,dx=p.x-n.rx,dy=p.y-n.ry,dist=Math.hypot(dx,dy),speed=(n.panic?3.6:1.65)*(n.health<50?.7:1);if(dist>.001&&Math.abs(dx-dy)>.025)n.facing=dx-dy>0?'right':'left';if(dist<=dt*speed){n.rx=p.x;n.ry=p.y;n.x=p.x;n.y=p.y;n.path.shift()}else{n.rx+=dx/dist*dt*speed;n.ry+=dy/dist*dt*speed}
  // Stride phase follows distance covered, not frame time. A slow/injured
  // walker therefore swings arms more slowly than a panicking runner.
  n.walkDistance=(n.walkDistance||0)+Math.hypot(n.rx-beforeX,n.ry-beforeY);
@@ -201,9 +174,9 @@ export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
    }
   }else{n.cleaning=false}
  }
- updateRoutine(g,n,dt);
+ if(!n.command)updateRoutine(g,n,dt);
  if(n.panic>0)n.panic=Math.max(0,n.panic-dt);
- if(n.role==='firefighter'){let fire=g.world.hazards.find(h=>h.kind==='fire'&&h.life>0&&Math.hypot(n.x-h.x,n.y-h.y)<3);if(fire){fire.life-=dt*12;if(fire.life<=0)log(g,n.name+' extinguished a fire.')}}
+ if(n.role==='firefighter'){for(const fire of g.world.hazards.filter(h=>h.kind==='fire'&&h.life>0&&Math.hypot(n.x-h.x,n.y-h.y)<3)){fire.life-=dt*24;if(fire.life<=0)log(g,n.name+' extinguished a fire.')}}
  if(n.role==='paramedic'){let patient=nearest(g,n,o=>o.health<85&&Math.hypot(o.x-n.x,o.y-n.y)<3);if(patient&&g.random()<dt*.65)interact(g,n,patient)}
  if(n.role==='police'){let suspect=nearest(g,n,o=>o.emotion.anger>65&&Math.hypot(o.x-n.x,o.y-n.y)<2);if(suspect&&g.random()<dt*.5)interact(g,n,suspect)}
  for(let m of n.memory){m.age+=dt;if(m.age>120&&m.strength<2)m.strength=0}n.memory=n.memory.filter(m=>m.strength>0);
