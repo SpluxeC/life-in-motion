@@ -1,7 +1,7 @@
-import {nearestOpen,pathTo,doorAt,fixtureAt,walkable,key} from './world.js?v=hardware-lighting-v48-20261025';
+import {nearestOpen,pathTo,doorAt,fixtureAt,walkable,key} from './world.js?v=hardware-lighting-v49-20261025';
 import {initializeRoutine,chooseRoutine,updateRoutine} from './routines.js?v=selection-shadows-map31-20261024';
 import {POWER_LIST,godPowerApply,tickGodPowers,spreadSuspicion,autoSabotage} from './god-powers.js?v=god-powers-v41';
-import {updateElectricalZones} from './scene-lighting.js?v=hardware-lighting-v48-20261025';
+import {updateElectricalZones} from './scene-lighting.js?v=hardware-lighting-v49-20261025';
 export {POWER_LIST} from './god-powers.js?v=god-powers-v41';
 const clamp=(n,a=0,b=100)=>Math.max(a,Math.min(b,n));
 export const ITEMS=[
