@@ -69,7 +69,8 @@ function captureHardwareMapPreview(){
  if(!preview||!canvas.clientWidth||!canvas.clientHeight)return;
  const beforeZoom=zoom,beforeOffset={...offset},beforeGame=game,beforeScene=scene;
  try{
-  // Always preview the clean current Hardware Store layout, not a previous round.\n  game=null;scene=createHardwareStore();
+  // Always preview the clean current Hardware Store layout, not a previous round.
+  game=null;scene=createHardwareStore();
   // Photograph the actual rendered map and props, not a stock illustration.
   // Frame the store, parking lot and garden rather than empty outer terrain.
   const corners=[[2,4],[48,4],[2,41],[48,41]].map(([x,y])=>iso(x,y));
