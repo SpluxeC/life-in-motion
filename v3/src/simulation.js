@@ -15,7 +15,7 @@ export function rngFor(seed){let state=seed>>>0;const random=()=>{state=(state+0
 export function makeGame(world,options={}){
  const seed=options.seed||Math.floor(Math.random()*2147483647),random=rngFor(seed);
  const game={world,seed,random,elapsed:0,clockStartMinutes:Number.isFinite(+options.clockStartMinutes)?+options.clockStartMinutes:480,minutesPerSecond:1,speed:1,paused:false,energy:35,energyEarned:0,npcs:[],respondersRemaining:{police:3,fire:3,medic:3},pending:[],dispatchCooldown:0,log:[],stats:{deaths:0,injuries:0,incidents:0,powers:0,chains:0},winner:false,freeplay:false,completed:false,nextId:0,cooldowns:{},selected:null};
- const countStaff=clamp(+(options.staff??4),1,12),countCustomers=clamp(+(options.customers??8),1,20);
+ const countStaff=clamp(+(options.staff??8),1,16),countCustomers=clamp(+(options.customers??12),1,20);
  for(let i=0;i<countStaff+countCustomers;i++)spawnNPC(game,i<countStaff?'employee':'customer');
  for(let n of game.npcs){n.relationships={};for(let o of game.npcs)if(o!==n)n.relationships[o.id]=Math.round(random()*120-40)}
  log(game,'Hardware Store opened. '+game.npcs.length+' NPCs are active.');
