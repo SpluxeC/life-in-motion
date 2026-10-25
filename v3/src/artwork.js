@@ -35,7 +35,7 @@ export function createArtwork(ctx,project,getZoom){
   // compact rounded items keep the softer oval contact shadow.
   const rectangular=shape==='rect'||(shape==='auto'&&(w>1||h>1));
   if(rectangular){
-   const pad=.06*scale;
+   const pad=0; // stay inside actual collision footprint, including parked cars
    const pts=[P(x-.5-pad,y-.5-pad),P(x+w-.5+pad,y-.5-pad),
     P(x+w-.5+pad,y+h-.5+pad),P(x-.5-pad,y+h-.5+pad)];
    poly(pts.map(p=>({x:p.x+4*Z(),y:p.y+5*Z()})),'#111e203b');
