@@ -15,6 +15,7 @@ import {hitProjectedFixture,isGroundTileTap,selectionLabel,doorSelectionTarget} 
 import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness,HAIR_COLORS,HAIR_STYLES} from '../src/hud.js';
 import {readFileSync} from 'node:fs';
 import {pinchCamera} from '../src/pinch-zoom.js';
+import {patchPanelHTML} from '../src/panel-patch.js';
 const store=new Map();
 globalThis.localStorage={getItem:key=>store.get(key)||null,setItem:(key,value)=>store.set(key,value)};
 const compactHTML=readFileSync(new URL('../index.html',import.meta.url),'utf8');
@@ -52,6 +53,11 @@ assert(walkable(world,28,38),'Receiving access clear');
 assert(pathTo(world,{x:20,y:9},{x:41,y:13}).length>0,'Employee room reachable');
 const g=makeGame(world,{staff:4,customers:8,seed:42});
 assert.equal(g.npcs.length,12);
+const expandedPopulation=makeGame(createHardwareStore(),{staff:16,customers:20,seed:202642});
+assert.equal(expandedPopulation.npcs.filter(n=>n.role==='employee').length,16,'Supports all 16 employees');
+assert.equal(expandedPopulation.npcs.filter(n=>n.role==='customer').length,20,'Supports all 20 customers');
+assert.equal(expandedPopulation.npcs.length,36,'Highest setup options create 36 NPCs');
+
 
 assert.deepEqual(POWER_LIST.map(p=>p.id),['suspicion','anger','whisper','command','sabotage','hazard'],'Exactly six finalized powers');
 assert.equal(SUSPICION_OPTIONS.universal.Minor.length+SUSPICION_OPTIONS.universal.Moderate.length+
@@ -660,6 +666,17 @@ const page=readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const client=readFileSync(new URL('../src/main.js',import.meta.url),'utf8');
 assert(!page.includes('data-tab="events"'),'Events tab removed');
 assert(page.includes('id="contextGodPowers"'),'Contextual power popup is present');
+assert(page.includes('id="hardwareMapPreview"'),'Hardware Store map selection displays a map screenshot');
+assert(client.includes("preview.src=canvas.toDataURL('image/jpeg'"),'Map screenshot comes from the actual canvas renderer');
+assert(client.includes("patchPanelHTML(people,html)")&&client.includes("patchPanelHTML(powers,powersHTML)")&&
+ client.includes("patchPanelHTML(people,peopleListHTML)"),'People and powers buttons update without replacing their DOM nodes');
+const chosenEmployeeOptions=(page.match(/<select id="setupStaff">([\\s\\S]*?)<\\/select>/)||[])[1]||'';
+const chosenCustomerOptions=(page.match(/<select id="setupCustomers">([\\s\\S]*?)<\\/select>/)||[])[1]||'';
+assert.deepEqual([...chosenEmployeeOptions.matchAll(/value="(\\d+)"/g)].map(m=>Number(m[1])),[8,12,16],
+ 'Store employee setup offers only 8, 12, 16');
+assert.deepEqual([...chosenCustomerOptions.matchAll(/value="(\\d+)"/g)].map(m=>Number(m[1])),[12,16,20],
+ 'Starting customer setup offers only 12, 16, 20');
+
 assert(!page.includes('id="stopFollow"')&&!client.includes('Stop Following / Unselect'),'Stop Following controls are removed');
 assert(page.includes('class="navLabel">God Powers</span>'),'Floating nav explicitly reads God Powers');
 assert(!page.includes('v3 · Hardware Store</small>'),'Header has no version/map subtitle');
