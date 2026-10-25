@@ -44,7 +44,7 @@ export function selectionLabel(world,selected){
   const label=floorRoomName(world,selected.x,selected.y);
   return label+' Tile ('+selected.x+', '+selected.y+')';
  }
- const namedMachines={paintMixer:'Paint Mixer',keyCutter:'Key Cutting Machine',wireCutter:'Wire Cutting Machine',forklift:'Forklift',handTruck:'Hand Truck',bucketStack:'Paint Buckets',ridingMower:'Riding Lawn Mower'};
+ const namedMachines={saw:'Saw',paintMixer:'Paint Mixer',keyCutter:'Key Cutting Machine',wireCutter:'Wire Cutting Machine',forklift:'Forklift',handTruck:'Hand Truck',bucketStack:'Paint Buckets',ridingMower:'Riding Lawn Mower'};
  if(namedMachines[selected.type])return namedMachines[selected.type];
  const person=world?.npcs?.find?.(o=>o.id===selected.id);
  if(person)return person.name;
