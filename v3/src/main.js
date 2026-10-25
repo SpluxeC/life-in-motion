@@ -1,6 +1,7 @@
 import {createHardwareStore,doorAt,fixtureAt,nearestOpen,walkable,key} from './world.js?v=landscape-camera-ui-v32-20261024';
 import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v=god-powers-v41-20261025';
 import {createContextPowers} from './context-powers.js?v=god-powers-v41-20261025';
+import {patchPanelHTML} from './panel-patch.js?v=panel-hover-v42-20261025';
 import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js?v=landscape-camera-ui-v32-20261024';
 import {createArtwork} from './artwork.js?v=unified-floor-yaw-v37-20261024';
 import {renderDepth,compareRenderDepth} from './render-depth.js?v=driver-side-forklift-wheels-20261023-1';
@@ -18,7 +19,7 @@ const artwork=createArtwork(ctx,project,()=>zoom);
 const contextPowers=createContextPowers({element:$('contextGodPowers'),stage:canvas.parentElement,getGame:()=>game,apply:(id,t,detail)=>applyPower(game,id,t,detail),onMessage:m=>{feedback=m;refreshHud()}});
 const view=()=>({w:canvas.clientWidth,h:canvas.clientHeight});
 function show(screen){document.body.classList.toggle('playing',!screen);for(let id of ['mainMenu','howToPlayScreen','worldSetup'])$(id).classList.toggle('hidden',id!==screen)}
-function setup(step){show('worldSetup');$('setupMapStep').hidden=step!==1;$('setupOptionsStep').hidden=step!==2;$('setupStepLabel').textContent='STEP '+step+' OF 2 · '+(step===1?'SELECT MAP':'NEW WORLD')}
+function setup(step){show('worldSetup');$('setupMapStep').hidden=step!==1;$('setupOptionsStep').hidden=step!==2;$('setupStepLabel').textContent='STEP '+step+' OF 2 · '+(step===1?'SELECT MAP':'NEW WORLD');if(step===1)captureHardwareMapPreview()}
 $('startGame').onclick=()=>setup(1);$('howToPlayButton').onclick=()=>show('howToPlayScreen');$('howToBack').onclick=()=>show('mainMenu');$('setupBack').onclick=()=>{$('setupOptionsStep').hidden?show('mainMenu'):setup(1)};
 $('mapHardware').onclick=()=>setup(2);$('home').onclick=()=>{if(game&&!game.completed)saveGame(game);show('mainMenu');refreshContinue()};
 $('setupLaunch').onclick=()=>{scene=createHardwareStore();game=makeGame(scene,{staff:+$('setupStaff').value,customers:+$('setupCustomers').value,clockStartMinutes:+$('setupTime').value});game.speed=1;selected=null;resultShown=false;pendingPower=null;feedback='';contextPowers.reset();activateTab('world',false);show(null);centerCamera();refreshHud()};
@@ -57,6 +58,29 @@ function selectTarget(obj,point=null){
 
 
 function centerCamera(){let v=view();zoom=Math.min(.87,Math.max(.43,Math.min(v.w/1300,v.h/870)));offset=iso(36,20)}
+
+function captureHardwareMapPreview(){
+ const preview=$('hardwareMapPreview');
+ if(!preview||!canvas.clientWidth||!canvas.clientHeight)return;
+ const beforeZoom=zoom,beforeOffset={...offset};
+ try{
+  // Photograph the actual rendered map and props, not a stock illustration.
+  // Frame the store, parking lot and garden rather than empty outer terrain.
+  const corners=[[2,4],[48,4],[2,41],[48,41]].map(([x,y])=>iso(x,y));
+  const minX=Math.min(...corners.map(p=>p.x)),maxX=Math.max(...corners.map(p=>p.x));
+  const minY=Math.min(...corners.map(p=>p.y)),maxY=Math.max(...corners.map(p=>p.y));
+  const v=view();
+  zoom=Math.min((v.w*.92)/(maxX-minX),(v.h*.86)/(maxY-minY));
+  offset={x:(minX+maxX)/2,y:(minY+maxY)/2-10/zoom};
+  render(0);
+  preview.src=canvas.toDataURL('image/jpeg',.84);
+ }catch(error){
+  // Keep the fallback thumbnail if this browser disallows canvas capture.
+ }finally{
+  zoom=beforeZoom;offset=beforeOffset;
+ }
+}
+
 function followSelected(){const n=game?.npcs.find(o=>o.id===selected?.id);if(n)offset=iso(n.rx,n.ry)}
 // Restricted camera yaw: at 45° it exactly matches the original projection.
 // World coordinates and NPC pathfinding never change.
@@ -365,26 +389,27 @@ function refreshHud(){
    '<button data-npc-power="'+p.id+'" '+(powerUsable(p,n)?'':'disabled')+'>'+escapeHTML(p.name)+' · '+(p.priceRange||p.cost)+' Energy</button>').join('')+'</div>';
 
   if(feedback)html+='<p class="gameMessage">'+escapeHTML(feedback)+'</p>';
-  people.innerHTML=html;
+  patchPanelHTML(people,html);
   people.querySelector('#backPeople').onclick=clearSelection;
 
   people.querySelectorAll('[data-npc-power]').forEach(b=>b.onclick=()=>{
    contextPowers.show(n,Math.min(view().w*.55,view().w-210),Math.min(view().h*.25,view().h-150),b.dataset.npcPower);
   });
  }else{
-  people.innerHTML='<h3>People · '+g.npcs.length+' in this round</h3>'+
+  const peopleListHTML='<h3>People · '+g.npcs.length+' in this round</h3>'+
    g.npcs.map(p=>'<button class="personRow" data-person="'+escapeHTML(p.id)+'">'+
     '<strong>'+escapeHTML(p.name)+'</strong><small>'+
     escapeHTML(p.role)+' · '+escapeHTML(emotionState(p))+
     '<br><strong>Weakness:</strong> '+escapeHTML(npcWeakness(p))+
     '<br>'+escapeHTML(p.alive?p.activity:'Deceased')+'</small></button>').join('')+
    (feedback?'<p class="gameMessage">'+escapeHTML(feedback)+'</p>':'');
+  patchPanelHTML(people,peopleListHTML);
   people.querySelectorAll('[data-person]').forEach(b=>b.onclick=()=>{
    const person=g.npcs.find(p=>p.id===b.dataset.person);if(person)selectTarget(person);
   });
  }
  const powers=$('powersContent');
- powers.innerHTML='<h3>God Energy: '+Math.floor(g.energy)+'</h3>'+
+ const powersHTML='<h3>God Energy: '+Math.floor(g.energy)+'</h3>'+
   POWER_LIST.map(p=>{
    const open=selectedPowerId===p.id;
    const help=POWER_HELP[p.id]||['Influence the world.','Tap a valid target.'];
@@ -396,6 +421,7 @@ function refreshHud(){
      '<button id="armPower" class="actionWide" '+(powerUsable(p)?'':'disabled')+'>'+
      (pendingPower===p.id?'Cancel Power':'Use Power · Tap Target')+'</button></div>':'');
   }).join('')+(feedback?'<p class="gameMessage">'+escapeHTML(feedback)+'</p>':'');
+ patchPanelHTML(powers,powersHTML);
  powers.querySelectorAll('[data-select-power]').forEach(b=>b.onclick=()=>{
   selectedPowerId=selectedPowerId===b.dataset.selectPower?null:b.dataset.selectPower;
   pendingPower=null;feedback='';refreshHud();
