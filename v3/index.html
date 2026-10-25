@@ -80,11 +80,43 @@ body{overflow:hidden}
 .bottomNav button svg{width:21px;height:21px;flex:none}
 .navLabel{font-size:10px;font-weight:700;letter-spacing:.01em;line-height:1.1;white-space:nowrap}
 @media(max-width:800px){.bottomNav button{width:62px;min-width:62px;height:48px;min-height:48px;padding:3px 2px}.bottomNav button svg{width:18px;height:18px}.navLabel{font-size:9px}.panel{left:76px;width:min(310px,calc(100vw - 88px))}.worldInfo{left:75px}}
+
+/* v38: compact landscape menus and edge-hugging fixed game navigation */
+.bottomNav{left:max(0px,env(safe-area-inset-left))}
+@media(max-width:900px) and (orientation:landscape){
+ .screen:not(#howToPlayScreen){padding:4px 8px;overflow:hidden}
+ .screen:not(#howToPlayScreen) .menuPanel{width:min(460px,100%);max-height:calc(100dvh - 8px);overflow:hidden;padding:8px 15px;border-radius:12px}
+ .screen:not(#howToPlayScreen) .menuMark svg{width:36px;height:36px}
+ .screen:not(#howToPlayScreen) .menuPanel h2{font-size:23px;margin:0}
+ .screen:not(#howToPlayScreen) .menuTagline{font-size:11px;margin:2px 0}
+ .screen:not(#howToPlayScreen) .menuWorldLine{margin:6px 0;padding:5px;font-size:9px}
+ .screen:not(#howToPlayScreen) .menuPanel>button{margin:4px 0;padding:7px}
+ .screen:not(#howToPlayScreen) .menuFootnote{margin:4px 0;font-size:10px}
+ #worldSetup .setupPanel{width:min(860px,100%);max-height:calc(100dvh - 8px);overflow:hidden;padding:8px 12px}
+ #worldSetup .setupHeader{font-size:10px}
+ #worldSetup .setupHeader button{padding:4px 8px}
+ #worldSetup h2{font-size:16px;margin:3px 0}
+ #worldSetup h3{font-size:12px;margin:3px 0}
+ #worldSetup p{font-size:10px;margin:3px 0}
+ #worldSetup .mapChoices{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+ #worldSetup .mapChoice{min-height:0;max-height:calc((100dvh - 84px)/2);padding:5px;gap:2px;overflow:hidden}
+ #worldSetup .mapScene{height:clamp(12px,6dvh,33px);flex-shrink:0}
+ #worldSetup .mapChoice strong{font-size:11px}
+ #worldSetup .mapChoice small,#worldSetup .mapState{font-size:9px;line-height:1.1}
+ #worldSetup .setupOptions{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ #worldSetup .setupOptions label{font-size:11px;gap:2px}
+ #worldSetup .setupOptions select{padding:5px;font-size:11px}
+ #worldSetup .setupFooter{margin-top:5px}
+ #worldSetup .setupFooter button{padding:6px 10px;font-size:11px}
+ .bottomNav{left:max(0px,env(safe-area-inset-left))}
+ .bottomNav button{width:55px;min-width:55px}
+ .panel{left:65px;width:min(300px,calc(100vw - 75px))}
+}
 </style></head><body>
 <div id="mainMenu" class="screen"><div class="menuPanel">
 <div class="menuMark" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M8 28 32 8l24 20v29H8Z" fill="#407b7d" stroke="#d7ece9" stroke-width="3"/><path d="M24 57V36h16v21" fill="#173843" stroke="#d7ece9" stroke-width="2"/><path d="M14 36h7v10h-7zm29 0h7v10h-7z" fill="#ebcf84"/><path d="M18 26h28" stroke="#d9e7dd" stroke-width="2"/></svg></div>
 <h2>Life <span>in Motion</span></h2><p class="menuTagline">Every person has a story. Every choice has consequences.</p>
-<div class="menuWorldLine"><span class="menuWorldReady">V3 PLAYABLE · MAP v37 · UNIFIED MAP ROTATION</span><span>5 future maps locked</span></div>
+<div class="menuWorldLine"><span class="menuWorldReady">V3 PLAYABLE · MAP v38 · MOBILE UI</span><span>5 future maps locked</span></div>
 <button id="startGame">Create New World →</button><button id="continueGame" disabled>Continue Saved World</button><button id="howToPlayButton">How to Play</button>
 <p class="menuFootnote">Create a new world or continue your saved round.</p></div></div>
 <div id="howToPlayScreen" class="screen hidden"><div class="menuPanel"><button id="howToBack">← Back</button><h2>How to Play</h2><p class="muted">The goal of Life in Motion v3 is to manipulate an autonomous world until nobody survives. Observe their behavior, manipulate their relationships, use God Powers, and turn environmental hazards against them. Earn God Energy through chaos and eliminate every NPC to win.</p></div></div>
@@ -97,7 +129,7 @@ body{overflow:hidden}
 <div class="mapChoice locked"><span class="mapScene"></span><strong>Technical College</strong><small>Future location</small><span class="mapState">Locked · Coming later</span></div>
 <div class="mapChoice locked"><span class="mapScene"></span><strong>Restaurant</strong><small>Future location</small><span class="mapState">Locked · Coming later</span></div></div></div>
 <div id="setupOptionsStep" hidden><h2>Hardware Store · Game Setup</h2><p class="muted">Customize the population and begin your total-elimination round.</p><h3>World options</h3><div class="setupOptions"><label>Store employees<select id="setupStaff"><option value="4" selected>4 · Foundation</option><option value="8">8 · Busy</option></select></label><label>Starting customers<select id="setupCustomers"><option value="8" selected>8 · Foundation</option><option value="12">12 · Busy</option></select></label><label>Starting time<select id="setupTime"><option value="480">8:00 AM · Morning</option><option value="720">12:00 PM · Midday</option><option value="1020">5:00 PM · Evening</option></select></label><label>NPC starting items<select id="setupItems"><option>Occasional</option><option selected>Common</option><option>Everyone</option></select></label></div><p class="muted">All NPCs are autonomous. God Powers are earned-energy-gated, and emergency responders can join the round.</p><div class="setupFooter"><button id="setupLaunch">Start Hardware Store →</button></div></div></div></div>
-<header class="gameHeader"><div class="brandLine"><h1>Life in Motion</h1><span class="victoryBoard">V3 · TOTAL ELIMINATION</span></div><div class="controls"><span id="selectedLabel" class="selectedLabel hidden" aria-label="Selected map object"></span><span id="gameClock" class="gameClock" aria-label="In-game clock">8:00 AM</span><button id="pause">Pause</button><button data-speed="1" class="active">1×</button><button data-speed="2">2×</button><button data-speed="4">4×</button></div></header>
+<header class="gameHeader"><div class="brandLine"><h1>Life in Motion</h1><span id="headerStatus" class="victoryBoard" aria-label="Population and God Energy">Living 12/12 · God Energy 0</span></div><div class="controls"><span id="selectedLabel" class="selectedLabel hidden" aria-label="Selected map object"></span><span id="gameClock" class="gameClock" aria-label="In-game clock">8:00 AM</span><button id="pause">Pause</button></div></header>
 <main class="worldLayout" id="worldLayout"><div class="stage"><canvas id="game" aria-label="Isometric hardware store world preview"></canvas><div class="worldInfo" id="worldStatus">Drag to pan · Wheel to zoom · Tap a person</div><button id="stopFollow" class="followStop hidden">✕ Stop Following</button></div>
 <aside class="panel" id="gamePanel" aria-live="polite"><button id="panelClose" aria-label="Close panel" title="Close panel">✕</button>
  <div id="worldPanel" class="tabPane"><div class="notice">Select an NPC, fixture, or tile to inspect the world and use contextual God Powers. Earn energy through manipulation, accidents, and conflict.</div><h3>World Events</h3><div id="worldEvents"></div></div>
