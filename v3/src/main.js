@@ -17,7 +17,7 @@ const canvas=$('game'),ctx=canvas.getContext('2d');
 initMenuAnimation($('mainMenu'));
 
 let cameraAngle=45,panelOpen=false;
-let game=null,scene=createHardwareStore(),zoom=.72,offset={x:0,y:0},last=performance.now(),acc=0,lastHud=0,lastSave=0,lastViewport={w:0,h:0},drag=null,selected=null,resultShown=false,activeTab='world',selectedPowerId='whisper',pendingPower=null,feedback='';
+let game=null,scene=createHardwareStore(),zoom=.72,offset={x:0,y:0},last=performance.now(),acc=0,lastHud=0,lastSave=0,lastViewport={w:0,h:0},drag=null,selected=null,resultShown=false,activeTab='world',selectedPowerId='whisper',feedback='';
 const TW=48,TH=24,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const artwork=createArtwork(ctx,project,()=>zoom);
 const sceneLighting=createSceneLighting(ctx,project,()=>zoom);
@@ -27,8 +27,8 @@ function show(screen){document.body.classList.toggle('playing',!screen);for(let 
 function setup(step){show('worldSetup');$('setupMapStep').hidden=step!==1;$('setupOptionsStep').hidden=step!==2;$('setupStepLabel').textContent='STEP '+step+' OF 2 · '+(step===1?'SELECT MAP':'NEW WORLD');if(step===1)captureHardwareMapPreview()}
 $('startGame').onclick=()=>setup(1);$('howToPlayButton').onclick=()=>show('howToPlayScreen');$('howToBack').onclick=()=>show('mainMenu');$('setupBack').onclick=()=>{$('setupOptionsStep').hidden?show('mainMenu'):setup(1)};
 $('mapHardware').onclick=()=>setup(2);$('home').onclick=()=>{if(game&&!game.completed)saveGame(game);show('mainMenu');refreshContinue()};
-$('setupLaunch').onclick=()=>{scene=createHardwareStore();game=makeGame(scene,{staff:+$('setupStaff').value,customers:+$('setupCustomers').value,clockStartMinutes:+$('setupTime').value});game.speed=1;selected=null;resultShown=false;pendingPower=null;feedback='';contextPowers.reset();activateTab('world',false);show(null);centerCamera();refreshHud()};
-$('continueGame').onclick=()=>{let restored=loadGame();if(!restored){$('continueGame').disabled=true;return}game=restored;game.speed=1;scene=game.world;selected=null;resultShown=false;pendingPower=null;feedback='';activateTab('world',false);show(null);centerCamera();refreshHud()};
+$('setupLaunch').onclick=()=>{scene=createHardwareStore();game=makeGame(scene,{staff:+$('setupStaff').value,customers:+$('setupCustomers').value,clockStartMinutes:+$('setupTime').value});game.speed=1;selected=null;resultShown=false;feedback='';contextPowers.reset();activateTab('world',false);show(null);centerCamera();refreshHud()};
+$('continueGame').onclick=()=>{let restored=loadGame();if(!restored){$('continueGame').disabled=true;return}game=restored;game.speed=1;scene=game.world;selected=null;resultShown=false;feedback='';contextPowers.reset();activateTab('world',false);show(null);centerCamera();refreshHud()};
 function refreshContinue(){$('continueGame').disabled=!hasSave()}
 refreshContinue();
 $('saveV3').onclick=()=>{if(!game)return;let ok=saveGame(game);feedback=ok?'Game saved.':'Save failed: browser storage unavailable';$('settingsFeedback').textContent=feedback;refreshContinue()};
@@ -55,10 +55,14 @@ $('cameraAngle').addEventListener('input',event=>{
 function clearSelection(){selected=null;feedback='';contextPowers.reset();refreshHud()}
 function selectTarget(obj,point=null){
  selected=obj;
- if(obj&&game?.npcs.some(n=>n.id===obj.id))activateTab('people');
- pendingPower=null;feedback='';
+ const isNpc=!!obj&&!!game?.npcs.some(n=>n.id===obj.id);
+ // NPC powers belong in Person Overview, never in the map selection popup.
+ // Also close any previous object popup before updating the selection.
+ contextPowers.hide();
+ if(isNpc)activateTab('people');
+ feedback='';
  refreshHud();
- if(point)contextPowers.show(obj,point.x,point.y);
+ if(point&&!isNpc)contextPowers.show(obj,point.x,point.y);
 }
 
 
@@ -434,6 +438,7 @@ function refreshHud(){
  }
  const powers=$('powersContent');
  const powersHTML='<h3>God Energy: '+Math.floor(g.energy)+'</h3>'+
+  '<p class="personFacts">Select a person, suitable object, or eligible floor tile on the map to use God Powers. This tab shows descriptions only.</p>'+
   POWER_LIST.map(p=>{
    const open=selectedPowerId===p.id;
    const help=POWER_HELP[p.id]||['Influence the world.','Tap a valid target.'];
@@ -442,26 +447,19 @@ function refreshHud(){
     (open?'<div class="powerDescription"><strong>'+escapeHTML(p.name)+'</strong>'+
      '<p>'+escapeHTML(help[0])+'</p><p>'+escapeHTML(help[1])+'</p>'+
      (g.cooldowns[p.id]>g.elapsed?'<p>Cooldown: '+Math.ceil(g.cooldowns[p.id]-g.elapsed)+'s</p>':'')+
-     '<button id="armPower" class="actionWide" '+(powerUsable(p)?'':'disabled')+'>'+
-     (pendingPower===p.id?'Cancel Power':'Use Power · Tap Target')+'</button></div>':'');
+     '</div>':'');
   }).join('')+(feedback?'<p class="gameMessage">'+escapeHTML(feedback)+'</p>':'');
  patchPanelHTML(powers,powersHTML);
  powers.querySelectorAll('[data-select-power]').forEach(b=>b.onclick=()=>{
   selectedPowerId=selectedPowerId===b.dataset.selectPower?null:b.dataset.selectPower;
-  pendingPower=null;feedback='';refreshHud();
+  feedback='';refreshHud();
  });
- const activate=powers.querySelector('#armPower');
- if(activate)activate.onclick=()=>{
-  pendingPower=pendingPower===selectedPowerId?null:selectedPowerId;
-  feedback=pendingPower?'Power ready. Tap a valid target in the world.':'Power cancelled.';
-  refreshHud();
- };
  parent.scrollTop=previousScroll;
  if(g.completed&&!resultShown){resultShown=true;showVictory()}
 }
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function showVictory(){const g=game;let overlay=document.createElement('div');overlay.className='screen';overlay.id='victoryOverlay';overlay.innerHTML='<div class="menuPanel"><h2>TOTAL ELIMINATION</h2><p>Every NPC on the map has died.</p><p>Deaths: '+g.stats.deaths+' · Chain reactions: '+g.stats.chains+'<br>God Powers: '+g.stats.powers+' · Time: '+Math.round(g.elapsed)+'s</p><button id="restartRound">Play Again</button><button id="freeplayRound">Continue Freeplay</button><button id="menuRound">Main Menu</button></div>';document.body.append(overlay);unlockMap('hardware-store');
- overlay.querySelector('#restartRound').onclick=()=>{overlay.remove();game=makeGame(createHardwareStore(),{staff:+$('setupStaff').value,customers:+$('setupCustomers').value,clockStartMinutes:+$('setupTime').value});scene=game.world;resultShown=false;selected=null;pendingPower=null;feedback='';activateTab('world');centerCamera();refreshHud()};
+ overlay.querySelector('#restartRound').onclick=()=>{overlay.remove();game=makeGame(createHardwareStore(),{staff:+$('setupStaff').value,customers:+$('setupCustomers').value,clockStartMinutes:+$('setupTime').value});scene=game.world;resultShown=false;selected=null;feedback='';contextPowers.reset();activateTab('world');centerCamera();refreshHud()};
  overlay.querySelector('#freeplayRound').onclick=()=>{overlay.remove();g.freeplay=true};
  overlay.querySelector('#menuRound').onclick=()=>{overlay.remove();show('mainMenu');refreshContinue()};
 }
@@ -513,18 +511,6 @@ function inspectAtScreen(sx,sy){
  const tile=unproject(sx,sy);
  const tileTarget={id:'tile-'+tile.x+'-'+tile.y,x:tile.x,y:tile.y,type:'tile'};
  if(contextPowers.consumeClick(hits[0]?.target,tileTarget))return;
- if(pendingPower){
-  const power=POWER_LIST.find(p=>p.id===pendingPower);
-  const picked=power?.id==='hazard'?tileTarget:(hits[0]?.target||tileTarget);
-  const isNpc=game.npcs.some(n=>n.id===picked?.id);
-  const kind=isNpc?'npc':picked.type==='tile'?'tile':picked.id?.startsWith('door-')?'door':
-   game.world.props.some(o=>o.id===picked.id)?'prop':picked.type==='departmentSign'?'sign':'fixture';
-  if(!power?.targets.includes(kind)){feedback='Choose a valid target for '+(power?.name||'this power');refreshHud();return}
-  const chosen=pendingPower;
-  selectTarget(picked,{x:sx,y:sy});
-  contextPowers.show(picked,sx,sy,chosen);
-  return;
- }
  // Open floor tiles win over the projected *upper part* of adjacent shelves.
  // Actual NPC taps are still first priority, so selection/follow feels natural.
  if(!hits.some(hit=>hit.priority<=2)&&
