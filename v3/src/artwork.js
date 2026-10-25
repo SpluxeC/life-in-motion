@@ -1233,6 +1233,8 @@ export function createArtwork(ctx,project,getZoom){
    plants(x,y,height+.5,Math.min(9,Math.round(w*h*2)+2),w-.25,h-.25);
   }else if(type==='endcap'){
    o.facing==='west'?westWallDisplay(o):endcapDisplay(o);
+  }else if(type==='departmentWallShelf'){
+   westWallDisplay(o);
   }else if(type==='hardwareBins'){
    o.facing==='west'?westWallDisplay(o):endcapDisplay({...o,department:'HARDWARE'});
   }else if(type==='bucketStack'){
