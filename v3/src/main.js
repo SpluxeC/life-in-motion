@@ -10,6 +10,7 @@ import {npcLimbPose} from './npc-pose.js?v=driver-side-forklift-wheels-20261023-
 import {pinchCamera} from './pinch-zoom.js?v=garden-tools-pinch-map16-20261023';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d');
+let cameraAngle=45,panelOpen=false;
 let game=null,scene=createHardwareStore(),zoom=.72,offset={x:0,y:0},last=performance.now(),acc=0,lastHud=0,lastSave=0,lastViewport={w:0,h:0},drag=null,selected=null,resultShown=false,activeTab='world',selectedPowerId='whisper',pendingPower=null,feedback='';
 const TW=48,TH=24,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const artwork=createArtwork(ctx,project,()=>zoom);
@@ -18,18 +19,29 @@ function show(screen){for(let id of ['mainMenu','howToPlayScreen','worldSetup'])
 function setup(step){show('worldSetup');$('setupMapStep').hidden=step!==1;$('setupOptionsStep').hidden=step!==2;$('setupStepLabel').textContent='STEP '+step+' OF 2 · '+(step===1?'SELECT MAP':'NEW WORLD')}
 $('startGame').onclick=()=>setup(1);$('howToPlayButton').onclick=()=>show('howToPlayScreen');$('howToBack').onclick=()=>show('mainMenu');$('setupBack').onclick=()=>{$('setupOptionsStep').hidden?show('mainMenu'):setup(1)};
 $('mapHardware').onclick=()=>setup(2);$('home').onclick=()=>{if(game&&!game.completed)saveGame(game);show('mainMenu');refreshContinue()};
-$('setupLaunch').onclick=()=>{scene=createHardwareStore();game=makeGame(scene,{staff:+$('setupStaff').value,customers:+$('setupCustomers').value,clockStartMinutes:+$('setupTime').value});selected=null;resultShown=false;pendingPower=null;feedback='';activateTab('world');show(null);centerCamera();refreshHud()};
-$('continueGame').onclick=()=>{let restored=loadGame();if(!restored){$('continueGame').disabled=true;return}game=restored;scene=game.world;selected=null;resultShown=false;pendingPower=null;feedback='';activateTab('world');show(null);centerCamera();refreshHud()};
+$('setupLaunch').onclick=()=>{scene=createHardwareStore();game=makeGame(scene,{staff:+$('setupStaff').value,customers:+$('setupCustomers').value,clockStartMinutes:+$('setupTime').value});selected=null;resultShown=false;pendingPower=null;feedback='';activateTab('world',false);show(null);centerCamera();refreshHud()};
+$('continueGame').onclick=()=>{let restored=loadGame();if(!restored){$('continueGame').disabled=true;return}game=restored;scene=game.world;selected=null;resultShown=false;pendingPower=null;feedback='';activateTab('world',false);show(null);centerCamera();refreshHud()};
 function refreshContinue(){$('continueGame').disabled=!hasSave()}
 refreshContinue();
 $('saveV3').onclick=()=>{if(!game)return;let ok=saveGame(game);feedback=ok?'Game saved.':'Save failed: browser storage unavailable';$('settingsFeedback').textContent=feedback;refreshContinue()};
 $('pause').onclick=()=>{if(game){game.paused=!game.paused;$('pause').textContent=game.paused?'Resume':'Pause';refreshHud()}};
 $('stopFollow').onclick=()=>clearSelection();
-function activateTab(tab){
- activeTab=tab;
- document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+function activateTab(tab,open=true){
+ activeTab=tab;panelOpen=open;
+ $('worldLayout').classList.toggle('panelClosed',!panelOpen);
+ document.querySelectorAll('[data-tab]').forEach(b=>{
+  b.classList.toggle('active',panelOpen&&b.dataset.tab===tab);
+  b.setAttribute('aria-pressed',String(panelOpen&&b.dataset.tab===tab));
+ });
  for(const name of ['world','people','powers','settings'])$(name+'Panel').classList.toggle('hidden',name!==tab);
 }
+$('panelClose').onclick=()=>activateTab(activeTab,false);
+$('cameraAngle').addEventListener('input',event=>{
+ cameraAngle=clamp(Number(event.target.value)||45,25,65);
+ $('cameraAngleValue').textContent=cameraAngle+'°';
+ const npc=game?.npcs.find(n=>n.id===selected?.id);
+ if(npc)offset=iso(npc.rx,npc.ry);
+});
 function clearSelection(){selected=null;feedback='';$('stopFollow').classList.add('hidden');refreshHud()}
 function selectTarget(obj){
  selected=obj;
@@ -41,9 +53,20 @@ function selectTarget(obj){
 document.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>{if(!game)return;game.speed=+b.dataset.speed;document.querySelectorAll('[data-speed]').forEach(t=>t.classList.toggle('active',t===b))});
 function centerCamera(){let v=view();zoom=Math.min(.87,Math.max(.43,Math.min(v.w/1300,v.h/870)));offset=iso(36,20)}
 function followSelected(){const n=game?.npcs.find(o=>o.id===selected?.id);if(n){offset=iso(n.rx,n.ry);$('stopFollow').classList.remove('hidden')}else $('stopFollow').classList.add('hidden')}
-function iso(x,y){return{x:(x-y)*TW*.5,y:-(x+y)*TH*.5}}
+// Restricted camera yaw: at 45° it exactly matches the original projection.
+// World coordinates and NPC pathfinding never change.
+function basis(){
+ const r=cameraAngle*Math.PI/180;
+ return {a:TW*Math.SQRT1_2*Math.cos(r),b:TW*Math.SQRT1_2*Math.sin(r),
+         c:TH*Math.SQRT1_2*Math.sin(r),d:TH*Math.SQRT1_2*Math.cos(r)};
+}
+function iso(x,y){const {a,b,c,d}=basis();return{x:a*x-b*y,y:-c*x-d*y}}
 function project(x,y,z=0){let v=view(),p=iso(x,y);return{x:v.w*.5+(p.x-offset.x)*zoom,y:v.h*.56+(p.y-offset.y-z)*zoom}}
-function unproject(sx,sy){let v=view(),px=(sx-v.w*.5)/zoom+offset.x,py=(sy-v.h*.56)/zoom+offset.y;return{x:Math.round(px/TW-py/TH),y:Math.round(-px/TW-py/TH)}}
+function unproject(sx,sy){
+ const v=view(),px=(sx-v.w*.5)/zoom+offset.x,py=(sy-v.h*.56)/zoom+offset.y;
+ const {a,b,c,d}=basis(),det=a*d+b*c;
+ return{x:Math.round((d*px-b*py)/det),y:Math.round((-c*px-a*py)/det)};
+}
 function resize(){let dpr=Math.min(2,window.devicePixelRatio||1),v=view();if(lastViewport.w!==v.w||lastViewport.h!==v.h||canvas.width!==Math.round(v.w*dpr)){canvas.width=Math.round(v.w*dpr);canvas.height=Math.round(v.h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);lastViewport={...v}}}
 function drawHair(n,z,h){
  const {color,style}=hairAppearance(n),dir=n.facing==='left'?-1:1,head=-h*z*.82;
@@ -492,8 +515,8 @@ function frame(now){
  requestAnimationFrame(frame)
 }
 document.querySelectorAll('[data-tab]').forEach(button=>button.addEventListener('click',()=>{
- activateTab(button.dataset.tab);
+ activateTab(button.dataset.tab,!(panelOpen&&activeTab===button.dataset.tab));
  feedback='';
  refreshHud();
 }));
-centerCamera();requestAnimationFrame(frame);
+activateTab('world',false);centerCamera();requestAnimationFrame(frame);
