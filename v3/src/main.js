@@ -3,6 +3,7 @@ import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v
 import {createContextPowers} from './context-powers.js?v=target-powers-v50-20261025';
 import {initMenuAnimation} from './menu-animation.js?v=animated-main-menu-v47-20261025';
 import {createSceneLighting} from './scene-lighting.js?v=hardware-lighting-v49-20261025';
+import {createPowerEffects} from './power-effects.js?v=npc-power-vfx-v51-20261025';
 import {patchPanelHTML} from './panel-patch.js?v=panel-hover-v42-20261025';
 import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js?v=hardware-lighting-v49-20261025';
 import {createArtwork} from './artwork.js?v=unified-floor-yaw-v37-20261024';
@@ -21,14 +22,15 @@ let game=null,scene=createHardwareStore(),zoom=.72,offset={x:0,y:0},last=perform
 const TW=48,TH=24,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const artwork=createArtwork(ctx,project,()=>zoom);
 const sceneLighting=createSceneLighting(ctx,project,()=>zoom);
-const contextPowers=createContextPowers({element:$('contextGodPowers'),stage:canvas.parentElement,getGame:()=>game,apply:(id,t,detail)=>applyPower(game,id,t,detail),onMessage:m=>{feedback=m;refreshHud()}});
+const powerEffects=createPowerEffects(ctx,project,()=>zoom);
+const contextPowers=createContextPowers({element:$('contextGodPowers'),stage:canvas.parentElement,getGame:()=>game,apply:(id,t,detail)=>{const result=applyPower(game,id,t,detail);if(result.ok)powerEffects.trigger(id,t,game.elapsed,detail);return result},onMessage:m=>{feedback=m;refreshHud()}});
 const view=()=>({w:canvas.clientWidth,h:canvas.clientHeight});
 function show(screen){document.body.classList.toggle('playing',!screen);for(let id of ['mainMenu','howToPlayScreen','worldSetup'])$(id).classList.toggle('hidden',id!==screen)}
 function setup(step){show('worldSetup');$('setupMapStep').hidden=step!==1;$('setupOptionsStep').hidden=step!==2;$('setupStepLabel').textContent='STEP '+step+' OF 2 · '+(step===1?'SELECT MAP':'NEW WORLD');if(step===1)captureHardwareMapPreview()}
 $('startGame').onclick=()=>setup(1);$('howToPlayButton').onclick=()=>show('howToPlayScreen');$('howToBack').onclick=()=>show('mainMenu');$('setupBack').onclick=()=>{$('setupOptionsStep').hidden?show('mainMenu'):setup(1)};
 $('mapHardware').onclick=()=>setup(2);$('home').onclick=()=>{if(game&&!game.completed)saveGame(game);show('mainMenu');refreshContinue()};
-$('setupLaunch').onclick=()=>{scene=createHardwareStore();game=makeGame(scene,{staff:+$('setupStaff').value,customers:+$('setupCustomers').value,clockStartMinutes:+$('setupTime').value});game.speed=1;selected=null;resultShown=false;feedback='';contextPowers.reset();activateTab('world',false);show(null);centerCamera();refreshHud()};
-$('continueGame').onclick=()=>{let restored=loadGame();if(!restored){$('continueGame').disabled=true;return}game=restored;game.speed=1;scene=game.world;selected=null;resultShown=false;feedback='';contextPowers.reset();activateTab('world',false);show(null);centerCamera();refreshHud()};
+$('setupLaunch').onclick=()=>{scene=createHardwareStore();powerEffects.clear();game=makeGame(scene,{staff:+$('setupStaff').value,customers:+$('setupCustomers').value,clockStartMinutes:+$('setupTime').value});game.speed=1;selected=null;resultShown=false;feedback='';contextPowers.reset();activateTab('world',false);show(null);centerCamera();refreshHud()};
+$('continueGame').onclick=()=>{let restored=loadGame();if(!restored){$('continueGame').disabled=true;return}powerEffects.clear();game=restored;game.speed=1;scene=game.world;selected=null;resultShown=false;feedback='';contextPowers.reset();activateTab('world',false);show(null);centerCamera();refreshHud()};
 function refreshContinue(){$('continueGame').disabled=!hasSave()}
 refreshContinue();
 $('saveV3').onclick=()=>{if(!game)return;let ok=saveGame(game);feedback=ok?'Game saved.':'Save failed: browser storage unavailable';$('settingsFeedback').textContent=feedback;refreshContinue()};
@@ -234,6 +236,7 @@ function stick(n,t){let p=project(n.rx,n.ry),z=zoom*(n.role==='customer'||n.role
   ctx.strokeStyle='#5b7779';ctx.lineWidth=1.4*z;ctx.strokeRect(bx,by,bw,bh);
   ctx.fillStyle='#294a4e';ctx.fillText('HELP?',p.x,by+bh*.5,bw-5*z);ctx.restore();
  }
+ powerEffects.drawNpcMood(n,t);
  if(n.alive&&n.unconscious<=0&&n.cleaning){artwork.drawCleaningSet(n.rx,n.ry,n.cleaningPhase||0)}
  else if(n.alive&&n.unconscious<=0&&n.inventory?.length&&(n.role!=='employee'||!['cashier','service','patrol','break','help'].includes(n.task?.kind))){artwork.drawItem(n.inventory[0],n.rx+.28,n.ry+.12,15,.66)}
 
@@ -298,6 +301,7 @@ function render(t){
  // The same overhead light field shades floors, objects and NPCs together.
  // Electrical flicker remains localized to the falling wire's coverage zone.
  sceneLighting.drawSceneLighting(world,viewport,t);
+ powerEffects.draw(t,game?{...world,npcs:game.npcs}:world);
  for(const hazard of world.hazards){
   if(hazard.life<=0||!['electric','fire'].includes(hazard.kind))continue;
   const pos=project(hazard.x,hazard.y,hazard.kind==='electric'?9:12);
@@ -459,7 +463,7 @@ function refreshHud(){
 }
 const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function showVictory(){const g=game;let overlay=document.createElement('div');overlay.className='screen';overlay.id='victoryOverlay';overlay.innerHTML='<div class="menuPanel"><h2>TOTAL ELIMINATION</h2><p>Every NPC on the map has died.</p><p>Deaths: '+g.stats.deaths+' · Chain reactions: '+g.stats.chains+'<br>God Powers: '+g.stats.powers+' · Time: '+Math.round(g.elapsed)+'s</p><button id="restartRound">Play Again</button><button id="freeplayRound">Continue Freeplay</button><button id="menuRound">Main Menu</button></div>';document.body.append(overlay);unlockMap('hardware-store');
- overlay.querySelector('#restartRound').onclick=()=>{overlay.remove();game=makeGame(createHardwareStore(),{staff:+$('setupStaff').value,customers:+$('setupCustomers').value,clockStartMinutes:+$('setupTime').value});scene=game.world;resultShown=false;selected=null;feedback='';contextPowers.reset();activateTab('world');centerCamera();refreshHud()};
+ overlay.querySelector('#restartRound').onclick=()=>{overlay.remove();powerEffects.clear();game=makeGame(createHardwareStore(),{staff:+$('setupStaff').value,customers:+$('setupCustomers').value,clockStartMinutes:+$('setupTime').value});scene=game.world;resultShown=false;selected=null;feedback='';contextPowers.reset();activateTab('world');centerCamera();refreshHud()};
  overlay.querySelector('#freeplayRound').onclick=()=>{overlay.remove();g.freeplay=true};
  overlay.querySelector('#menuRound').onclick=()=>{overlay.remove();show('mainMenu');refreshContinue()};
 }
