@@ -419,6 +419,14 @@ assert(pathTo(restroomV28,{x:37,y:24},{x:44,y:24}).length>0);
 const cornerArtSource=readFileSync(new URL('../src/artwork.js',import.meta.url),'utf8');
 assert(!cornerArtSource.includes('isOuterCorner'),
  'Original full exterior corner wall rendering restored');
+const receivingV30=createHardwareStore();
+assert(!receivingV30.fixtures.some(f=>f.type==='workbench'&&f.x===17&&f.y===35),
+ 'Lumber workbench has been removed');
+const sawV30=receivingV30.fixtures.find(f=>f.type==='saw');
+assert.equal(selectionLabel(receivingV30,sawV30),'Saw',
+ 'Lumber saw inspect title is Saw, not Lumber Shelf');
+assert.equal(receivingV30.fixtures.filter(f=>f.type==='palletStack'&&f.y===42).length,2);
+assert.equal(receivingV30.fixtures.filter(f=>f.type==='boxStack'&&f.y===42).length,2);
 // Exercise both sliding leaves with a real NPC entering the garden.
 const gateGame=makeGame(extended,{staff:4,customers:2,seed:23});
 const gateWalker=gateGame.npcs[2];
@@ -457,7 +465,7 @@ legacySnapshot.world.fixtures=legacySnapshot.world.fixtures.filter(f=>f.type!=='
 legacySnapshot.world.walls=legacySnapshot.world.walls.filter(([k])=>k!=='37,10'&&k!=='37,27');
 store.set(legacyKey,JSON.stringify(legacySnapshot));
 const migrated=loadGame();
-assert(migrated&&migrated.world.layoutVersion===29,'Older saves receive the revised level');
+assert(migrated&&migrated.world.layoutVersion===30,'Older saves receive the revised level');
 assert(migrated.world.walls.has('37,10')&&migrated.world.walls.has('37,27'),
  'Save migration restores hallway end walls');
 assert(!doorAt(migrated.world,43,39)&&doorAt(migrated.world,36,31)?.type==='sliding',
