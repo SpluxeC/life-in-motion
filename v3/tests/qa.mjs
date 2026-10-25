@@ -16,6 +16,7 @@ import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness,HAIR_C
 import {readFileSync} from 'node:fs';
 import {pinchCamera} from '../src/pinch-zoom.js';
 import {patchPanelHTML} from '../src/panel-patch.js';
+import {canOfferTileGodPowers,createContextPowers} from '../src/context-powers.js';
 import {CEILING_LIGHTS,ELECTRICAL_RADIUS,updateElectricalZones,lightIntensityAt,createSceneLighting} from '../src/scene-lighting.js';
 import {initMenuAnimation} from '../src/menu-animation.js';
 const store=new Map();
@@ -39,6 +40,62 @@ for(const id of ['setupMapStep','setupOptionsStep','setupBack','setupLaunch','ma
  assert(compactHTML.includes('id="'+id+'"'),'New World controls and map preview preserved: '+id);
 }
 
+
+
+const powerTileWorld=createHardwareStore();
+for(const area of ['grass','landscape','parking','sidewalk','road']){
+ const tile=powerTileWorld.ground.find(t=>t.area===area);
+ assert(tile&&!canOfferTileGodPowers(powerTileWorld,tile.x,tile.y),
+  'No contextual God Powers on '+area+' ground');
+}
+for(const area of ['store','employee','garden','loading']){
+ const tile=powerTileWorld.ground.find(t=>t.area===area);
+ assert(tile&&canOfferTileGodPowers(powerTileWorld,tile.x,tile.y),
+  'Contextual hazards remain available on eligible '+area+' flooring');
+}
+assert(!canOfferTileGodPowers(powerTileWorld,-1,-1)&&
+ !canOfferTileGodPowers(powerTileWorld,1000,1000),
+ 'Unmapped ground never offers powers');
+const testedNpc={id:'npc-context-test',alive:true,role:'customer'};
+const popupWorld=powerTileWorld;
+const popupGame={world:popupWorld,npcs:[testedNpc],energy:100,elapsed:0,paused:false,cooldowns:{}};
+const menuClasses=new Set(['hidden']);
+const popupElement={
+ innerHTML:'',offsetWidth:185,offsetHeight:110,
+ style:{},classList:{
+  add:className=>menuClasses.add(className),
+  remove:className=>menuClasses.delete(className),
+  contains:className=>menuClasses.has(className)
+ },
+ querySelector:()=>null,querySelectorAll:()=>[]
+};
+const popupMessages=[],popupUses=[];
+const popup=createContextPowers({
+ element:popupElement,stage:{clientWidth:640,clientHeight:450},
+ getGame:()=>popupGame,
+ apply:(id,target,detail)=>{popupUses.push({id,target,detail});return{ok:true,message:'Applied '+id}},
+ onMessage:message=>popupMessages.push(message)
+});
+popup.show(testedNpc,55,65);
+assert(menuClasses.has('hidden'),'Selecting an NPC does not show the God Powers popup');
+popup.show(testedNpc,55,65,'suspicion');
+assert(!menuClasses.has('hidden')&&popupElement.innerHTML.includes('data-accusation'),
+ 'Person Overview can still open the chosen NPC power options');
+popup.show(testedNpc,55,65,'anger');
+assert(popupUses.some(x=>x.id==='anger'&&x.target===testedNpc),
+ 'Person Overview can apply a single-step NPC power directly');
+const groundTile=popupWorld.ground.find(t=>t.area==='grass');
+popup.show({...groundTile,type:'tile',id:'tile-'+groundTile.x+'-'+groundTile.y},55,65);
+assert(menuClasses.has('hidden'),'Clicking grass closes the contextual God Powers popup');
+const shopTile=popupWorld.ground.find(t=>t.area==='store');
+popup.show({...shopTile,type:'tile',id:'tile-'+shopTile.x+'-'+shopTile.y},55,65);
+assert(!menuClasses.has('hidden')&&popupElement.innerHTML.includes('Environmental Hazard'),
+ 'Appropriate indoor flooring retains environmental hazard options');
+const machine=popupWorld.fixtures.find(f=>f.type==='saw');
+popup.show(machine,55,65);
+assert(!menuClasses.has('hidden')&&popupElement.innerHTML.includes('Sabotage Equipment'),
+ 'Selecting appropriate equipment retains its contextual power');
+popup.hide();
 
 const cinematicMenu=compactHTML.split('<div id="mainMenu" class="screen">')[1]?.split('<div id="howToPlayScreen"')[0]||'';
 
@@ -850,7 +907,15 @@ assert(currentClient.includes('game=null;scene=createHardwareStore();'),
 assert(currentClient.includes("'<br><strong>Weakness:</strong> '"),'People list shows weakness before task');
 assert(currentClient.indexOf("'<br><strong>Weakness:</strong> '")<currentClient.indexOf("escapeHTML(p.alive?p.activity:'Deceased')"),'Weakness displayed above activity');
 assert(currentClient.includes("POWER_LIST.map(p=>{")&&currentClient.includes("open?'<div class=\"powerDescription\""),'Power explanations appear inline under selected power');
-assert(currentClient.includes("const activate=powers.querySelector('#armPower')"),'Expand/collapse power guidance keeps usable action');
+assert(!currentClient.includes('armPower')&&!currentClient.includes('pendingPower'),
+ 'God Powers tab cannot arm, cancel, or activate powers');
+assert(currentClient.includes('This tab shows descriptions only.')&&currentClient.includes('data-select-power'),
+ 'God Powers tab keeps expandable descriptions without an activation control');
+assert(currentClient.includes('if(point&&!isNpc)contextPowers.show(obj,point.x,point.y)'),
+ 'NPC map selection opens Person Overview without the floating God Powers list');
+assert(currentClient.includes('contextPowers.show(n,Math.min(view().w*.55'),
+ 'Person Overview retains NPC-specific power controls');
+
 assert(currentClient.includes("hairAppearance(n)")&&currentClient.includes("emotionState(n)"),'NPC portrait reads same hair and emotion state');
 // Spawned people should display varied, reproducible starting emotions.
 for(const seed of [447,91,2026]){
