@@ -16,6 +16,7 @@ import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness,HAIR_C
 import {readFileSync} from 'node:fs';
 import {pinchCamera} from '../src/pinch-zoom.js';
 import {patchPanelHTML} from '../src/panel-patch.js';
+import {CEILING_LIGHTS,ELECTRICAL_RADIUS,updateElectricalZones,lightIntensityAt,createSceneLighting} from '../src/scene-lighting.js';
 import {initMenuAnimation} from '../src/menu-animation.js';
 const store=new Map();
 globalThis.localStorage={getItem:key=>store.get(key)||null,setItem:(key,value)=>store.set(key,value)};
@@ -156,6 +157,43 @@ for(const role of ['employee','customer','police','firefighter','paramedic']){
 assert.equal(COMMAND_OPTIONS.length,15,'All approved full behavioral commands exist');
 assert.equal(powerCost('suspicion',{severity:'Extreme'}),22);
 assert.equal(powerCost('command',{action:'attack'}),18);
+
+assert(CEILING_LIGHTS.length>=20&&CEILING_LIGHTS.some(l=>l.area==='store')&&
+ CEILING_LIGHTS.some(l=>l.area==='employee')&&CEILING_LIGHTS.some(l=>l.area==='garden'),
+ 'Hardware Store uses overhead lighting across its distinct indoor areas');
+assert.equal(ELECTRICAL_RADIUS,4.6,'Electrical outages stay localized');
+const lightingGame=makeGame(createHardwareStore(),{seed:402,staff:8,customers:12});
+lightingGame.energy=250;
+const wirePlaced=applyPower(lightingGame,'hazard',{type:'tile',x:37,y:20},{kind:'electric'});
+assert(wirePlaced.ok,'Hanging live wire can be placed in the covered store hallway');
+updateGame(lightingGame,1/30);
+assert(lightingGame.world.electricalZones.some(z=>z.active&&z.x===37&&z.y===20),
+ 'An active wire starts a matching localized electrical zone');
+const dimPower=lightIntensityAt(lightingGame.world,40,19,lightingGame.elapsed);
+assert(dimPower<.95,'The nearby ceiling light flickers and dims under the wire');
+assert.equal(lightIntensityAt(lightingGame.world,7,14,lightingGame.elapsed),1,
+ 'A distant light in the same store is not affected by the wire');
+assert(lightingGame.world.fixtures.some(f=>f.powerOutUntil>lightingGame.elapsed),
+ 'Nearby powered fixtures receive a temporary local outage');
+lightingGame.world.hazards.find(h=>h.kind==='electric').life=0;
+updateGame(lightingGame,1/30);
+const recoveryZone=lightingGame.world.electricalZones.find(z=>z.x===37&&z.y===20);
+assert(recoveryZone&&!recoveryZone.active,'Cleared wire enters recovery, not permanent blackout');
+assert(recoveryZone.recoverAt-lightingGame.elapsed>=5&&recoveryZone.recoverAt-lightingGame.elapsed<=15,
+ 'Local lights restore automatically after 5–15 simulated seconds');
+assert(lightIntensityAt(lightingGame.world,40,19,lightingGame.elapsed)<.8,
+ 'The local power outage remains visible during restoration');
+lightingGame.paused=true;
+const frozenLightingTime=lightingGame.elapsed;
+updateGame(lightingGame,20);
+assert.equal(lightingGame.elapsed,frozenLightingTime,'Pausing freezes electrical recovery');
+lightingGame.paused=false;
+updateGame(lightingGame,recoveryZone.recoverAt-lightingGame.elapsed+.1);
+assert.equal(lightingGame.world.electricalZones.length,0,'Electrical zones disappear on recovery');
+assert.equal(lightIntensityAt(lightingGame.world,40,19,lightingGame.elapsed),1,
+ 'Lighting returns to full intensity after the power comes back');
+assert.equal(typeof createSceneLighting,'function','The shared lighting renderer is available');
+
 const powerCheck=makeGame(createHardwareStore(),{seed:901,staff:4,customers:8});
 powerCheck.energy=250;
 let beforePower=powerCheck.energy;
