@@ -76,8 +76,8 @@ export function createHardwareStore(){
  fixture('plants',41,33,2,2);fixture('plants',45,35,1,2);fixture('gardenDesk',42,29,2,1);
  // Additional stocked departments and service details. Each solid asset reserves its true footprint.
  // Relocate the narrow Tools endcap from the aisle center to the Hardware department's right edge.
- fixture('endcap',35,21,1,1,{department:'TOOLS',stock:6,facing:'west'});fixture('endcap',26,24,1,1,{department:'PLUMBING',stock:6});
- fixture('endcap',35,22,1,1,{department:'HARDWARE',stock:6,facing:'west'});
+ fixture('departmentWallShelf',35,21,1,1,{department:'TOOLS',stock:6,facing:'west'});fixture('endcap',26,24,1,1,{department:'PLUMBING',stock:6});
+ fixture('departmentWallShelf',35,22,1,1,{department:'HARDWARE',stock:6,facing:'west'});
  fixture('bucketStack',5,16,1,1,{department:'PAINT',stock:6});
  fixture('lumberRack',14,35,2,1,{department:'LUMBER',stock:8});
  // Centered retail-grade red tool shelf, between the Tools aisle runs.
@@ -136,7 +136,7 @@ export function createHardwareStore(){
  for(let x of [4,12,20,28,36,44,52,60])props.push({id:'shrub-'+x,type:'shrub',x,y:1});
  for(let y of [12,20,28,37,45])props.push({id:'tree-'+y,type:'tree',x:60,y});
  for(let x of [51,57])for(let y of [13,25,38])props.push({id:'shrub-'+x+'-'+y,type:'shrub',x,y});
- return {id:'hardware-store',title:'Hardware Store',layoutVersion:30,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
+ return {id:'hardware-store',title:'Hardware Store',layoutVersion:31,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],blocking:blocked};
 }
 export const inside=(x,y)=>x>=0&&y>=0&&x<WIDTH&&y<HEIGHT;
 export function fixtureAt(world,x,y){return world.fixtures.find(o=>x>=o.x&&x<o.x+o.w&&y>=o.y&&y<o.y+o.h)}
