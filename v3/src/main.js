@@ -1,5 +1,6 @@
 import {createHardwareStore,doorAt,fixtureAt,nearestOpen,walkable,key} from './world.js?v=landscape-camera-ui-v32-20261024';
-import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v=landscape-camera-ui-v32-20261024';
+import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v=god-powers-v40-20261025';
+import {createContextPowers} from './context-powers.js?v=god-powers-v40-20261025';
 import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js?v=landscape-camera-ui-v32-20261024';
 import {createArtwork} from './artwork.js?v=unified-floor-yaw-v37-20261024';
 import {renderDepth,compareRenderDepth} from './render-depth.js?v=driver-side-forklift-wheels-20261023-1';
@@ -14,18 +15,19 @@ let cameraAngle=45,panelOpen=false;
 let game=null,scene=createHardwareStore(),zoom=.72,offset={x:0,y:0},last=performance.now(),acc=0,lastHud=0,lastSave=0,lastViewport={w:0,h:0},drag=null,selected=null,resultShown=false,activeTab='world',selectedPowerId='whisper',pendingPower=null,feedback='';
 const TW=48,TH=24,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const artwork=createArtwork(ctx,project,()=>zoom);
+const contextPowers=createContextPowers({element:$('contextGodPowers'),stage:canvas.parentElement,getGame:()=>game,apply:(id,t,detail)=>applyPower(game,id,t,detail),onMessage:m=>{feedback=m;refreshHud()}});
 const view=()=>({w:canvas.clientWidth,h:canvas.clientHeight});
 function show(screen){document.body.classList.toggle('playing',!screen);for(let id of ['mainMenu','howToPlayScreen','worldSetup'])$(id).classList.toggle('hidden',id!==screen)}
 function setup(step){show('worldSetup');$('setupMapStep').hidden=step!==1;$('setupOptionsStep').hidden=step!==2;$('setupStepLabel').textContent='STEP '+step+' OF 2 · '+(step===1?'SELECT MAP':'NEW WORLD')}
 $('startGame').onclick=()=>setup(1);$('howToPlayButton').onclick=()=>show('howToPlayScreen');$('howToBack').onclick=()=>show('mainMenu');$('setupBack').onclick=()=>{$('setupOptionsStep').hidden?show('mainMenu'):setup(1)};
 $('mapHardware').onclick=()=>setup(2);$('home').onclick=()=>{if(game&&!game.completed)saveGame(game);show('mainMenu');refreshContinue()};
-$('setupLaunch').onclick=()=>{scene=createHardwareStore();game=makeGame(scene,{staff:+$('setupStaff').value,customers:+$('setupCustomers').value,clockStartMinutes:+$('setupTime').value});game.speed=1;selected=null;resultShown=false;pendingPower=null;feedback='';activateTab('world',false);show(null);centerCamera();refreshHud()};
+$('setupLaunch').onclick=()=>{scene=createHardwareStore();game=makeGame(scene,{staff:+$('setupStaff').value,customers:+$('setupCustomers').value,clockStartMinutes:+$('setupTime').value});game.speed=1;selected=null;resultShown=false;pendingPower=null;feedback='';contextPowers.reset();activateTab('world',false);show(null);centerCamera();refreshHud()};
 $('continueGame').onclick=()=>{let restored=loadGame();if(!restored){$('continueGame').disabled=true;return}game=restored;game.speed=1;scene=game.world;selected=null;resultShown=false;pendingPower=null;feedback='';activateTab('world',false);show(null);centerCamera();refreshHud()};
 function refreshContinue(){$('continueGame').disabled=!hasSave()}
 refreshContinue();
 $('saveV3').onclick=()=>{if(!game)return;let ok=saveGame(game);feedback=ok?'Game saved.':'Save failed: browser storage unavailable';$('settingsFeedback').textContent=feedback;refreshContinue()};
 $('pause').onclick=()=>{if(game){game.paused=!game.paused;refreshHud()}};
-$('stopFollow').onclick=()=>clearSelection();
+
 function activateTab(tab,open=true){
  activeTab=tab;panelOpen=open;
  $('worldLayout').classList.toggle('panelClosed',!panelOpen);
@@ -44,17 +46,18 @@ $('cameraAngle').addEventListener('input',event=>{
  const npc=game?.npcs.find(n=>n.id===selected?.id);
  offset=npc?iso(npc.rx,npc.ry):iso(focal.x,focal.y);
 });
-function clearSelection(){selected=null;feedback='';$('stopFollow').classList.add('hidden');refreshHud()}
-function selectTarget(obj){
+function clearSelection(){selected=null;feedback='';contextPowers.reset();refreshHud()}
+function selectTarget(obj,point=null){
  selected=obj;
  if(obj&&game?.npcs.some(n=>n.id===obj.id))activateTab('people');
  pendingPower=null;feedback='';
  refreshHud();
+ if(point)contextPowers.show(obj,point.x,point.y);
 }
 
 
 function centerCamera(){let v=view();zoom=Math.min(.87,Math.max(.43,Math.min(v.w/1300,v.h/870)));offset=iso(36,20)}
-function followSelected(){const n=game?.npcs.find(o=>o.id===selected?.id);if(n){offset=iso(n.rx,n.ry);$('stopFollow').classList.remove('hidden')}else $('stopFollow').classList.add('hidden')}
+function followSelected(){const n=game?.npcs.find(o=>o.id===selected?.id);if(n)offset=iso(n.rx,n.ry)}
 // Restricted camera yaw: at 45° it exactly matches the original projection.
 // World coordinates and NPC pathfinding never change.
 function basis(){
@@ -323,7 +326,7 @@ function refreshHud(){
  $('pause').querySelector('.pauseIcon').style.display=g.paused?'none':'';
  $('pause').querySelector('.resumeIcon').style.display=g.paused?'':'none';
  $('headerStatus').textContent='Living '+alive+'/'+g.npcs.length+' · God Energy '+Math.floor(g.energy);
- $('stopFollow').classList.toggle('hidden',!g.npcs.some(n=>n.id===selected?.id));
+
  $('settingsFeedback').textContent=feedback;
  $('worldEvents').innerHTML=g.log.slice(0,12).map(e=>'<p class="personFacts">'+escapeHTML(e.text)+'</p>').join('')||'<p>No events yet.</p>';
  const parent=$('gamePanel'),previousScroll=parent.scrollTop;
@@ -342,14 +345,14 @@ function refreshHud(){
    '</p><p><strong>Inventory:</strong> '+escapeHTML((n.inventory||[]).map(id=>ITEMS.find(i=>i.id===id)?.name||id).join(', ')||'Empty')+
    '</p><p><strong>Recent memory:</strong> '+escapeHTML((n.memory||[]).slice(0,3).map(m=>m.text).join(' · ')||'None')+'</p></div>';
   html+='<h3>God Powers</h3><div class="personPowers">'+POWER_LIST.filter(p=>p.targets.includes('npc')).map(p=>
-   '<button data-npc-power="'+p.id+'" '+(powerUsable(p,n)?'':'disabled')+'>'+escapeHTML(p.name)+' · '+p.cost+' Energy</button>').join('')+'</div>';
-  html+='<button id="clearPerson" class="actionWide">Stop Following / Unselect</button>';
+   '<button data-npc-power="'+p.id+'" '+(powerUsable(p,n)?'':'disabled')+'>'+escapeHTML(p.name)+' · '+(p.priceRange||p.cost)+' Energy</button>').join('')+'</div>';
+
   if(feedback)html+='<p class="gameMessage">'+escapeHTML(feedback)+'</p>';
   people.innerHTML=html;
   people.querySelector('#backPeople').onclick=clearSelection;
-  people.querySelector('#clearPerson').onclick=clearSelection;
+
   people.querySelectorAll('[data-npc-power]').forEach(b=>b.onclick=()=>{
-   const out=applyPower(g,b.dataset.npcPower,n);feedback=out.message;refreshHud();
+   contextPowers.show(n,Math.min(view().w*.55,view().w-210),Math.min(view().h*.25,view().h-150),b.dataset.npcPower);
   });
  }else{
   people.innerHTML='<h3>People · '+g.npcs.length+' in this round</h3>'+
@@ -369,7 +372,7 @@ function refreshHud(){
    const open=selectedPowerId===p.id;
    const help=POWER_HELP[p.id]||['Influence the world.','Tap a valid target.'];
    return '<button class="powerRow '+(open?'active':'')+'" data-select-power="'+p.id+'" aria-expanded="'+open+'"><span>'+
-    escapeHTML(p.name)+'</span><strong>'+p.cost+' Energy</strong></button>'+
+    escapeHTML(p.name)+'</span><strong>'+(p.priceRange||p.cost)+' Energy</strong></button>'+
     (open?'<div class="powerDescription"><strong>'+escapeHTML(p.name)+'</strong>'+
      '<p>'+escapeHTML(help[0])+'</p><p>'+escapeHTML(help[1])+'</p>'+
      (g.cooldowns[p.id]>g.elapsed?'<p>Cooldown: '+Math.ceil(g.cooldowns[p.id]-g.elapsed)+'s</p>':'')+
@@ -441,29 +444,28 @@ function inspectAtScreen(sx,sy){
  // This makes tapping a person reliably open their overview/follow mode.
  hits.sort((a,b)=>(a.priority===0?0:1)-(b.priority===0?0:1)||a.priority-b.priority||a.d-b.d);
  const tile=unproject(sx,sy);
+ const tileTarget={id:'tile-'+tile.x+'-'+tile.y,x:tile.x,y:tile.y,type:'tile'};
+ if(contextPowers.consumeClick(hits[0]?.target,tileTarget))return;
  if(pendingPower){
   const power=POWER_LIST.find(p=>p.id===pendingPower);
-  const picked=hits[0]?.target;
-  const npc=game.npcs.find(n=>n.id===picked?.id);
-  const fixture=game.world.fixtures.find(f=>f.id===picked?.id);
-  // Environmental hazards must originate on a walkable tile even when
-  // the player tapped the graphic of a neighboring fixture.
-  const target=power?.id==='hazard'?nearestOpen(world,tile.x,tile.y):
-   (npc||fixture||{type:'tile',x:tile.x,y:tile.y,id:'tile-'+tile.x+'-'+tile.y});
-  const out=applyPower(game,pendingPower,target);
-  feedback=out.message;
-  if(out.ok)pendingPower=null;
-  refreshHud();
+  const picked=power?.id==='hazard'?tileTarget:(hits[0]?.target||tileTarget);
+  const isNpc=game.npcs.some(n=>n.id===picked?.id);
+  const kind=isNpc?'npc':picked.type==='tile'?'tile':picked.id?.startsWith('door-')?'door':
+   game.world.props.some(o=>o.id===picked.id)?'prop':picked.type==='departmentSign'?'sign':'fixture';
+  if(!power?.targets.includes(kind)){feedback='Choose a valid target for '+(power?.name||'this power');refreshHud();return}
+  const chosen=pendingPower;
+  selectTarget(picked,{x:sx,y:sy});
+  contextPowers.show(picked,sx,sy,chosen);
   return;
  }
  // Open floor tiles win over the projected *upper part* of adjacent shelves.
  // Actual NPC taps are still first priority, so selection/follow feels natural.
  if(!hits.some(hit=>hit.priority<=2)&&
     isGroundTileTap(world,tile.x,tile.y,sx,sy,project,zoom)){
-  inspect(tile.x,tile.y);return;
+  inspect(tile.x,tile.y);contextPowers.show(selected,sx,sy);return;
  }
- if(hits.length){selectTarget(hits[0].target);return}
- inspect(tile.x,tile.y)
+ if(hits.length){selectTarget(hits[0].target,{x:sx,y:sy});return}
+ inspect(tile.x,tile.y);contextPowers.show(selected,sx,sy)
 }
 // Pointer events support one-finger map drags/taps and anchored two-finger
 // pinch/pan; a multi-touch gesture must never select an NPC or fire a power.
