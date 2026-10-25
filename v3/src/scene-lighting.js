@@ -1,11 +1,12 @@
 // Life in Motion: world-aligned ambient light, projected shadows and local electrical states.
 // Lighting uses the existing camera projection. No timers or wall-clock randomness.
 const clamp=(n,a=0,b=1)=>Math.max(a,Math.min(b,n));
-export const ELECTRICAL_RADIUS=4.6;
+export const ELECTRICAL_RADIUS=6.5;
 export const CEILING_LIGHTS=[
  ...[14,21,28,35].flatMap(y=>[7,15,23,31].map(x=>({x,y,area:'store'}))),
  ...[13,19,25].flatMap(y=>[40,44].map(x=>({x,y,area:'employee'}))),
- ...[31,36].flatMap(y=>[40,45].map(x=>({x,y,area:'garden'})))
+ ...[31,36].flatMap(y=>[40,45].map(x=>({x,y,area:'garden'}))),
+ ...[27,33].map(x=>({x,y:41,area:'loading'}))
 ];
 const ROOMS=[
  {x1:2,y1:10,x2:37.5,y2:39.5,shade:.39},
