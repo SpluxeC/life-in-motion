@@ -136,13 +136,170 @@ body{overflow:hidden}
  #worldSetup .mapScene.hardwareScene{height:clamp(42px,14dvh,56px)}
 }
 #mainMenu .menuWorldLine{justify-content:center;text-align:center}
+
+/* Life in Motion — god-simulator cinematic main menu. Isolated from setup and gameplay. */
+#mainMenu.screen{
+  isolation:isolate;overflow:hidden;
+  background:
+    radial-gradient(ellipse 72% 105% at 16% 36%,rgba(38,105,104,.30),transparent 74%),
+    radial-gradient(ellipse 68% 82% at 95% 86%,rgba(149,101,52,.19),transparent 74%),
+    linear-gradient(136deg,#07131d 0%,#102632 48%,#08141d 100%);
+}
+#mainMenu.screen::before{
+  content:"";position:absolute;inset:-30%;z-index:-1;pointer-events:none;opacity:.35;
+  background-image:linear-gradient(rgba(125,177,169,.065) 1px,transparent 1px),linear-gradient(90deg,rgba(125,177,169,.065) 1px,transparent 1px);
+  background-size:36px 36px;transform:perspective(660px) rotateX(57deg) rotateZ(-19deg) scale(1.2);
+}
+#mainMenu.screen::after{
+  content:"";position:absolute;z-index:-1;pointer-events:none;width:min(80vw,950px);aspect-ratio:1;
+  border:1px solid rgba(137,205,185,.12);border-radius:50%;right:-19vw;top:-34vw;
+  box-shadow:0 0 0 55px rgba(109,176,159,.025),0 0 0 126px rgba(109,176,159,.023),0 0 120px rgba(38,155,138,.085);
+}
+#mainMenu .menuCinematic{
+  position:relative;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(240px,.86fr);
+  align-items:stretch;gap:clamp(22px,4.4vw,56px);width:min(930px,calc(100vw - 40px));
+  min-height:min(450px,calc(100dvh - 42px));max-height:calc(100dvh - 22px);
+  padding:clamp(24px,4.2vw,52px);overflow:hidden;text-align:left;
+  border:1px solid rgba(150,192,177,.40);border-radius:24px;
+  background:linear-gradient(145deg,rgba(23,49,59,.97),rgba(12,29,41,.98) 55%,rgba(12,26,36,.98));
+  box-shadow:0 36px 95px rgba(0,0,0,.47),inset 0 1px 0 rgba(255,255,255,.09),0 0 75px rgba(24,120,105,.12);
+}
+#mainMenu .menuCinematic::before{
+  content:"";position:absolute;inset:12px;pointer-events:none;border:1px solid rgba(153,204,190,.11);border-radius:16px;
+}
+#mainMenu .menuCinematic::after{
+  content:"";position:absolute;pointer-events:none;width:210px;height:210px;bottom:-125px;left:-84px;border-radius:50%;
+  background:radial-gradient(circle,rgba(178,136,71,.18),transparent 68%);
+}
+#mainMenu .menuHero{position:relative;display:flex;min-width:0;flex-direction:column;align-items:flex-start;justify-content:center;gap:0;z-index:1}
+#mainMenu .menuMark{
+  width:clamp(78px,9vw,108px);height:clamp(78px,9vw,108px);display:grid;place-items:center;
+  border-radius:20px;margin:0 0 clamp(18px,2vw,28px);
+  background:linear-gradient(150deg,rgba(52,101,104,.54),rgba(7,26,37,.65));
+  border:1px solid rgba(159,215,189,.33);box-shadow:inset 0 1px 0 rgba(232,244,218,.14),0 16px 35px rgba(0,0,0,.26);
+}
+#mainMenu .menuMark svg{display:block;width:82%;height:82%;filter:drop-shadow(0 0 12px rgba(99,203,176,.28))}
+#mainMenu .menuHero h2{
+  font-size:clamp(40px,5.2vw,66px);line-height:.99;font-weight:850;letter-spacing:-.065em;
+  margin:0 0 clamp(12px,1.8vw,20px);color:#f4f3e8;text-wrap:balance;
+  text-shadow:0 4px 19px rgba(0,0,0,.28);
+}
+#mainMenu .menuHero h2 span{display:block;color:#a7e5d3;letter-spacing:-.06em}
+#mainMenu .menuTagline{
+  max-width:350px;font-size:clamp(13px,1.48vw,17px);line-height:1.56;
+  letter-spacing:.015em;color:#c4d6d5;margin:0 0 clamp(18px,2.7vw,31px);text-wrap:balance;
+}
+#mainMenu .menuWorldLine{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;margin:0;
+  width:auto;max-width:100%;padding:9px 14px;border-radius:6px;
+  font-size:11px;line-height:1.2;letter-spacing:.035em;text-align:center;
+  background:rgba(9,33,40,.78);border:1px solid rgba(132,179,165,.27);
+}
+#mainMenu .menuWorldLine::before{
+  content:"";width:6px;height:6px;flex:none;background:#a6dfc4;border-radius:50%;
+  box-shadow:0 0 0 3px rgba(134,203,164,.09),0 0 8px rgba(145,233,179,.5);
+}
+#mainMenu .menuWorldReady{color:#d4e9d7;font-weight:650}
+#mainMenu .menuActions{
+  position:relative;z-index:1;display:flex;flex-direction:column;align-self:center;
+  gap:12px;padding:24px 0 24px clamp(18px,3.1vw,36px);
+  border-left:1px solid rgba(152,194,177,.25);width:100%;
+}
+#mainMenu .menuActions button{
+  position:relative;display:flex;align-items:center;justify-content:space-between;
+  width:100%;min-height:62px;margin:0;padding:14px clamp(15px,2vw,22px);
+  text-align:left;font-size:clamp(13px,1.5vw,16px);font-weight:700;line-height:1.15;
+  border-radius:10px;border:1px solid rgba(138,187,176,.34);color:#e8f1ec;
+  background:linear-gradient(125deg,rgba(38,74,82,.83),rgba(20,51,61,.9));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 10px 23px rgba(0,0,0,.15);
+  transition:background-color .16s,border-color .16s,transform .16s,box-shadow .16s;
+}
+#mainMenu .menuActions button::after{
+  content:"";width:8px;height:8px;flex:none;margin-left:8px;border-top:1.5px solid currentColor;
+  border-right:1.5px solid currentColor;transform:rotate(45deg);opacity:.65;
+}
+#mainMenu .menuActions button:first-child{
+  color:#092a2c;border-color:#b6ead2;
+  background:linear-gradient(115deg,#97d7b9,#5bbda9);
+  box-shadow:0 12px 28px rgba(38,141,124,.21),inset 0 1px 0 rgba(255,255,255,.42);
+}
+#mainMenu .menuActions button:hover:not(:disabled),
+#mainMenu .menuActions button:focus-visible{
+  transform:translateX(3px);border-color:#d6edd9;
+  box-shadow:0 12px 30px rgba(21,150,127,.2),inset 0 1px 0 rgba(255,255,255,.09);
+}
+#mainMenu .menuActions button:first-child:hover:not(:disabled){background:linear-gradient(115deg,#b7e8cd,#75d4ba)}
+#mainMenu .menuActions button:focus-visible{outline:2px solid #f5d8a0;outline-offset:3px}
+#mainMenu .menuActions button:disabled{opacity:.42;cursor:default;box-shadow:none;transform:none}
+@media (max-width:760px) and (orientation:landscape),(max-height:480px) and (min-width:560px){
+ #mainMenu.screen{padding:5px 8px}
+ #mainMenu .menuCinematic{
+   width:min(760px,calc(100vw - 14px));min-height:0;max-height:calc(100dvh - 10px);
+   grid-template-columns:minmax(0,1fr) minmax(200px,.87fr);gap:clamp(10px,3vw,28px);
+   padding:clamp(11px,2.8dvh,22px) clamp(14px,2.7vw,26px);border-radius:14px;
+ }
+ #mainMenu .menuMark{width:clamp(40px,12dvh,64px);height:clamp(40px,12dvh,64px);margin-bottom:clamp(6px,2dvh,13px);border-radius:12px}
+ #mainMenu .menuHero h2{font-size:clamp(28px,6.8dvh,46px);margin-bottom:clamp(5px,1.8dvh,12px)}
+ #mainMenu .menuTagline{font-size:clamp(10px,2.8dvh,13px);line-height:1.35;margin-bottom:clamp(8px,2dvh,15px)}
+ #mainMenu .menuWorldLine{font-size:9px;padding:6px 9px}
+ #mainMenu .menuActions{gap:clamp(6px,1.7dvh,10px);padding:10px 0 10px clamp(12px,2vw,22px)}
+ #mainMenu .menuActions button{min-height:clamp(38px,11.5dvh,54px);padding:8px 12px;font-size:clamp(11px,3dvh,14px)}
+}
+@media (max-width:559px) and (orientation:portrait){
+ #mainMenu.screen{padding:8px}
+ #mainMenu .menuCinematic{
+   width:min(440px,100%);min-height:0;max-height:calc(100dvh - 16px);
+   display:flex;flex-direction:column;align-items:stretch;justify-content:center;
+   gap:clamp(15px,3dvh,24px);padding:clamp(16px,4dvh,28px) clamp(18px,5vw,28px);border-radius:17px;
+ }
+ #mainMenu .menuHero{align-items:center;text-align:center}
+ #mainMenu .menuMark{width:clamp(55px,10dvh,80px);height:clamp(55px,10dvh,80px);margin-bottom:clamp(10px,2dvh,18px)}
+ #mainMenu .menuHero h2{font-size:clamp(35px,9vw,48px);margin-bottom:10px}
+ #mainMenu .menuHero h2 span{display:inline}
+ #mainMenu .menuTagline{font-size:clamp(12px,3vw,15px);margin-bottom:15px}
+ #mainMenu .menuWorldLine{font-size:11px;padding:8px 12px}
+ #mainMenu .menuActions{padding:16px 0 0;border-left:0;border-top:1px solid rgba(152,194,177,.25);gap:8px}
+ #mainMenu .menuActions button{min-height:clamp(40px,7.5dvh,52px);font-size:14px;padding:10px 15px}
+}
+@media (prefers-reduced-motion:reduce){
+ #mainMenu .menuActions button{transition:none}
+}
+
 </style></head><body>
-<div id="mainMenu" class="screen"><div class="menuPanel">
-<div class="menuMark" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M8 28 32 8l24 20v29H8Z" fill="#407b7d" stroke="#d7ece9" stroke-width="3"/><path d="M24 57V36h16v21" fill="#173843" stroke="#d7ece9" stroke-width="2"/><path d="M14 36h7v10h-7zm29 0h7v10h-7z" fill="#ebcf84"/><path d="M18 26h28" stroke="#d9e7dd" stroke-width="2"/></svg></div>
-<h2>Life <span>in Motion</span></h2><p class="menuTagline">Pull the strings. Watch the chaos unfold.</p>
-<div class="menuWorldLine"><span class="menuWorldReady">New Maps Coming Soon!</span></div>
-<button id="startGame">Create New World →</button><button id="continueGame" disabled>Continue Saved World</button><button id="howToPlayButton">How to Play</button>
-<p class="menuFootnote">Create a new world or continue your saved round.</p></div></div>
+<div id="mainMenu" class="screen">
+<div class="menuPanel menuCinematic">
+  <div class="menuHero">
+    <div class="menuMark" aria-hidden="true">
+      <svg viewBox="0 0 120 120" role="presentation" focusable="false">
+        <defs>
+          <linearGradient id="godEyeMetal" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4dca5"/><stop offset="1" stop-color="#a2dbc9"/></linearGradient>
+          <radialGradient id="godIris"><stop offset="0" stop-color="#f5eac4"/><stop offset=".45" stop-color="#79c9b4"/><stop offset="1" stop-color="#173b44"/></radialGradient>
+        </defs>
+        <path d="M60 7 106 33v54L60 113 14 87V33Z" fill="none" stroke="#6b948c" stroke-width="1.2" opacity=".7"/>
+        <path d="M60 15 98 37v46L60 105 22 83V37Z" fill="#091b25" fill-opacity=".5" stroke="#bbab7c" stroke-width="1" opacity=".65"/>
+        <path d="M15 59h15m60 0h15M60 7v15m0 75v16" stroke="#d2c18f" stroke-width="1.4" opacity=".85"/>
+        <path d="M24 56Q60 21 96 56 60 90 24 56Z" fill="#163b42" fill-opacity=".8" stroke="url(#godEyeMetal)" stroke-width="3" stroke-linejoin="round"/>
+        <circle cx="60" cy="56" r="17" fill="url(#godIris)" stroke="#f1dfac" stroke-width="1.4"/>
+        <circle cx="60" cy="56" r="9" fill="#08202c"/>
+        <circle cx="56" cy="51" r="3.5" fill="#e9fff0"/>
+        <path d="M49 76v12m11-16v24m11-20v12" stroke="#c8b77e" stroke-width="1.3" stroke-dasharray="3 3" opacity=".9"/>
+        <circle cx="49" cy="91" r="3.2" fill="#a9cfbc"/>
+        <circle cx="60" cy="99" r="3.2" fill="#d7c084"/>
+        <circle cx="71" cy="91" r="3.2" fill="#a9cfbc"/>
+        <path d="M38 26 33 22m49 4 5-4M33 91l-5 5m59-5 5 5" stroke="#a0c8bc" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <h2>Life <span>in Motion</span></h2>
+    <p class="menuTagline">Pull the strings. Watch the chaos unfold.</p>
+    <div class="menuWorldLine"><span class="menuWorldReady">New Maps Coming Soon!</span></div>
+  </div>
+  <div class="menuActions">
+    <button id="startGame">Create New World →</button>
+    <button id="continueGame" disabled>Continue Saved World</button>
+    <button id="howToPlayButton">How to Play</button>
+  </div>
+</div>
+</div>
 <div id="howToPlayScreen" class="screen hidden"><div class="menuPanel"><button id="howToBack">← Back</button><h2>How to Play</h2><p class="muted">The goal of Life in Motion is to manipulate an autonomous world until nobody survives. Observe their behavior, manipulate their relationships, use God Powers, and turn environmental hazards against them. Earn God Energy through chaos and eliminate every NPC to win.</p></div></div>
 <div id="worldSetup" class="screen hidden"><div class="setupPanel"><div class="setupHeader"><button id="setupBack">← Back</button><span id="setupStepLabel">STEP 1 OF 2 · SELECT MAP</span></div>
 <div id="setupMapStep"><h2>Choose your map</h2><p class="muted">Select a playable location to continue to world settings.</p><div class="mapChoices">
