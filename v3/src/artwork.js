@@ -107,8 +107,11 @@ export function createArtwork(ctx,project,getZoom){
   const palette={road:['#38444b','#3b464c','#414b50'],parking:['#555f62','#576064','#60696a'],store:['#b4b5aa','#aeafa5','#a9aaa1'],employee:['#8f9b94','#95a097','#89948d'],garden:['#9b9981','#a6a48a','#a2a48c'],sidewalk:['#b9bbb0','#b5b9ae','#c2c3b8'],loading:['#777f7d','#828986','#747c7a'],landscape:['#56704f','#5b7554','#617955'],grass:['#6a7f5c','#718360','#637856']};
   for(const tile of world.ground){
    const p=P(tile.x,tile.y);if(p.x<-40||p.x>W+40||p.y<-70||p.y>H+70)continue;
-   const a=24*z,b=12*z,base=palette[tile.area]||palette.grass,c=base[colorNoise(tile.x,tile.y)%base.length];
-   poly([{x:p.x,y:p.y-b},{x:p.x+a,y:p.y},{x:p.x,y:p.y+b},{x:p.x-a,y:p.y}],c);
+   const base=palette[tile.area]||palette.grass,c=base[colorNoise(tile.x,tile.y)%base.length];
+   // Project each tile's actual shared corners, not a fixed screen-space
+   // diamond. Otherwise every tile appears to rotate independently.
+   poly([P(tile.x-.5,tile.y-.5),P(tile.x+.5,tile.y-.5),
+    P(tile.x+.5,tile.y+.5),P(tile.x-.5,tile.y+.5)],c);
    if(tile.area==='store'||tile.area==='employee'){
     if((tile.x+tile.y)%2===0&&z>.45){
      const e=P(tile.x+.46,tile.y+.46),d=P(tile.x-.46,tile.y+.46);
