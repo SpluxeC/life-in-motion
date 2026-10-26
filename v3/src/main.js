@@ -351,6 +351,14 @@ function render(t){
   ...world.hazards.filter(h=>h.kind==='spill'&&h.beingCleaned&&h.life>0).map(h=>({kind:'sign',depth:renderDepth('sign',h)+.2,fn:()=>artwork.drawWetFloorSign(h.x,h.y)})),
   ...(game?game.npcs.filter(o=>!(o.medicalUntil>game.elapsed)).map(o=>({kind:'npc',depth:renderDepth('npc',o),fn:()=>{
    stick(o,t);
+   if(o.alive&&['paramedic','firefighter','police'].includes(o.role)&&/Responding|Freeing|Reinstalling|Removing/.test(o.activity||'')){
+    const p=project(o.rx,o.ry,43),z=zoom;
+    ctx.save();ctx.fillStyle='#d9f2ec';ctx.strokeStyle='#254550';ctx.lineWidth=1.5*z;
+    ctx.beginPath();ctx.arc(p.x,p.y,5*z,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#235a5a';ctx.font='bold '+Math.max(8,9*z)+'px system-ui';ctx.textAlign='center';
+    ctx.fillText(o.activity.startsWith('Freeing')?'+':'!',p.x,p.y+3*z);
+    ctx.restore();
+   }
    if(o.command&&o.alive){const p=project(o.rx,o.ry,43);ctx.save();ctx.font='bold '+Math.max(10,13*zoom)+'px system-ui';ctx.textAlign='center';ctx.fillStyle='#ffe296';ctx.strokeStyle='#24343d';ctx.lineWidth=2.5;ctx.strokeText('✦',p.x,p.y);ctx.fillText('✦',p.x,p.y);ctx.restore()}
   }})):[]),
   ...world.hazards.map(o=>({kind:'hazard',depth:renderDepth('hazard',o),fn:()=>drawHazard(o,t)}))
