@@ -1,6 +1,8 @@
+import {mkdir} from 'node:fs/promises';
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 const browser=await chromium.launch({headless:true});
+await mkdir('qa-screenshots',{recursive:true});
 async function scenario(viewport,isMobile){
  const page=await browser.newPage({viewport,hasTouch:isMobile,isMobile});
  const errors=[];
@@ -14,12 +16,18 @@ async function scenario(viewport,isMobile){
   const canvas=page.locator('canvas#game');
   const rect=await canvas.boundingBox();
   assert.ok(rect&&rect.width>0&&rect.height>0,'canvas must be visible');
+  await canvas.screenshot({path:'qa-screenshots/'+(isMobile?'mobile':'desktop')+'-running.png'});
   await page.locator('#pause').click();
   assert.equal(await page.locator('#pause').getAttribute('aria-pressed'),'true');
+  const pausedPixels=await canvas.evaluate(el=>Array.from(el.getContext('2d').getImageData(0,0,32,32).data));
+  await page.waitForTimeout(150);
+  const pausedPixelsLater=await canvas.evaluate(el=>Array.from(el.getContext('2d').getImageData(0,0,32,32).data));
+  assert.deepEqual(pausedPixels,pausedPixelsLater,'paused world visual frame changed');
   // Paused camera adjustments must remain available without advancing simulation.
   const angle=page.locator('#cameraAngle');
   await angle.fill('55');
   assert.equal(await page.locator('#cameraAngleValue').textContent(),'55°');
+  await canvas.screenshot({path:'qa-screenshots/'+(isMobile?'mobile':'desktop')+'-camera-paused.png'});
   await page.locator('#pause').click();
   assert.equal(await page.locator('#pause').getAttribute('aria-pressed'),'false');
   await page.waitForTimeout(180);
