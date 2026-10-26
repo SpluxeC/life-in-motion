@@ -38,3 +38,24 @@ test('fallback works on older saves without animation fields',()=>{
  assert.equal(pose.legs.length,2);
  assert.ok(Number.isFinite(pose.body));
 });
+
+test('activity overlays preserve connected elbows and finite joints',()=>{
+ for(const action of ['talk','offerHelp','scan','type','stock','inspect','idle']){
+  const pose=npcLimbPose({...npc,action,actionPhase:3.2});
+  for(const arm of pose.arms){
+   for(const part of ['shoulder','elbow','wrist']){
+    assert.ok(Number.isFinite(arm[part].x));
+    assert.ok(Number.isFinite(arm[part].y));
+   }
+   const midpoint=(arm.shoulder.y+arm.wrist.y)/2+.65;
+   assert.ok(Math.abs(arm.elbow.y-midpoint)<1e-9);
+  }
+ }
+});
+test('secondary gestures stop while walking or incapacitated',()=>{
+ const walking=npcLimbPose({...npc,path:[{x:5,y:5}],walkDistance:2});
+ assert.equal(walking.active,true);
+ const down=npcLimbPose({...npc,unconscious:4,action:'talk'});
+ assert.equal(down.active,false);
+ assert.equal(animationLayers({...npc,alive:false}).idleBreath,0);
+});
