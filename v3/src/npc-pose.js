@@ -1,3 +1,4 @@
+import {npcReactionPose} from './npc-expression.js';
 import {animationLayers,blendSecondary} from './animation-layers.js';
 // Two-bone limbs for the isometric stick figures. A full alternating
 // two-step cycle represents 1.9 world tiles traveled, so slower/faster NPCs
@@ -6,13 +7,17 @@ const pt=(x,y)=>({x,y});
 export const STRIDE_TILES=1.9;
 export function npcLimbPose(n,t=0,quality={}){
  const layers=animationLayers(n);
+ const reaction=npcReactionPose(n);
+ const recentHit=Number.isFinite(n.hitReactionUntil)&&t<n.hitReactionUntil&&t>=n.hitReactionUntil-.5;
+ const recentAttack=Number.isFinite(n.attackReactionUntil)&&t<n.attackReactionUntil&&t>=n.attackReactionUntil-.4;
+ const reactionIntensity=recentHit?.9:recentAttack?.5:0;
  const active=layers.walk;
  const facing=n.facing==='left'?-1:1;
  const seed=String(n.id||'').split('').reduce((v,c)=>v+c.charCodeAt(0),0)*.071;
  // The phase comes from locomotion distance, never wall clock or render frames.
  const distance=Number.isFinite(n.walkDistance)?n.walkDistance:0;
  const phase=active?distance*(2*Math.PI/STRIDE_TILES)+seed:0;
- const body=active?Math.cos(phase*2)*.28:(quality.secondaryMotion===false?0:layers.idleBreath);
+ const body=(active?Math.cos(phase*2)*.28:(quality.secondaryMotion===false?0:layers.idleBreath))+(quality.activityGesture===false?0:reaction.lean+reactionIntensity*.6);
  const arms=[],legs=[];
  for(const side of [-1,1]){
   const step=active?Math.sin(phase+(side===1?Math.PI:0)):0;
@@ -42,6 +47,11 @@ export function npcLimbPose(n,t=0,quality={}){
    wrist=pt(side*11,-12+wave*1.5);
   }else{
    wrist=pt(side*7.4,-8.6);
+  }
+  if(!active&&quality.activityGesture!==false&&(recentHit||recentAttack)){
+   const strength=recentHit?4:5;
+   wrist.y-=strength*(recentHit?1:side===1?1:.35);
+   wrist.x+=side*(recentHit?-2:4);
   }
   // A tiny, independently blended gesture prevents completely rigid idle hands.
   // Existing authored activity poses remain authoritative when the gesture is active.
