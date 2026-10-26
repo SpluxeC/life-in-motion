@@ -8,7 +8,7 @@ async function scenario(viewport,isMobile){
  const errors=[];
  page.on('pageerror',e=>errors.push(e.message));
  try{
-  await page.goto('http://127.0.0.1:8765/v3/',{waitUntil:'networkidle'});
+  await page.goto('http://127.0.0.1:8765/v3/?qa=phase4',{waitUntil:'networkidle'});
   await page.locator('#startGame').click();
   await page.locator('#mapHardware').click();
   await page.locator('#setupLaunch').click();
@@ -19,6 +19,12 @@ async function scenario(viewport,isMobile){
   await canvas.screenshot({path:'qa-screenshots/'+(isMobile?'mobile':'desktop')+'-running.png'});
   await page.locator('#pause').click();
   assert.equal(await page.locator('#pause').getAttribute('aria-pressed'),'true');
+  const untouched=await canvas.evaluate(el=>Array.from(el.getContext('2d').getImageData(0,0,el.width,el.height).data).reduce((a,v)=>(a+v)%4294967291,0));
+  assert.equal(await page.evaluate(()=>window.__phase4QA?.()),true,'phase 4 QA fixture missing');
+  await page.waitForTimeout(80);
+  await canvas.screenshot({path:'qa-screenshots/'+(isMobile?'mobile':'desktop')+'-phase4-debris.png'});
+  const changed=await canvas.evaluate(el=>Array.from(el.getContext('2d').getImageData(0,0,el.width,el.height).data).reduce((a,v)=>(a+v)%4294967291,0));
+  assert.notEqual(changed,untouched,'falling debris had no visible effect on canvas');
   const pausedPixels=await canvas.evaluate(el=>Array.from(el.getContext('2d').getImageData(0,0,32,32).data));
   await page.waitForTimeout(150);
   const pausedPixelsLater=await canvas.evaluate(el=>Array.from(el.getContext('2d').getImageData(0,0,32,32).data));
