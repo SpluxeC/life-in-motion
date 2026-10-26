@@ -1,16 +1,18 @@
+import {animationLayers,blendSecondary} from './animation-layers.js';
 // Two-bone limbs for the isometric stick figures. A full alternating
 // two-step cycle represents 1.9 world tiles traveled, so slower/faster NPCs
 // automatically swing arms at the pace of their actual steps.
 const pt=(x,y)=>({x,y});
 export const STRIDE_TILES=1.9;
 export function npcLimbPose(n,t=0){
- const active=!!(n.alive&&n.unconscious<=0&&(n.path?.length||0)>0);
+ const layers=animationLayers(n);
+ const active=layers.walk;
  const facing=n.facing==='left'?-1:1;
  const seed=String(n.id||'').split('').reduce((v,c)=>v+c.charCodeAt(0),0)*.071;
  // The phase comes from locomotion distance, never wall clock or render frames.
  const distance=Number.isFinite(n.walkDistance)?n.walkDistance:0;
  const phase=active?distance*(2*Math.PI/STRIDE_TILES)+seed:0;
- const body=active?Math.cos(phase*2)*.28:0;
+ const body=active?Math.cos(phase*2)*.28:layers.idleBreath;
  const arms=[],legs=[];
  for(const side of [-1,1]){
   const step=active?Math.sin(phase+(side===1?Math.PI:0)):0;
@@ -44,6 +46,11 @@ export function npcLimbPose(n,t=0){
   const elbow=active?
    pt(side*7.8+(wrist.x-side*7.4)*.43,-13.6+body):
    pt((shoulder.x+wrist.x)*.5+side*1.3,(shoulder.y+wrist.y)*.5+.65);
+  // A tiny, independently blended gesture prevents completely rigid idle hands.
+  // Existing authored activity poses remain authoritative when the gesture is active.
+  if(!active && layers.gesture>0){
+   wrist.y=blendSecondary(wrist.y,Math.sin((n.actionPhase||0)*2.7+side)*.65*layers.expressiveness,layers.gesture);
+  }
   arms.push({side,shoulder,elbow,wrist});
  }
  return {active,phase,body,arms,legs};
