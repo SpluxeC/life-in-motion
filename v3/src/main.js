@@ -15,6 +15,7 @@ import {npcLimbPose} from './npc-pose.js?v=animation-phase1-20261026';
 import {npcReactionPose} from './npc-expression.js?v=phase2-20261026';
 import {environmentCues} from './environment-effects.js?v=phase3-20261026';
 import {emergencyVehicleVisual} from './vehicle-animation.js?v=phase5-20261026';
+import {createGameAudio} from './game-audio.js?v=phase6-20261026';
 import {animationDetail,adaptiveFrameRate,animationRenderOptions} from './animation-quality.js?v=animation-phase1-20261026';
 import {pinchCamera} from './pinch-zoom.js?v=garden-tools-pinch-map16-20261023';
 const $=id=>document.getElementById(id);
@@ -37,7 +38,13 @@ const TW=48,TH=24,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const artwork=createArtwork(ctx,project,()=>zoom);
 const sceneLighting=createSceneLighting(ctx,project,()=>zoom);
 const powerEffects=createPowerEffects(ctx,project,()=>zoom);
-const contextPowers=createContextPowers({element:$('contextGodPowers'),stage:canvas.parentElement,getGame:()=>game,apply:(id,t,detail)=>{const result=applyPower(game,id,t,detail);if(result.ok)powerEffects.trigger(id,t,game.elapsed,detail);return result},onMessage:m=>{feedback=m;refreshHud()}});
+const gameAudio=createGameAudio();
+const soundToggle=$('toggleSound');
+soundToggle.onclick=async()=>{const enabled=await gameAudio.setEnabled(!gameAudio.enabled);soundToggle.setAttribute('aria-pressed',String(enabled));soundToggle.textContent='Soundtrack & Effects: '+(enabled?'On':'Off')};
+const reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)');
+powerEffects.setReducedMotion(!!reducedMotion?.matches);
+reducedMotion?.addEventListener?.('change',e=>powerEffects.setReducedMotion(e.matches));
+const contextPowers=createContextPowers({element:$('contextGodPowers'),stage:canvas.parentElement,getGame:()=>game,apply:(id,t,detail)=>{const result=applyPower(game,id,t,detail);if(result.ok){powerEffects.trigger(id,t,game.elapsed,detail);gameAudio.cue(id,t.rx??t.x??0,selected?.rx??0)}return result},onMessage:m=>{feedback=m;refreshHud()}});
 const view=()=>({w:canvas.clientWidth,h:canvas.clientHeight});
 function show(screen){document.body.classList.toggle('playing',!screen);for(let id of ['mainMenu','howToPlayScreen','worldSetup'])$(id).classList.toggle('hidden',id!==screen)}
 function setup(step){show('worldSetup');$('setupMapStep').hidden=step!==1;$('setupOptionsStep').hidden=step!==2;$('setupStepLabel').textContent='STEP '+step+' OF 2 · '+(step===1?'SELECT MAP':'NEW WORLD');if(step===1)captureHardwareMapPreview()}
