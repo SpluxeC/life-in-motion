@@ -13,6 +13,7 @@ import {hitProjectedFixture,isGroundTileTap,selectionLabel,doorSelectionTarget} 
 import {signOpacity} from './sign-visibility.js?v=garden-sign-shelf-wall-map15-20261023';
 import {npcLimbPose} from './npc-pose.js?v=animation-phase1-20261026';
 import {npcReactionPose} from './npc-expression.js?v=phase2-20261026';
+import {environmentCues} from './environment-effects.js?v=phase3-20261026';
 import {animationDetail,adaptiveFrameRate,animationRenderOptions} from './animation-quality.js?v=animation-phase1-20261026';
 import {pinchCamera} from './pinch-zoom.js?v=garden-tools-pinch-map16-20261023';
 const $=id=>document.getElementById(id);
@@ -288,6 +289,21 @@ const departmentSigns=[
  // Hung just inside the garden entrance, aligned with its two Y-axis sliders.
   {x:35.2,y:30.5,name:'GARDEN',accent:'#63905b',axis:'y'}
 ];
+function drawEnvironmentCue(cue){
+ const p=project(cue.x,cue.y,cue.kind==='electric'?13:2),z=zoom;
+ ctx.save();
+ if(cue.kind==='fire'){
+  ctx.strokeStyle='#ffc17a';ctx.lineWidth=2*z;ctx.globalAlpha=.55*cue.strength;
+  ctx.beginPath();ctx.ellipse(p.x,p.y,18*z,7*z,0,0,Math.PI*2);ctx.stroke();
+ }else if(cue.kind==='electric'){
+  ctx.strokeStyle='#b1eaff';ctx.lineWidth=1.8*z;ctx.globalAlpha=.65*cue.strength;
+  ctx.beginPath();ctx.moveTo(p.x-8*z,p.y);ctx.lineTo(p.x-2*z,p.y-9*z);ctx.lineTo(p.x+3*z,p.y-3*z);ctx.lineTo(p.x+8*z,p.y-13*z);ctx.stroke();
+ }else{
+  ctx.strokeStyle='#a9d8e3';ctx.lineWidth=1.3*z;ctx.globalAlpha=.34;
+  ctx.beginPath();ctx.ellipse(p.x,p.y,16*z,6*z,0,0,Math.PI*2);ctx.stroke();
+ }
+ ctx.restore();
+}
 function render(t){
  resize();
  const viewport=view(),world=game?.world||scene;
@@ -331,6 +347,7 @@ function render(t){
  // Electrical flicker remains localized to the falling wire's coverage zone.
  sceneLighting.drawSceneLighting(world,viewport,t);
  powerEffects.draw(t,game?{...world,npcs:game.npcs}:world);
+ for(const cue of environmentCues(world,t))drawEnvironmentCue(cue);
  for(const hazard of world.hazards){
   if(hazard.life<=0||!['electric','fire'].includes(hazard.kind))continue;
   const pos=project(hazard.x,hazard.y,hazard.kind==='electric'?9:12);
