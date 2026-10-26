@@ -4,7 +4,7 @@ import {animationLayers,blendSecondary} from './animation-layers.js';
 // automatically swing arms at the pace of their actual steps.
 const pt=(x,y)=>({x,y});
 export const STRIDE_TILES=1.9;
-export function npcLimbPose(n,t=0){
+export function npcLimbPose(n,t=0,quality={}){
  const layers=animationLayers(n);
  const active=layers.walk;
  const facing=n.facing==='left'?-1:1;
@@ -12,7 +12,7 @@ export function npcLimbPose(n,t=0){
  // The phase comes from locomotion distance, never wall clock or render frames.
  const distance=Number.isFinite(n.walkDistance)?n.walkDistance:0;
  const phase=active?distance*(2*Math.PI/STRIDE_TILES)+seed:0;
- const body=active?Math.cos(phase*2)*.28:layers.idleBreath;
+ const body=active?Math.cos(phase*2)*.28:(quality.secondaryMotion===false?0:layers.idleBreath);
  const arms=[],legs=[];
  for(const side of [-1,1]){
   const step=active?Math.sin(phase+(side===1?Math.PI:0)):0;
@@ -45,7 +45,7 @@ export function npcLimbPose(n,t=0){
   }
   // A tiny, independently blended gesture prevents completely rigid idle hands.
   // Existing authored activity poses remain authoritative when the gesture is active.
-  if(!active && layers.gesture>0){
+  if(!active && quality.activityGesture!==false && quality.secondaryMotion!==false && layers.gesture>0){
    wrist.y=blendSecondary(wrist.y,Math.sin((Number.isFinite(n.actionPhase)?n.actionPhase:0)*2.7+side)*.65*layers.expressiveness,layers.gesture);
   }
   // Compute elbows AFTER applying secondary motion so every two-bone limb
