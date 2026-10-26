@@ -22,6 +22,16 @@ initMenuAnimation($('mainMenu'));
 
 let cameraAngle=45,panelOpen=false,renderFps=60;
 let game=null,scene=createHardwareStore(),zoom=.72,offset={x:0,y:0},last=performance.now(),acc=0,lastHud=0,lastSave=0,lastViewport={w:0,h:0},drag=null,selected=null,resultShown=false,activeTab='world',selectedPowerId='whisper',feedback='';
+// Local QA-only scene injection; unavailable on the published game.
+if(location.hostname==='127.0.0.1'&&new URLSearchParams(location.search).get('qa')==='phase4'){
+ window.__phase4QA=()=>{
+  if(!game)return false;
+  game.world.damage??=[];
+  game.world.damage.push({id:'qa-fallen-sign',kind:'fallenSign',signId:'department-sign-PAINT',
+   x:20,y:18,phase:'fallen',fallenAt:game.elapsed-.85,until:null});
+  return true;
+ };
+}
 const TW=48,TH=24,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const artwork=createArtwork(ctx,project,()=>zoom);
 const sceneLighting=createSceneLighting(ctx,project,()=>zoom);
