@@ -155,6 +155,17 @@ export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
  for(const f of g.world.fixtures)if(f.powerOutUntil&&f.powerOutUntil<=g.elapsed)f.powerOutUntil=0;
  for(let v of g.world.props){if(v.targetX!==undefined){let dx=v.targetX-v.x,dy=v.targetY-v.y,dist=Math.hypot(dx,dy);if(dist>.04){v.x+=dx/dist*Math.min(dist,dt*2);v.y+=dy/dist*Math.min(dist,dt*2)}}}
  for(let p of [...g.pending]){p.time-=dt;if(p.time<=0){dispatch(g,p.service);g.pending.splice(g.pending.indexOf(p),1)}}
+ // Fire crews target active fires and reduce their remaining duration in-place.
+ // Work is deterministic and advances only on simulation ticks.
+ for(const crew of g.npcs){
+  if(!crew.alive||crew.role!=='firefighter'||crew.unconscious>0)continue;
+  const fire=g.world.hazards.filter(h=>h.kind==='fire'&&h.life>0)
+   .sort((a,b)=>Math.hypot(crew.rx-a.x,crew.ry-a.y)-Math.hypot(crew.rx-b.x,crew.ry-b.y))[0];
+  if(!fire)continue;
+  const distance=Math.hypot(crew.rx-fire.x,crew.ry-fire.y);
+  if(distance<2.2){fire.life=Math.max(0,fire.life-dt*5);crew.activity='Extinguishing fire';crew.action='offerHelp';crew.path=[]}
+  else if(!crew.path?.length){const to=nearestOpen(g.world,fire.x+1,fire.y);crew.path=pathTo(g.world,crew,to);crew.target=to;crew.activity='Responding to fire';crew.action='walk'}
+ }
  for(const h of [...g.world.hazards]){
   h.beingCleaned=false;h.life-=dt;h.tick+=dt;
   if(h.life<=0)continue;
