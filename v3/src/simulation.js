@@ -1,3 +1,4 @@
+import {tickDamageRecovery,debrisBlocksMovement} from './damage-recovery.js';
 import {nearestOpen,pathTo,doorAt,fixtureAt,walkable,key} from './world.js?v=hardware-lighting-v49-20261025';
 import {initializeRoutine,chooseRoutine,updateRoutine} from './routines.js?v=selection-shadows-map31-20261024';
 import {POWER_LIST,godPowerApply,tickGodPowers,spreadSuspicion,autoSabotage} from './god-powers.js?v=god-powers-v41';
@@ -131,6 +132,7 @@ function interact(g,n,other){if(!other||!other.alive)return;
 export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
  g.elapsed+=dt;g.dispatchCooldown=Math.max(0,g.dispatchCooldown-dt);
  tickGodPowers(g,dt,godContext);
+ tickDamageRecovery(g,dt);
  for(let k of Object.keys(g.cooldowns))if(g.cooldowns[k]<g.elapsed)delete g.cooldowns[k];
  for(let d of g.world.doors){
   // A door begins opening as the character approaches its planned doorway,
@@ -190,7 +192,8 @@ export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
  if(n.bleeding>0){n.health-=n.bleeding*dt*.09;if(n.health<=0){kill(g,n,'untreated injury');continue}}n.pain=clamp(n.pain-dt*.13);if(n.unconscious>0){if(n.cleaningTarget)clearCleanup(g,n);n.unconscious-=dt;continue}
  if(n.arrested){if(n.cleaningTarget)clearCleanup(g,n);n.detention-=dt;if(n.detention<=0){n.arrested=false;n.activity='Released from detention'}continue}
  n.think-=dt;if(n.think<=0){n.think=1.5+g.random()*2;if(!n.command)choose(g,n)}
- if(n.path.length){let next=n.path[0],entry=doorAt(g.world,next.x,next.y);if(entry&&entry.open<.65){if(!entry.locked)entry.forceUntil=g.elapsed+2;else{n.emotion.anger=clamp(n.emotion.anger+dt*6);n.emotion.stress=clamp(n.emotion.stress+dt*3);n.activity='Frustrated by locked door'}continue}let p=n.path[0],beforeX=n.rx,beforeY=n.ry,dx=p.x-n.rx,dy=p.y-n.ry,dist=Math.hypot(dx,dy),speed=(n.panic?3.6:1.65)*(n.health<50?.7:1);if(dist>.001&&Math.abs(dx-dy)>.025)n.facing=dx-dy>0?'right':'left';if(dist<=dt*speed){n.rx=p.x;n.ry=p.y;n.x=p.x;n.y=p.y;n.path.shift()}else{n.rx+=dx/dist*dt*speed;n.ry+=dy/dist*dt*speed}
+ if(n.trappedBy){n.path=[];continue}
+ if(n.path.length){let next=n.path[0];if(debrisBlocksMovement(g.world,next.x,next.y)){n.path=[];n.think=0;continue}let entry=doorAt(g.world,next.x,next.y);if(entry&&entry.open<.65){if(!entry.locked)entry.forceUntil=g.elapsed+2;else{n.emotion.anger=clamp(n.emotion.anger+dt*6);n.emotion.stress=clamp(n.emotion.stress+dt*3);n.activity='Frustrated by locked door'}continue}let p=n.path[0],beforeX=n.rx,beforeY=n.ry,dx=p.x-n.rx,dy=p.y-n.ry,dist=Math.hypot(dx,dy),speed=(n.panic?3.6:1.65)*(n.health<50?.7:1);if(dist>.001&&Math.abs(dx-dy)>.025)n.facing=dx-dy>0?'right':'left';if(dist<=dt*speed){n.rx=p.x;n.ry=p.y;n.x=p.x;n.y=p.y;n.path.shift()}else{n.rx+=dx/dist*dt*speed;n.ry+=dy/dist*dt*speed}
  // Stride phase follows distance covered, not frame time. A slow/injured
  // walker therefore swings arms more slowly than a panicking runner.
  n.walkDistance=(n.walkDistance||0)+Math.hypot(n.rx-beforeX,n.ry-beforeY);
