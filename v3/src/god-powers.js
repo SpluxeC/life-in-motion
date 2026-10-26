@@ -190,7 +190,7 @@ export function tickGodPowers(g,dt,ctx){
   if(explosive&&!/Using|Working|Operating/i.test(near.activity||''))continue;
   for(const n of g.npcs)if(n.alive&&Math.hypot(n.x-s.x,n.y-s.y)<(explosive?2.3:1.25))
    ctx.injury(g,n,(explosive?42:falling?29:15)*(.6+g.random()*.9),'sabotaged '+s.type);
-  if(falling){g.world.damage??=[];const debris={id:'debris-'+g.elapsed+'-'+s.id,kind:/sign/i.test(s.type)?'fallenSign':'fallenBox',signId:s.id,x:near.x,y:near.y,until:null,phase:'fallen'};g.world.damage.push(debris);if(near.alive&&near.health>0){near.trappedBy=debris.id;near.path=[];near.activity='Trapped under fallen debris'}}
+  if(falling){g.world.damage??=[];const debris={id:'debris-'+g.elapsed+'-'+s.id,kind:/sign/i.test(s.type)?'fallenSign':'fallenBox',signId:s.id,x:near.x,y:near.y,fallenAt:g.elapsed,until:null,phase:'fallen'};g.world.damage.push(debris);if(near.alive&&near.health>0){near.trappedBy=debris.id;near.path=[];near.activity='Trapped under fallen debris'}}
   if(explosive){const at=nearestOpen(g.world,s.x+1,s.y);ctx.addHazard(g,at.x,at.y,'fire','sabotage');ctx.incident(g,'fire')}else ctx.incident(g,'injury');
   if(obj){obj.damaged=true;obj.destroyed=explosive&&g.random()<.5;obj.repairUntil=g.elapsed+(obj.destroyed?55:26)}
   g.world.sabotages.splice(g.world.sabotages.indexOf(s),1);
