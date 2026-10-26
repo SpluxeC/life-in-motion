@@ -43,14 +43,16 @@ export function npcLimbPose(n,t=0){
   }else{
    wrist=pt(side*7.4,-8.6);
   }
-  const elbow=active?
-   pt(side*7.8+(wrist.x-side*7.4)*.43,-13.6+body):
-   pt((shoulder.x+wrist.x)*.5+side*1.3,(shoulder.y+wrist.y)*.5+.65);
   // A tiny, independently blended gesture prevents completely rigid idle hands.
   // Existing authored activity poses remain authoritative when the gesture is active.
   if(!active && layers.gesture>0){
-   wrist.y=blendSecondary(wrist.y,Math.sin((n.actionPhase||0)*2.7+side)*.65*layers.expressiveness,layers.gesture);
+   wrist.y=blendSecondary(wrist.y,Math.sin((Number.isFinite(n.actionPhase)?n.actionPhase:0)*2.7+side)*.65*layers.expressiveness,layers.gesture);
   }
+  // Compute elbows AFTER applying secondary motion so every two-bone limb
+  // remains connected; no detached wrists during conversations.
+  const elbow=active?
+   pt(side*7.8+(wrist.x-side*7.4)*.43,-13.6+body):
+   pt((shoulder.x+wrist.x)*.5+side*1.3,(shoulder.y+wrist.y)*.5+.65);
   arms.push({side,shoulder,elbow,wrist});
  }
  return {active,phase,body,arms,legs};
