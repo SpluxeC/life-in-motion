@@ -37,6 +37,13 @@ async function scenario(viewport,isMobile){
   await page.locator('#pause').click();
   assert.equal(await page.locator('#pause').getAttribute('aria-pressed'),'false');
   await page.waitForTimeout(180);
+  await page.locator('[data-tab="settings"]').click();
+  const sound=page.locator('#toggleSound');
+  assert.equal(await sound.getAttribute('aria-pressed'),'false','sound must default off');
+  await sound.click();
+  assert.equal(await sound.getAttribute('aria-pressed'),'true','audio opt-in failed');
+  await sound.click();
+  assert.equal(await sound.getAttribute('aria-pressed'),'false','audio mute failed');
   const expression=await page.evaluate(async()=>{const {npcExpression}=await import('./src/npc-expression.js');return npcExpression({alive:true,emotion:{fear:90}}).kind});
   assert.equal(expression,'terrified','phase 2 expressions unavailable in browser');
   const hazard=await page.evaluate(async()=>{const {environmentCue}=await import('./src/environment-effects.js');return environmentCue({kind:'electric',life:5,x:3,y:4},10)?.kind});
