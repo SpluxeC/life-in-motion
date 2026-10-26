@@ -337,7 +337,10 @@ function render(t){
   ...(world.damage||[]).filter(o=>['fallenBox','fallenSign'].includes(o.kind)&&o.phase!=='repaired').map(o=>({kind:'item',depth:renderDepth('item',o),fn:()=>{
    const progress=Number.isFinite(o.fallenAt)?Math.max(0,Math.min(1,(t-o.fallenAt)/.8)):1;
    const p=project(o.x,o.y,(1-progress)*42),z=zoom;ctx.save();ctx.translate(p.x,p.y);ctx.rotate((1-progress)*-.65);ctx.fillStyle=o.kind==='fallenSign'?'#bd8353':'#ac8b67';ctx.fillRect(-10*z,-7*z,20*z,11*z);ctx.strokeStyle='#514539';ctx.lineWidth=1.5*z;ctx.strokeRect(-10*z,-7*z,20*z,11*z);
-   if(o.phase==='clearing'){ctx.fillStyle='#d8e6d2';ctx.fillRect(-8*z,-10*z,16*z,2*z)}ctx.restore();
+   if(o.phase==='clearing'){ctx.fillStyle='#d8e6d2';ctx.fillRect(-8*z,-10*z,16*z,2*z)}
+   ctx.strokeStyle='#ffb35c';ctx.globalAlpha=.82;ctx.lineWidth=2*z;
+   ctx.beginPath();ctx.ellipse(0,1*z,15*z,10*z,0,0,Math.PI*2);ctx.stroke();
+   ctx.restore();
   }})),
   ...departmentSigns.filter(o=>!(world.damage||[]).some(d=>d.kind==='fallenSign'&&d.signId==='department-sign-'+o.name&&d.phase!=='repaired')).map(o=>{
     const depth=o.name==='RECEIVING'?-1000:renderDepth('sign',o)+.1;
