@@ -25,6 +25,14 @@ jobs:
           python3 -m http.server 8765 --bind 127.0.0.1 &
           sleep 2
           node v3/tests/browser-smoke.mjs
+      - name: Upload visual QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase2-phase3-desktop-mobile-screenshots
+          path: qa-screenshots/
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Package development preview
         if: always()
         run: |
