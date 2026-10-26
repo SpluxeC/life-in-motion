@@ -55,4 +55,5 @@ async function scenario(viewport,isMobile){
 try{
  await scenario({width:1280,height:780},false);
  await scenario({width:844,height:390},true);
+ await scenario({width:390,height:844},true);
 }finally{await browser.close();}
