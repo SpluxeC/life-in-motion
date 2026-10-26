@@ -14,6 +14,7 @@ import {signOpacity} from './sign-visibility.js?v=garden-sign-shelf-wall-map15-2
 import {npcLimbPose} from './npc-pose.js?v=animation-phase1-20261026';
 import {npcReactionPose} from './npc-expression.js?v=phase2-20261026';
 import {environmentCues} from './environment-effects.js?v=phase3-20261026';
+import {emergencyVehicleVisual} from './vehicle-animation.js?v=phase5-20261026';
 import {animationDetail,adaptiveFrameRate,animationRenderOptions} from './animation-quality.js?v=animation-phase1-20261026';
 import {pinchCamera} from './pinch-zoom.js?v=garden-tools-pinch-map16-20261023';
 const $=id=>document.getElementById(id);
@@ -331,7 +332,7 @@ function render(t){
   }})),
   ...world.doors.map(o=>({kind:'door',depth:renderDepth('door',o),fn:()=>artwork.drawDoor(o,t)})),
   ...[...world.walls.values()].map(o=>({kind:'wall',depth:renderDepth('wall',o),fn:()=>artwork.drawWall(o,world)})),
-  ...world.props.map(o=>({kind:'vehicle',depth:renderDepth('vehicle',o),fn:()=>o.type==='wetFloorSign'?artwork.drawWetFloorSign(o.x,o.y):artwork.drawVehicle(o,t)})),
+  ...world.props.map(o=>({kind:'vehicle',depth:renderDepth('vehicle',o),fn:()=>{if(o.type==='wetFloorSign'){artwork.drawWetFloorSign(o.x,o.y);return}artwork.drawVehicle(o,t);const lights=emergencyVehicleVisual(o,t);if(lights){const p=project(o.x+(o.w||2)/2,o.y+(o.h||3)/2,34),z=zoom;ctx.save();ctx.fillStyle=lights.left;ctx.beginPath();ctx.arc(p.x-5*z,p.y,3*z,0,Math.PI*2);ctx.fill();ctx.fillStyle=lights.right;ctx.beginPath();ctx.arc(p.x+5*z,p.y,3*z,0,Math.PI*2);ctx.fill();ctx.restore()}}})),
   ...(world.drops||[]).map(o=>({kind:'item',depth:renderDepth('item',o),fn:()=>artwork.drawDrop(o)})),
   ...(world.damage||[]).filter(o=>['fallenBox','fallenSign'].includes(o.kind)&&o.phase!=='repaired').map(o=>({kind:'item',depth:renderDepth('item',o),fn:()=>{
    const progress=Number.isFinite(o.fallenAt)?Math.max(0,Math.min(1,(t-o.fallenAt)/.8)):1;
