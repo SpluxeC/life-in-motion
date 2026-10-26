@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - 'v3/src/animation-layers.js'
+      - 'v3/src/animation-quality.js'
+      - 'v3/src/main.js'
       - 'v3/src/npc-pose.js'
       - 'v3/tests/animation-layers.test.mjs'
       - '.github/workflows/animation-phase1.yml'
