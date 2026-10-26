@@ -251,7 +251,7 @@ function stick(n,t){let p=project(n.rx,n.ry),z=zoom*(n.role==='customer'||n.role
  for(const arm of joints.arms)limb(arm.shoulder,arm.elbow,arm.wrist);
  // Ankles are the step's attachment to the floor rather than swinging past it.
  for(const leg of joints.legs){const q=local(leg.foot);ctx.beginPath();ctx.arc(q.x,q.y,1.5*z,0,Math.PI*2);ctx.fill()}
- ctx.fillStyle='#f8faf7';ctx.strokeStyle='#0c1416';ctx.lineWidth=2*z;ctx.beginPath();ctx.arc(0,-h*z*.82,7*z,0,Math.PI*2);ctx.fill();ctx.stroke();drawNpcExpression(n,z,h,detail);if(n.role==='employee'){
+ ctx.fillStyle='#f8faf7';ctx.strokeStyle='#0c1416';ctx.lineWidth=2*z;ctx.beginPath();ctx.arc(0,-h*z*.82,7*z,0,Math.PI*2);ctx.fill();ctx.stroke();if(n.role==='employee'){
   // Two tailored red vest panels, shoulder seams, a V-neck and an open black center.
   ctx.lineWidth=1.15*z;ctx.strokeStyle='#171a1c';ctx.fillStyle='#c92f38';
   ctx.beginPath();
@@ -276,7 +276,10 @@ function stick(n,t){let p=project(n.rx,n.ry),z=zoom*(n.role==='customer'||n.role
   ctx.fillStyle='#ddd1b3';ctx.fillRect(-5*z,-h*z*.70,5*z,6*z);
   ctx.fillStyle='#b0dce1';ctx.fillRect(-5*z,-h*z*.70,5*z,2*z);
  }
- drawHair(n,z,h);ctx.restore();
+ drawHair(n,z,h);
+ // Keep expressions above hair and hat brims so eyes and mouths stay readable.
+ drawNpcExpression(n,z,h,detail);
+ ctx.restore();
  if(n.alive&&n.unconscious<=0&&n.action==='offerHelp'&&n.task?.kind==='help'){
   ctx.save();ctx.font=`bold ${Math.max(8,9*z)}px system-ui`;ctx.textAlign='center';ctx.textBaseline='middle';
   const bw=39*z,bh=16*z,bx=p.x-bw/2,by=p.y-60*z;
@@ -454,9 +457,11 @@ function portraitHTML(n){
  return '<div class="npcPortrait mood-'+escapeHTML(mood.toLowerCase())+'"><svg viewBox="0 0 100 125" role="img" aria-label="Portrait expressing '+escapeHTML(mood)+'">'+
   '<path d="M22 123l8-30 20-7 20 7 8 30" fill="#202b32" stroke="#0a1114" stroke-width="4"/>'+vest+
   '<ellipse cx="50" cy="48" rx="31" ry="37" fill="#f7f4eb" stroke="#293436" stroke-width="3"/>'+
-  '<g fill="#18252a">'+eyes+'</g><path d="'+brow+'" stroke="#283032" stroke-width="3.5" fill="none"/>'+
+  
+  '<g transform="'+(n.facing==='left'?'translate(100 0) scale(-1 1)':'')+'"><g fill="'+color+'" stroke="'+color+'" stroke-width="2">'+hairShape+'</g>'+helmet+'</g>'+ 
+  // Facial features are drawn LAST, above long hair and uniform hat brims.
+  '<g fill="#18252a">'+eyes+'</g><path d="'+brow+'" stroke="#283032" stroke-width="3.5" fill="none"/>'+ 
   '<path d="'+mouth+'" stroke="#4b292c" stroke-width="3.2" fill="none"/>'+extra+
-  '<g transform="'+(n.facing==='left'?'translate(100 0) scale(-1 1)':'')+'"><g fill="'+color+'" stroke="'+color+'" stroke-width="2">'+hairShape+'</g>'+helmet+'</g>'+
   '</svg><div><strong>'+escapeHTML(n.name)+'</strong><span>'+escapeHTML(n.role)+' · '+escapeHTML(mood)+'</span></div></div>';
 }
 function powerUsable(p,n=null){
