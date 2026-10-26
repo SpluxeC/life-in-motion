@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 const browser=await chromium.launch({headless:true});
 await mkdir('qa-screenshots',{recursive:true});
 async function scenario(viewport,isMobile){
+ const label=!isMobile?'desktop':viewport.width<viewport.height?'mobile-portrait':'mobile-landscape';
  const page=await browser.newPage({viewport,hasTouch:isMobile,isMobile});
  const errors=[];
  page.on('pageerror',e=>errors.push(e.message));
@@ -16,13 +17,13 @@ async function scenario(viewport,isMobile){
   const canvas=page.locator('canvas#game');
   const rect=await canvas.boundingBox();
   assert.ok(rect&&rect.width>0&&rect.height>0,'canvas must be visible');
-  await canvas.screenshot({path:'qa-screenshots/'+(isMobile?'mobile':'desktop')+'-running.png'});
+  await canvas.screenshot({path:'qa-screenshots/'+label+'-running.png'});
   await page.locator('#pause').click();
   assert.equal(await page.locator('#pause').getAttribute('aria-pressed'),'true');
   const untouched=await canvas.evaluate(el=>Array.from(el.getContext('2d').getImageData(0,0,el.width,el.height).data).reduce((a,v)=>(a+v)%4294967291,0));
   assert.equal(await page.evaluate(()=>window.__phase4QA?.()),true,'phase 4 QA fixture missing');
   await page.waitForTimeout(80);
-  await canvas.screenshot({path:'qa-screenshots/'+(isMobile?'mobile':'desktop')+'-phase4-debris.png'});
+  await canvas.screenshot({path:'qa-screenshots/'+label+'-phase4-debris.png'});
   const changed=await canvas.evaluate(el=>Array.from(el.getContext('2d').getImageData(0,0,el.width,el.height).data).reduce((a,v)=>(a+v)%4294967291,0));
   assert.notEqual(changed,untouched,'falling debris had no visible effect on canvas');
   const pausedPixels=await canvas.evaluate(el=>Array.from(el.getContext('2d').getImageData(0,0,32,32).data));
@@ -33,7 +34,7 @@ async function scenario(viewport,isMobile){
   const angle=page.locator('#cameraAngle');
   await angle.fill('55');
   assert.equal(await page.locator('#cameraAngleValue').textContent(),'55°');
-  await canvas.screenshot({path:'qa-screenshots/'+(isMobile?'mobile':'desktop')+'-camera-paused.png'});
+  await canvas.screenshot({path:'qa-screenshots/'+label+'-camera-paused.png'});
   await page.locator('#pause').click();
   assert.equal(await page.locator('#pause').getAttribute('aria-pressed'),'false');
   await page.waitForTimeout(180);
@@ -49,7 +50,7 @@ async function scenario(viewport,isMobile){
   const hazard=await page.evaluate(async()=>{const {environmentCue}=await import('./src/environment-effects.js');return environmentCue({kind:'electric',life:5,x:3,y:4},10)?.kind});
   assert.equal(hazard,'electric','phase 3 hazard effects unavailable in browser');
   assert.deepEqual(errors,[],'browser page errors');
-  console.log('PASS: '+(isMobile?'mobile':'desktop')+' start, render, pause, camera, resume');
+  console.log('PASS: '+label+' start, render, pause, camera, resume');
  }finally{await page.close();}
 }
 try{
