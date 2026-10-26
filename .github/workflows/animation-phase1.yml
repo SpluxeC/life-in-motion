@@ -1,0 +1,37 @@
+name: Phase 1 animation regression
+on:
+  pull_request:
+    paths:
+      - 'v3/src/animation-layers.js'
+      - 'v3/src/animation-quality.js'
+      - 'v3/src/main.js'
+      - 'v3/src/npc-expression.js'
+      - 'v3/src/power-effects.js'
+      - 'v3/src/environment-effects.js'
+      - 'v3/src/damage-recovery.js'
+      - 'v3/src/vehicle-animation.js'
+      - 'v3/src/game-audio.js'
+      - 'v3/tests/game-audio.test.mjs'
+      - 'v3/tests/milestone-save.test.mjs'
+      - 'v3/tests/vehicle-animation.test.mjs'
+      - 'v3/tests/response-integration.test.mjs'
+      - 'v3/src/god-powers.js'
+      - 'v3/src/simulation.js'
+      - 'v3/tests/damage-recovery.test.mjs'
+      - 'v3/tests/environment-effects.test.mjs'
+      - 'v3/tests/power-effects.test.mjs'
+      - 'v3/tests/npc-expression.test.mjs'
+      - 'v3/src/npc-pose.js'
+      - 'v3/tests/animation-layers.test.mjs'
+      - '.github/workflows/animation-phase1.yml'
+  workflow_dispatch:
+jobs:
+  animation-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run deterministic animation tests
+        run: node --experimental-default-type=module --test v3/tests/animation-layers.test.mjs v3/tests/npc-expression.test.mjs v3/tests/power-effects.test.mjs v3/tests/environment-effects.test.mjs v3/tests/damage-recovery.test.mjs v3/tests/vehicle-animation.test.mjs v3/tests/response-integration.test.mjs v3/tests/game-audio.test.mjs v3/tests/milestone-save.test.mjs

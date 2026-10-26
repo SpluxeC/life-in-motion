@@ -1,0 +1,21 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createHardwareStore} from '../src/world.js';
+import {makeGame} from '../src/simulation.js';
+import {saveGame,loadGame} from '../src/persistence.js';
+test('phase 4 debris, trapped NPC and emergency vehicle survive save/reload',()=>{
+ const values=new Map();
+ globalThis.localStorage={getItem:key=>values.get(key)||null,setItem:(key,value)=>values.set(key,value)};
+ const g=makeGame(createHardwareStore(),{seed:456,staff:1,customers:1});
+ const n=g.npcs[0];n.trappedBy='test-debris';
+ g.world.damage.push({id:'test-debris',kind:'fallenSign',phase:'fallen',x:20,y:18,until:null,fallenAt:4});
+ g.world.props.push({id:'response-test',type:'car',emergency:true,x:3,y:5,targetX:6,targetY:5});
+ assert.equal(saveGame(g),true);
+ const loaded=loadGame();
+ assert.ok(loaded);
+ assert.equal(loaded.npcs[0].trappedBy,'test-debris');
+ assert.equal(loaded.world.damage[0].id,'test-debris');
+ assert.ok(loaded.world.props.some(p=>p.id==='response-test'&&p.emergency));
+ assert.ok(loaded.world.blocking instanceof Set);
+ assert.ok(loaded.world.walls instanceof Map);
+});

@@ -1,0 +1,48 @@
+name: Phase 1 browser smoke and preview
+on:
+  pull_request:
+    paths:
+      - 'v3/**'
+      - 'index.html'
+      - '.github/workflows/animation-browser-preview.yml'
+  workflow_dispatch:
+jobs:
+  browser-preview:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium test dependencies
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Smoke test actual game in Chromium
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 &
+          sleep 2
+          node v3/tests/browser-smoke.mjs
+      - name: Upload visual QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase2-phase3-desktop-mobile-screenshots
+          path: qa-screenshots/
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Package development preview
+        if: always()
+        run: |
+          mkdir -p preview
+          cp index.html preview/
+          cp -r v3 preview/
+          printf 'Phase 1 Preview: unzip and serve using a local HTTP server (for example: python3 -m http.server 8000), then open http://localhost:8000/\n' > preview/README-preview.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: life-in-motion-phase1-browser-preview
+          path: preview/
+          retention-days: 14

@@ -11,19 +11,40 @@ import {renderDepth,compareRenderDepth} from './render-depth.js?v=driver-side-fo
 import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness} from './hud.js?v=driver-side-forklift-wheels-20261023-1';
 import {hitProjectedFixture,isGroundTileTap,selectionLabel,doorSelectionTarget} from './selection.js?v=receiving-stacks-map30-20261024';
 import {signOpacity} from './sign-visibility.js?v=garden-sign-shelf-wall-map15-20261023';
-import {npcLimbPose} from './npc-pose.js?v=driver-side-forklift-wheels-20261023-1';
+import {npcLimbPose} from './npc-pose.js?v=animation-phase1-20261026';
+import {npcReactionPose} from './npc-expression.js?v=phase2-20261026';
+import {environmentCues} from './environment-effects.js?v=phase3-20261026';
+import {emergencyVehicleVisual} from './vehicle-animation.js?v=phase5-20261026';
+import {createGameAudio} from './game-audio.js?v=phase6-20261026';
+import {animationDetail,adaptiveFrameRate,animationRenderOptions} from './animation-quality.js?v=animation-phase1-20261026';
 import {pinchCamera} from './pinch-zoom.js?v=garden-tools-pinch-map16-20261023';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d');
 initMenuAnimation($('mainMenu'));
 
-let cameraAngle=45,panelOpen=false;
+let cameraAngle=45,panelOpen=false,renderFps=60;
 let game=null,scene=createHardwareStore(),zoom=.72,offset={x:0,y:0},last=performance.now(),acc=0,lastHud=0,lastSave=0,lastViewport={w:0,h:0},drag=null,selected=null,resultShown=false,activeTab='world',selectedPowerId='whisper',feedback='';
+// Local QA-only scene injection; unavailable on the published game.
+if(location.hostname==='127.0.0.1'&&new URLSearchParams(location.search).get('qa')==='phase4'){
+ window.__phase4QA=()=>{
+  if(!game)return false;
+  game.world.damage??=[];
+  game.world.damage.push({id:'qa-fallen-sign',kind:'fallenSign',signId:'department-sign-PAINT',
+   x:20,y:18,phase:'fallen',fallenAt:game.elapsed-.85,until:null});
+  return true;
+ };
+}
 const TW=48,TH=24,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const artwork=createArtwork(ctx,project,()=>zoom);
 const sceneLighting=createSceneLighting(ctx,project,()=>zoom);
 const powerEffects=createPowerEffects(ctx,project,()=>zoom);
-const contextPowers=createContextPowers({element:$('contextGodPowers'),stage:canvas.parentElement,getGame:()=>game,apply:(id,t,detail)=>{const result=applyPower(game,id,t,detail);if(result.ok)powerEffects.trigger(id,t,game.elapsed,detail);return result},onMessage:m=>{feedback=m;refreshHud()}});
+const gameAudio=createGameAudio();
+const soundToggle=$('toggleSound');
+soundToggle.onclick=async()=>{const enabled=await gameAudio.setEnabled(!gameAudio.enabled);soundToggle.setAttribute('aria-pressed',String(enabled));soundToggle.textContent='Soundtrack & Effects: '+(enabled?'On':'Off')};
+const reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)');
+powerEffects.setReducedMotion(!!reducedMotion?.matches);
+reducedMotion?.addEventListener?.('change',e=>powerEffects.setReducedMotion(e.matches));
+const contextPowers=createContextPowers({element:$('contextGodPowers'),stage:canvas.parentElement,getGame:()=>game,apply:(id,t,detail)=>{const result=applyPower(game,id,t,detail);if(result.ok){powerEffects.trigger(id,t,game.elapsed,detail);gameAudio.cue(id,t.rx??t.x??0,selected?.rx??0)}return result},onMessage:m=>{feedback=m;refreshHud()}});
 const view=()=>({w:canvas.clientWidth,h:canvas.clientHeight});
 function show(screen){document.body.classList.toggle('playing',!screen);for(let id of ['mainMenu','howToPlayScreen','worldSetup'])$(id).classList.toggle('hidden',id!==screen)}
 function setup(step){show('worldSetup');$('setupMapStep').hidden=step!==1;$('setupOptionsStep').hidden=step!==2;$('setupStepLabel').textContent='STEP '+step+' OF 2 · '+(step===1?'SELECT MAP':'NEW WORLD');if(step===1)captureHardwareMapPreview()}
@@ -185,8 +206,35 @@ function drawHair(n,z,h){
  }
  ctx.restore();
 }
+function drawNpcExpression(n,z,h,detail){
+ if(detail.level==='low')return;
+ const mood=npcReactionPose(n),face=mood.face;
+ const sy=-h*z*.82,scale=z;
+ ctx.save();
+ ctx.strokeStyle='#192327';ctx.fillStyle='#192327';ctx.lineCap='round';ctx.lineWidth=Math.max(.9,1.25*scale);
+ if(face.eyes==='closed'){
+  for(const sign of [-1,1]){ctx.beginPath();ctx.moveTo(sign*2.1*scale,sy-1.1*scale);ctx.lineTo(sign*4.5*scale,sy-1.1*scale);ctx.stroke()}
+ }else{
+  for(const sign of [-1,1]){
+   const x=sign*3.1*scale,ey=sy-1.5*scale;
+   if(face.eyes==='wide'){ctx.beginPath();ctx.ellipse(x,ey,1.35*scale,1.8*scale,0,0,Math.PI*2);ctx.stroke()}
+   else if(face.eyes==='narrow'){ctx.beginPath();ctx.moveTo(x-1.3*scale,ey);ctx.lineTo(x+1.3*scale,ey+sign*.35*scale);ctx.stroke()}
+   else{ctx.beginPath();ctx.arc(x,ey,1*scale,0,Math.PI*2);ctx.fill()}
+  }
+ }
+ ctx.beginPath();
+ const my=sy+3.3*scale;
+ if(face.mouth==='open')ctx.ellipse(0,my,1.55*scale,2*scale,0,0,Math.PI*2);
+ else if(face.mouth==='frown')ctx.arc(0,my+1.5*scale,2.6*scale,Math.PI*1.15,Math.PI*1.85);
+ else if(face.mouth==='grimace'){ctx.moveTo(-2.7*scale,my);ctx.lineTo(2.7*scale,my)}
+ else if(face.mouth==='smile')ctx.arc(0,my-1.1*scale,2.7*scale,.12*Math.PI,.88*Math.PI);
+ else {ctx.moveTo(-2*scale,my);ctx.lineTo(2*scale,my)}
+ if(face.mouth==='open')ctx.fill();else ctx.stroke();
+ ctx.restore();
+}
 function stick(n,t){let p=project(n.rx,n.ry),z=zoom*(n.role==='customer'||n.role==='employee'?1:1.07),moving=n.path.length>0,step=moving?Math.sin(t*10+n.id.length):0,h=n.unconscious>0?5:35;ctx.save();ctx.translate(p.x,p.y);ctx.strokeStyle='#121a1c';ctx.lineWidth=2.6*z;ctx.lineCap='round';ctx.fillStyle='#121b2380';ctx.beginPath();ctx.ellipse(0,2*z,10*z,4*z,0,0,7);ctx.fill();if(!n.alive){ctx.rotate(Math.PI/2);ctx.translate(0,9*z)}if(n.unconscious>0){ctx.rotate(1.4);ctx.translate(0,9*z)}
- const joints=npcLimbPose(n,t),jointScale=h/35;
+ const detail=animationDetail({zoom,fps:renderFps,selected:selected?.id===n.id});
+ const joints=npcLimbPose(n,t,animationRenderOptions(detail)),jointScale=h/35;
  const local=p=>({x:p.x*z*jointScale,y:p.y*z*jointScale});
  // Separate upper/lower limb segments join at visible elbows and knees.
  // Opposite leg phases, ground-contact planting and swing-arm counterbalance
@@ -203,7 +251,7 @@ function stick(n,t){let p=project(n.rx,n.ry),z=zoom*(n.role==='customer'||n.role
  for(const arm of joints.arms)limb(arm.shoulder,arm.elbow,arm.wrist);
  // Ankles are the step's attachment to the floor rather than swinging past it.
  for(const leg of joints.legs){const q=local(leg.foot);ctx.beginPath();ctx.arc(q.x,q.y,1.5*z,0,Math.PI*2);ctx.fill()}
- ctx.fillStyle='#f8faf7';ctx.strokeStyle='#0c1416';ctx.lineWidth=2*z;ctx.beginPath();ctx.arc(0,-h*z*.82,7*z,0,Math.PI*2);ctx.fill();ctx.stroke();if(n.role==='employee'){
+ ctx.fillStyle='#f8faf7';ctx.strokeStyle='#0c1416';ctx.lineWidth=2*z;ctx.beginPath();ctx.arc(0,-h*z*.82,7*z,0,Math.PI*2);ctx.fill();ctx.stroke();drawNpcExpression(n,z,h,detail);if(n.role==='employee'){
   // Two tailored red vest panels, shoulder seams, a V-neck and an open black center.
   ctx.lineWidth=1.15*z;ctx.strokeStyle='#171a1c';ctx.fillStyle='#c92f38';
   ctx.beginPath();
@@ -259,6 +307,21 @@ const departmentSigns=[
  // Hung just inside the garden entrance, aligned with its two Y-axis sliders.
   {x:35.2,y:30.5,name:'GARDEN',accent:'#63905b',axis:'y'}
 ];
+function drawEnvironmentCue(cue){
+ const p=project(cue.x,cue.y,cue.kind==='electric'?13:2),z=zoom;
+ ctx.save();
+ if(cue.kind==='fire'){
+  ctx.strokeStyle='#ffc17a';ctx.lineWidth=2*z;ctx.globalAlpha=.55*cue.strength;
+  ctx.beginPath();ctx.ellipse(p.x,p.y,18*z,7*z,0,0,Math.PI*2);ctx.stroke();
+ }else if(cue.kind==='electric'){
+  ctx.strokeStyle='#b1eaff';ctx.lineWidth=1.8*z;ctx.globalAlpha=.65*cue.strength;
+  ctx.beginPath();ctx.moveTo(p.x-8*z,p.y);ctx.lineTo(p.x-2*z,p.y-9*z);ctx.lineTo(p.x+3*z,p.y-3*z);ctx.lineTo(p.x+8*z,p.y-13*z);ctx.stroke();
+ }else{
+  ctx.strokeStyle='#a9d8e3';ctx.lineWidth=1.3*z;ctx.globalAlpha=.34;
+  ctx.beginPath();ctx.ellipse(p.x,p.y,16*z,6*z,0,0,Math.PI*2);ctx.stroke();
+ }
+ ctx.restore();
+}
 function render(t){
  resize();
  const viewport=view(),world=game?.world||scene;
@@ -276,12 +339,17 @@ function render(t){
   }})),
   ...world.doors.map(o=>({kind:'door',depth:renderDepth('door',o),fn:()=>artwork.drawDoor(o,t)})),
   ...[...world.walls.values()].map(o=>({kind:'wall',depth:renderDepth('wall',o),fn:()=>artwork.drawWall(o,world)})),
-  ...world.props.map(o=>({kind:'vehicle',depth:renderDepth('vehicle',o),fn:()=>o.type==='wetFloorSign'?artwork.drawWetFloorSign(o.x,o.y):artwork.drawVehicle(o,t)})),
+  ...world.props.map(o=>({kind:'vehicle',depth:renderDepth('vehicle',o),fn:()=>{if(o.type==='wetFloorSign'){artwork.drawWetFloorSign(o.x,o.y);return}artwork.drawVehicle(o,t);const lights=emergencyVehicleVisual(o,t);if(lights){const p=project(o.x+(o.w||2)/2,o.y+(o.h||3)/2,34),z=zoom;ctx.save();ctx.fillStyle=lights.left;ctx.beginPath();ctx.arc(p.x-5*z,p.y,3*z,0,Math.PI*2);ctx.fill();ctx.fillStyle=lights.right;ctx.beginPath();ctx.arc(p.x+5*z,p.y,3*z,0,Math.PI*2);ctx.fill();ctx.restore()}}})),
   ...(world.drops||[]).map(o=>({kind:'item',depth:renderDepth('item',o),fn:()=>artwork.drawDrop(o)})),
-  ...(world.damage||[]).filter(o=>o.until>(game?.elapsed||0)&&['fallenBox','fallenSign'].includes(o.kind)).map(o=>({kind:'item',depth:renderDepth('item',o),fn:()=>{
-   const p=project(o.x,o.y),z=zoom;ctx.save();ctx.fillStyle=o.kind==='fallenSign'?'#bd8353':'#ac8b67';ctx.fillRect(p.x-10*z,p.y-7*z,20*z,11*z);ctx.strokeStyle='#514539';ctx.lineWidth=1.5*z;ctx.strokeRect(p.x-10*z,p.y-7*z,20*z,11*z);ctx.restore();
+  ...(world.damage||[]).filter(o=>['fallenBox','fallenSign'].includes(o.kind)&&o.phase!=='repaired').map(o=>({kind:'item',depth:renderDepth('item',o),fn:()=>{
+   const progress=Number.isFinite(o.fallenAt)?Math.max(0,Math.min(1,(t-o.fallenAt)/.8)):1;
+   const p=project(o.x,o.y,(1-progress)*42),z=zoom;ctx.save();ctx.translate(p.x,p.y);ctx.rotate((1-progress)*-.65);ctx.fillStyle=o.kind==='fallenSign'?'#bd8353':'#ac8b67';ctx.fillRect(-10*z,-7*z,20*z,11*z);ctx.strokeStyle='#514539';ctx.lineWidth=1.5*z;ctx.strokeRect(-10*z,-7*z,20*z,11*z);
+   if(o.phase==='clearing'){ctx.fillStyle='#d8e6d2';ctx.fillRect(-8*z,-10*z,16*z,2*z)}
+   ctx.strokeStyle='#ffb35c';ctx.globalAlpha=.82;ctx.lineWidth=2*z;
+   ctx.beginPath();ctx.ellipse(0,1*z,15*z,10*z,0,0,Math.PI*2);ctx.stroke();
+   ctx.restore();
   }})),
-  ...departmentSigns.filter(o=>!(world.damage||[]).some(d=>d.kind==='fallenSign'&&d.signId==='department-sign-'+o.name&&d.until>(game?.elapsed||0))).map(o=>{
+  ...departmentSigns.filter(o=>!(world.damage||[]).some(d=>d.kind==='fallenSign'&&d.signId==='department-sign-'+o.name&&d.phase!=='repaired')).map(o=>{
     const depth=o.name==='RECEIVING'?-1000:renderDepth('sign',o)+.1;
     return {kind:'sign',depth,fn:()=>{
       const opacity=signOpacity(o,game?.npcs||[],project,zoom,depth,n=>renderDepth('npc',n));
@@ -293,6 +361,14 @@ function render(t){
   ...world.hazards.filter(h=>h.kind==='spill'&&h.beingCleaned&&h.life>0).map(h=>({kind:'sign',depth:renderDepth('sign',h)+.2,fn:()=>artwork.drawWetFloorSign(h.x,h.y)})),
   ...(game?game.npcs.filter(o=>!(o.medicalUntil>game.elapsed)).map(o=>({kind:'npc',depth:renderDepth('npc',o),fn:()=>{
    stick(o,t);
+   if(o.alive&&['paramedic','firefighter','police'].includes(o.role)&&/Responding|Freeing|Reinstalling|Removing/.test(o.activity||'')){
+    const p=project(o.rx,o.ry,43),z=zoom;
+    ctx.save();ctx.fillStyle='#d9f2ec';ctx.strokeStyle='#254550';ctx.lineWidth=1.5*z;
+    ctx.beginPath();ctx.arc(p.x,p.y,5*z,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#235a5a';ctx.font='bold '+Math.max(8,9*z)+'px system-ui';ctx.textAlign='center';
+    ctx.fillText(o.activity.startsWith('Freeing')?'+':'!',p.x,p.y+3*z);
+    ctx.restore();
+   }
    if(o.command&&o.alive){const p=project(o.rx,o.ry,43);ctx.save();ctx.font='bold '+Math.max(10,13*zoom)+'px system-ui';ctx.textAlign='center';ctx.fillStyle='#ffe296';ctx.strokeStyle='#24343d';ctx.lineWidth=2.5;ctx.strokeText('✦',p.x,p.y);ctx.fillText('✦',p.x,p.y);ctx.restore()}
   }})):[]),
   ...world.hazards.map(o=>({kind:'hazard',depth:renderDepth('hazard',o),fn:()=>drawHazard(o,t)}))
@@ -302,6 +378,7 @@ function render(t){
  // Electrical flicker remains localized to the falling wire's coverage zone.
  sceneLighting.drawSceneLighting(world,viewport,t);
  powerEffects.draw(t,game?{...world,npcs:game.npcs}:world);
+ for(const cue of environmentCues(world,t))drawEnvironmentCue(cue);
  for(const hazard of world.hazards){
   if(hazard.life<=0||!['electric','fire'].includes(hazard.kind))continue;
   const pos=project(hazard.x,hazard.y,hazard.kind==='electric'?9:12);
@@ -571,7 +648,9 @@ canvas.addEventListener('pointercancel',e=>finishPointer(e,true));
 canvas.addEventListener('lostpointercapture',e=>finishPointer(e,true));
 canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=clamp(zoom*(e.deltaY>0?.91:1.1),.32,2)},{passive:false});
 function frame(now){
- const dt=Math.min(.08,(now-last)/1000);last=now;
+ const rawDt=(now-last)/1000;
+ const dt=Math.min(.08,rawDt);last=now;
+ renderFps=adaptiveFrameRate(renderFps,rawDt);
  if(game&&!game.paused){
   acc+=dt*game.speed;let steps=0;
   while(acc>=1/30&&steps<16){updateGame(game,1/30);acc-=1/30;steps++}
