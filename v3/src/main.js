@@ -12,6 +12,7 @@ import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness} from 
 import {hitProjectedFixture,isGroundTileTap,selectionLabel,doorSelectionTarget} from './selection.js?v=receiving-stacks-map30-20261024';
 import {signOpacity} from './sign-visibility.js?v=garden-sign-shelf-wall-map15-20261023';
 import {npcLimbPose} from './npc-pose.js?v=animation-phase1-20261026';
+import {npcReactionPose} from './npc-expression.js?v=phase2-20261026';
 import {animationDetail,adaptiveFrameRate,animationRenderOptions} from './animation-quality.js?v=animation-phase1-20261026';
 import {pinchCamera} from './pinch-zoom.js?v=garden-tools-pinch-map16-20261023';
 const $=id=>document.getElementById(id);
@@ -186,6 +187,32 @@ function drawHair(n,z,h){
  }
  ctx.restore();
 }
+function drawNpcExpression(n,z,h,detail){
+ if(detail.level==='low')return;
+ const mood=npcReactionPose(n),face=mood.face;
+ const sy=-h*z*.82,scale=z;
+ ctx.save();
+ ctx.strokeStyle='#192327';ctx.fillStyle='#192327';ctx.lineCap='round';ctx.lineWidth=Math.max(.9,1.25*scale);
+ if(face.eyes==='closed'){
+  for(const sign of [-1,1]){ctx.beginPath();ctx.moveTo(sign*2.1*scale,sy-1.1*scale);ctx.lineTo(sign*4.5*scale,sy-1.1*scale);ctx.stroke()}
+ }else{
+  for(const sign of [-1,1]){
+   const x=sign*3.1*scale,ey=sy-1.5*scale;
+   if(face.eyes==='wide'){ctx.beginPath();ctx.ellipse(x,ey,1.35*scale,1.8*scale,0,0,Math.PI*2);ctx.stroke()}
+   else if(face.eyes==='narrow'){ctx.beginPath();ctx.moveTo(x-1.3*scale,ey);ctx.lineTo(x+1.3*scale,ey+sign*.35*scale);ctx.stroke()}
+   else{ctx.beginPath();ctx.arc(x,ey,1*scale,0,Math.PI*2);ctx.fill()}
+  }
+ }
+ ctx.beginPath();
+ const my=sy+3.3*scale;
+ if(face.mouth==='open')ctx.ellipse(0,my,1.55*scale,2*scale,0,0,Math.PI*2);
+ else if(face.mouth==='frown')ctx.arc(0,my+1.5*scale,2.6*scale,Math.PI*1.15,Math.PI*1.85);
+ else if(face.mouth==='grimace'){ctx.moveTo(-2.7*scale,my);ctx.lineTo(2.7*scale,my)}
+ else if(face.mouth==='smile')ctx.arc(0,my-1.1*scale,2.7*scale,.12*Math.PI,.88*Math.PI);
+ else {ctx.moveTo(-2*scale,my);ctx.lineTo(2*scale,my)}
+ if(face.mouth==='open')ctx.fill();else ctx.stroke();
+ ctx.restore();
+}
 function stick(n,t){let p=project(n.rx,n.ry),z=zoom*(n.role==='customer'||n.role==='employee'?1:1.07),moving=n.path.length>0,step=moving?Math.sin(t*10+n.id.length):0,h=n.unconscious>0?5:35;ctx.save();ctx.translate(p.x,p.y);ctx.strokeStyle='#121a1c';ctx.lineWidth=2.6*z;ctx.lineCap='round';ctx.fillStyle='#121b2380';ctx.beginPath();ctx.ellipse(0,2*z,10*z,4*z,0,0,7);ctx.fill();if(!n.alive){ctx.rotate(Math.PI/2);ctx.translate(0,9*z)}if(n.unconscious>0){ctx.rotate(1.4);ctx.translate(0,9*z)}
  const detail=animationDetail({zoom,fps:renderFps,selected:selected?.id===n.id});
  const joints=npcLimbPose(n,t,animationRenderOptions(detail)),jointScale=h/35;
@@ -205,7 +232,7 @@ function stick(n,t){let p=project(n.rx,n.ry),z=zoom*(n.role==='customer'||n.role
  for(const arm of joints.arms)limb(arm.shoulder,arm.elbow,arm.wrist);
  // Ankles are the step's attachment to the floor rather than swinging past it.
  for(const leg of joints.legs){const q=local(leg.foot);ctx.beginPath();ctx.arc(q.x,q.y,1.5*z,0,Math.PI*2);ctx.fill()}
- ctx.fillStyle='#f8faf7';ctx.strokeStyle='#0c1416';ctx.lineWidth=2*z;ctx.beginPath();ctx.arc(0,-h*z*.82,7*z,0,Math.PI*2);ctx.fill();ctx.stroke();if(n.role==='employee'){
+ ctx.fillStyle='#f8faf7';ctx.strokeStyle='#0c1416';ctx.lineWidth=2*z;ctx.beginPath();ctx.arc(0,-h*z*.82,7*z,0,Math.PI*2);ctx.fill();ctx.stroke();drawNpcExpression(n,z,h,detail);if(n.role==='employee'){
   // Two tailored red vest panels, shoulder seams, a V-neck and an open black center.
   ctx.lineWidth=1.15*z;ctx.strokeStyle='#171a1c';ctx.fillStyle='#c92f38';
   ctx.beginPath();
