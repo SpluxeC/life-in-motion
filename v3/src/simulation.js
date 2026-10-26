@@ -163,7 +163,7 @@ export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
    .sort((a,b)=>Math.hypot(crew.rx-a.x,crew.ry-a.y)-Math.hypot(crew.rx-b.x,crew.ry-b.y))[0];
   if(!fire)continue;
   const distance=Math.hypot(crew.rx-fire.x,crew.ry-fire.y);
-  if(distance<2.2){fire.life=Math.max(0,fire.life-dt*5);crew.activity='Extinguishing fire';crew.action='offerHelp';crew.path=[]}
+  if(distance<2.2){crew.activity='Extinguishing fire';crew.action='offerHelp';crew.path=[]}
   else if(!crew.path?.length){const to=nearestOpen(g.world,fire.x+1,fire.y);crew.path=pathTo(g.world,crew,to);crew.target=to;crew.activity='Responding to fire';crew.action='walk'}
  }
  for(const h of [...g.world.hazards]){
