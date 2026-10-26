@@ -1,24 +1,33 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 const browser=await chromium.launch({headless:true});
-const page=await browser.newPage({viewport:{width:1280,height:780}});
-const errors=[];
-page.on('pageerror',e=>errors.push(e.message));
+async function scenario(viewport,isMobile){
+ const page=await browser.newPage({viewport,hasTouch:isMobile,isMobile});
+ const errors=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ try{
+  await page.goto('http://127.0.0.1:8765/v3/',{waitUntil:'networkidle'});
+  await page.locator('#startGame').click();
+  await page.locator('#mapHardware').click();
+  await page.locator('#setupLaunch').click();
+  await page.waitForTimeout(450);
+  const canvas=page.locator('canvas#game');
+  const rect=await canvas.boundingBox();
+  assert.ok(rect&&rect.width>0&&rect.height>0,'canvas must be visible');
+  await page.locator('#pause').click();
+  assert.equal(await page.locator('#pause').getAttribute('aria-pressed'),'true');
+  // Paused camera adjustments must remain available without advancing simulation.
+  const angle=page.locator('#cameraAngle');
+  await angle.fill('55');
+  assert.equal(await page.locator('#cameraAngleValue').textContent(),'55°');
+  await page.locator('#pause').click();
+  assert.equal(await page.locator('#pause').getAttribute('aria-pressed'),'false');
+  await page.waitForTimeout(180);
+  assert.deepEqual(errors,[],'browser page errors');
+  console.log('PASS: '+(isMobile?'mobile':'desktop')+' start, render, pause, camera, resume');
+ }finally{await page.close();}
+}
 try{
- await page.goto('http://127.0.0.1:8765/v3/',{waitUntil:'networkidle'});
- await page.locator('#startGame').click();
- await page.locator('#mapHardware').click();
- await page.locator('#setupLaunch').click();
- await page.waitForTimeout(800);
- assert.equal(await page.locator('canvas#game').count(),1,'game canvas missing');
- const before=await page.locator('#game').evaluate(el=>({width:el.width,height:el.height}));
- assert.ok(before.width>0&&before.height>0,'canvas not sized');
- await page.locator('#pause').click();
- await page.waitForTimeout(100);
- assert.equal(await page.locator('#pause').getAttribute('aria-pressed'),'true','pause did not engage');
- await page.locator('#pause').click();
- await page.waitForTimeout(200);
- assert.equal(await page.locator('#pause').getAttribute('aria-pressed'),'false','resume did not engage');
- assert.deepEqual(errors,[],'browser script errors');
- console.log('PASS: game launches, canvas renders, pause/resume works, no page errors');
+ await scenario({width:1280,height:780},false);
+ await scenario({width:844,height:390},true);
 }finally{await browser.close();}
