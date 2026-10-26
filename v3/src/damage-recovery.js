@@ -1,5 +1,17 @@
+import {nearestOpen,pathTo} from './world.js';
 // Persistent Phase 4 debris, rescue and reconstruction. Runs only in simulation ticks.
 const near=(a,b,r)=>Math.hypot((a.rx??a.x)-b.x,(a.ry??a.y)-b.y)<=r;
+function directWorker(g,d,roles){
+ const helpers=g.npcs.filter(n=>n.alive&&n.unconscious<=0&&roles.includes(n.role));
+ helpers.sort((a,b)=>Math.hypot(a.rx-d.x,a.ry-d.y)-Math.hypot(b.rx-d.x,b.ry-d.y));
+ const helper=helpers[0];
+ if(helper&&!near(helper,d,3)&&!helper.path?.length){
+  const goal=nearestOpen(g.world,d.x+1,d.y);
+  const path=pathTo(g.world,{x:helper.rx,y:helper.ry},goal);
+  if(path.length){helper.path=path;helper.target=goal;helper.activity='Responding to fallen debris';helper.action='walk'}
+ }
+ return helper&&near(helper,d,3)?helper:null;
+}
 export function tickDamageRecovery(g,dt){
  const debris=g.world.damage||[];
  for(const d of debris){
@@ -12,7 +24,7 @@ export function tickDamageRecovery(g,dt){
    const casualty=g.npcs.find(n=>n.alive&&n.trappedBy===d.id);
    if(casualty){
     casualty.path=[];casualty.activity='Trapped under debris';
-    const rescuer=g.npcs.find(n=>n.alive&&n.unconscious<=0&&['paramedic','firefighter'].includes(n.role)&&near(n,d,3));
+    const rescuer=directWorker(g,d,['paramedic','firefighter']);
     if(rescuer){
      d.rescueProgress=(d.rescueProgress||0)+dt;
      rescuer.activity='Freeing trapped person';rescuer.action='offerHelp';
@@ -21,7 +33,7 @@ export function tickDamageRecovery(g,dt){
    }else d.phase='clearing';
   }
   if(d.phase==='clearing'){
-   const worker=g.npcs.find(n=>n.alive&&n.unconscious<=0&&['employee','firefighter'].includes(n.role)&&near(n,d,3));
+   const worker=directWorker(g,d,['employee','firefighter']);
    if(worker){
     d.repairProgress=(d.repairProgress||0)+dt;
     worker.activity=d.kind==='fallenSign'?'Reinstalling sign':'Removing debris';worker.action='stock';
