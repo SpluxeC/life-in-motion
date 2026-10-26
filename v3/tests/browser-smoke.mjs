@@ -25,6 +25,8 @@ async function scenario(viewport,isMobile){
   await page.waitForTimeout(180);
   const expression=await page.evaluate(async()=>{const {npcExpression}=await import('./src/npc-expression.js');return npcExpression({alive:true,emotion:{fear:90}}).kind});
   assert.equal(expression,'terrified','phase 2 expressions unavailable in browser');
+  const hazard=await page.evaluate(async()=>{const {environmentCue}=await import('./src/environment-effects.js');return environmentCue({kind:'electric',life:5,x:3,y:4},10)?.kind});
+  assert.equal(hazard,'electric','phase 3 hazard effects unavailable in browser');
   assert.deepEqual(errors,[],'browser page errors');
   console.log('PASS: '+(isMobile?'mobile':'desktop')+' start, render, pause, camera, resume');
  }finally{await page.close();}
