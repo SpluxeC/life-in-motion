@@ -12,7 +12,7 @@ on:
       - 'v3/src/god-powers.js'
       - 'v3/src/simulation.js'
       - 'v3/tests/damage-recovery.test.mjs'
-      - 'v3/tests/environment-effects.test.mjs v3/tests/damage-recovery.test.mjs'
+      - 'v3/tests/environment-effects.test.mjs'
       - 'v3/tests/power-effects.test.mjs'
       - 'v3/tests/npc-expression.test.mjs'
       - 'v3/src/npc-pose.js'
@@ -28,4 +28,4 @@ jobs:
         with:
           node-version: '22'
       - name: Run deterministic animation tests
-        run: node --experimental-default-type=module --test v3/tests/animation-layers.test.mjs v3/tests/npc-expression.test.mjs v3/tests/power-effects.test.mjs v3/tests/environment-effects.test.mjs
+        run: node --experimental-default-type=module --test v3/tests/animation-layers.test.mjs v3/tests/npc-expression.test.mjs v3/tests/power-effects.test.mjs v3/tests/environment-effects.test.mjs v3/tests/damage-recovery.test.mjs
