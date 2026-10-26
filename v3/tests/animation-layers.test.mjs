@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {animationLayers,blendSecondary} from '../src/animation-layers.js';
 import {npcLimbPose} from '../src/npc-pose.js';
+import {animationDetail,adaptiveFrameRate,animationRenderOptions} from '../src/animation-quality.js';
 const npc={id:'employee-1',alive:true,unconscious:0,path:[],walkDistance:0,action:'talk',actionPhase:1.25,facing:'left',energy:80};
 test('deterministic poses: paused simulation values produce identical frames',()=>{
  assert.deepEqual(npcLimbPose(npc,1),npcLimbPose(npc,500));
@@ -58,4 +59,27 @@ test('secondary gestures stop while walking or incapacitated',()=>{
  const down=npcLimbPose({...npc,unconscious:4,action:'talk'});
  assert.equal(down.active,false);
  assert.equal(animationLayers({...npc,alive:false}).idleBreath,0);
+});
+
+test('zoom and performance reduce secondary animation, never essential actions',()=>{
+ const high=animationDetail({zoom:1.1,fps:60});
+ const low=animationDetail({zoom:.3,fps:15});
+ assert.equal(high.level,'high');
+ assert.equal(low.level,'low');
+ assert.equal(low.essential,true);
+ const moving={...npc,path:[{x:2,y:3}],walkDistance:1.5};
+ assert.equal(npcLimbPose(moving,0,animationRenderOptions(low)).active,true);
+ assert.equal(npcLimbPose(moving,0,animationRenderOptions(high)).active,true);
+});
+test('low quality suppresses only secondary idle motion',()=>{
+ const idle={...npc,action:'idle',actionPhase:3};
+ const high=npcLimbPose(idle,0,animationRenderOptions(animationDetail({zoom:1.3,fps:60})));
+ const low=npcLimbPose(idle,0,animationRenderOptions(animationDetail({zoom:.3,fps:15})));
+ assert.notEqual(high.body,low.body);
+ assert.equal(low.body,0);
+});
+test('frame-rate averaging and invalid measurements remain bounded',()=>{
+ assert.equal(adaptiveFrameRate(60,1/60),60);
+ assert.ok(adaptiveFrameRate(60,1/20)<60);
+ assert.ok(Number.isFinite(adaptiveFrameRate(60,NaN)));
 });
