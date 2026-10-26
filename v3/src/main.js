@@ -11,13 +11,14 @@ import {renderDepth,compareRenderDepth} from './render-depth.js?v=driver-side-fo
 import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness} from './hud.js?v=driver-side-forklift-wheels-20261023-1';
 import {hitProjectedFixture,isGroundTileTap,selectionLabel,doorSelectionTarget} from './selection.js?v=receiving-stacks-map30-20261024';
 import {signOpacity} from './sign-visibility.js?v=garden-sign-shelf-wall-map15-20261023';
-import {npcLimbPose} from './npc-pose.js?v=driver-side-forklift-wheels-20261023-1';
+import {npcLimbPose} from './npc-pose.js?v=animation-phase1-20261026';
+import {animationDetail,adaptiveFrameRate,animationRenderOptions} from './animation-quality.js?v=animation-phase1-20261026';
 import {pinchCamera} from './pinch-zoom.js?v=garden-tools-pinch-map16-20261023';
 const $=id=>document.getElementById(id);
 const canvas=$('game'),ctx=canvas.getContext('2d');
 initMenuAnimation($('mainMenu'));
 
-let cameraAngle=45,panelOpen=false;
+let cameraAngle=45,panelOpen=false,renderFps=60;
 let game=null,scene=createHardwareStore(),zoom=.72,offset={x:0,y:0},last=performance.now(),acc=0,lastHud=0,lastSave=0,lastViewport={w:0,h:0},drag=null,selected=null,resultShown=false,activeTab='world',selectedPowerId='whisper',feedback='';
 const TW=48,TH=24,clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const artwork=createArtwork(ctx,project,()=>zoom);
@@ -186,7 +187,8 @@ function drawHair(n,z,h){
  ctx.restore();
 }
 function stick(n,t){let p=project(n.rx,n.ry),z=zoom*(n.role==='customer'||n.role==='employee'?1:1.07),moving=n.path.length>0,step=moving?Math.sin(t*10+n.id.length):0,h=n.unconscious>0?5:35;ctx.save();ctx.translate(p.x,p.y);ctx.strokeStyle='#121a1c';ctx.lineWidth=2.6*z;ctx.lineCap='round';ctx.fillStyle='#121b2380';ctx.beginPath();ctx.ellipse(0,2*z,10*z,4*z,0,0,7);ctx.fill();if(!n.alive){ctx.rotate(Math.PI/2);ctx.translate(0,9*z)}if(n.unconscious>0){ctx.rotate(1.4);ctx.translate(0,9*z)}
- const joints=npcLimbPose(n,t),jointScale=h/35;
+ const detail=animationDetail({zoom,fps:renderFps,selected:selected?.id===n.id});
+ const joints=npcLimbPose(n,t,animationRenderOptions(detail)),jointScale=h/35;
  const local=p=>({x:p.x*z*jointScale,y:p.y*z*jointScale});
  // Separate upper/lower limb segments join at visible elbows and knees.
  // Opposite leg phases, ground-contact planting and swing-arm counterbalance
@@ -571,7 +573,9 @@ canvas.addEventListener('pointercancel',e=>finishPointer(e,true));
 canvas.addEventListener('lostpointercapture',e=>finishPointer(e,true));
 canvas.addEventListener('wheel',e=>{e.preventDefault();zoom=clamp(zoom*(e.deltaY>0?.91:1.1),.32,2)},{passive:false});
 function frame(now){
- const dt=Math.min(.08,(now-last)/1000);last=now;
+ const rawDt=(now-last)/1000;
+ const dt=Math.min(.08,rawDt);last=now;
+ renderFps=adaptiveFrameRate(renderFps,rawDt);
  if(game&&!game.paused){
   acc+=dt*game.speed;let steps=0;
   while(acc>=1/30&&steps<16){updateGame(game,1/30);acc-=1/30;steps++}
