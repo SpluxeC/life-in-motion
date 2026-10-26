@@ -1,0 +1,19 @@
+name: Phase 1 animation regression
+on:
+  pull_request:
+    paths:
+      - 'v3/src/animation-layers.js'
+      - 'v3/src/npc-pose.js'
+      - 'v3/tests/animation-layers.test.mjs'
+      - '.github/workflows/animation-phase1.yml'
+  workflow_dispatch:
+jobs:
+  animation-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run deterministic animation tests
+        run: node --experimental-default-type=module --test v3/tests/animation-layers.test.mjs
