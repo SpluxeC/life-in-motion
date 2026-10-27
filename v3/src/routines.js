@@ -55,7 +55,7 @@ function customerShopTarget(g,n){
 function canHelp(g,n){
  // One roving floor employee follows the entire map loop; other associates
  // can interrupt their route for customer conversations and restocking.
- if(n.duty!=='floor'||n.stationIndex===0||g.elapsed<(n.nextHelpAt||0))return null;
+ if(n.duty!=='floor'||(n.primaryJob&&n.primaryJob!=='Sales Associate')||g.elapsed<(n.nextHelpAt||0))return null;
  return g.npcs.filter(c=>isShopper(c)&&!c.helpedBy&&c.task?.kind==='browse'&&
   Math.hypot(c.rx-n.rx,c.ry-n.ry)<17).sort((a,b)=>
    Math.hypot(a.rx-n.rx,a.ry-n.ry)-Math.hypot(b.rx-n.rx,b.ry-n.ry))[0];
@@ -101,6 +101,14 @@ function staffDuty(g,n){
   if(job==='Lumber Associate')return schedule(g,n,'patrol',{x:7,y:35},9,{label:'Assisting with lumber cuts'});
   if(job==='Receiving Associate')return schedule(g,n,'patrol',{x:29,y:36},10,{label:'Handling deliveries in receiving'});
   if(job==='Maintenance')return schedule(g,n,'patrol',ROUTINE_STOPS[(n.workIndex++||0)%ROUTINE_STOPS.length],6,{label:'Inspecting store for repairs and spills'});
+ }
+ if(job==='Sales Associate'&&!n.coveringJob){
+  const locations=ROUTINE_STOPS.filter(p=>!['parking lot','employee break room'].includes(p.label));
+  const chosen=locations[(n.workIndex||0)%locations.length];
+  n.coveringDepartment=chosen.label;
+  const c=canHelp(g,n);if(c&&assignHelp(g,n,c))return true;
+  n.workIndex=(n.workIndex||0)+1;
+  return schedule(g,n,'patrol',chosen,7,{label:'Covering '+chosen.label});
  }
  const c=canHelp(g,n);if(c&&assignHelp(g,n,c))return true;
  // A floor associate also restocks merchandise depleted by shoppers.
