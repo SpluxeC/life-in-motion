@@ -167,7 +167,7 @@ export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
 }
  for(const f of g.world.fixtures)if(f.powerOutUntil&&f.powerOutUntil<=g.elapsed)f.powerOutUntil=0;
  addPassingTraffic(g.world,g.elapsed);
- advanceTraffic(g.world.props,dt);
+ advanceTraffic(g.world.props,dt,g.npcs,g.elapsed);
  removeDepartedTraffic(g.world);
  for(let p of [...g.pending]){p.time-=dt;if(p.time<=0){dispatch(g,p.service);g.pending.splice(g.pending.indexOf(p),1)}}
  // Fire crews target active fires and reduce their remaining duration in-place.
