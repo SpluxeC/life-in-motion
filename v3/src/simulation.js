@@ -1,4 +1,4 @@
-import {assignPrimaryJobs,assignCoverage,effectiveDuty} from './employee-jobs.js?v=jobs-20261027-1';
+import {assignPrimaryJobs,assignCoverage,effectiveDuty} from './employee-jobs.js?v=staff-jobs-20261027-2';
 import {tickDamageRecovery,debrisBlocksMovement} from './damage-recovery.js';
 import {nearestOpen,pathTo,doorAt,fixtureAt,walkable,key} from './world.js?v=landscape-sidewalk-road-20261027-1';
 import {initializeRoutine,chooseRoutine,updateRoutine} from './routines.js?v=staff-jobs-20261027-1';
