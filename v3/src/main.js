@@ -293,7 +293,15 @@ function stick(n,t){let p=project(n.rx,n.ry),z=zoom*(n.role==='customer'||n.role
  }
  powerEffects.drawNpcMood(n,t);
  if(n.alive&&n.unconscious<=0&&n.cleaning){artwork.drawCleaningSet(n.rx,n.ry,n.cleaningPhase||0)}
- else if(n.alive&&n.unconscious<=0&&n.inventory?.length&&(n.role!=='employee'||!['cashier','service','patrol','break','help'].includes(n.task?.kind))){artwork.drawItem(n.inventory[0],n.rx+.28,n.ry+.12,15,.66)}
+ else if(n.alive&&n.unconscious<=0&&n.inventory?.length&&(n.role!=='employee'||!['cashier','service','patrol','break','help'].includes(n.task?.kind))){
+  // Convert the animated wrist location to the world coordinate required by
+  // the existing item artwork. This keeps carried props attached to the hand.
+  const hands=npcLimbPose(n,t,animationRenderOptions(animationDetail({zoom,fps:renderFps,selected:selected?.id===n.id}))).arms;
+  const wrist=hands.find(a=>a.side===1)?.wrist||{x:8,y:-9};
+  const handX=p.x+wrist.x*z,handY=p.y+wrist.y*z;
+  const handWorld=unproject(handX,handY+8*z);
+  artwork.drawItem(n.inventory[0],handWorld.x,handWorld.y,8,.48);
+ }
 
 }
 function drawHazard(h,t){let p=project(h.x,h.y),z=zoom;ctx.save();if(h.kind==='fire'){for(let i=0;i<3;i++){ctx.fillStyle=i===0?'#ed743f':i===1?'#ffc15e':'#fae2a5';ctx.beginPath();ctx.ellipse(p.x+(i-1)*6*z,p.y-11*z-Math.sin(t*8+i)*3*z,7*z,15*z,0,0,Math.PI*2);ctx.fill()}}else if(h.kind==='spill'){ctx.fillStyle='#75bdbaad';ctx.beginPath();ctx.ellipse(p.x,p.y,19*z,6*z,0,0,7);ctx.fill()}else if(h.kind==='electric'){
@@ -329,6 +337,28 @@ function drawEnvironmentCue(cue){
  }
  ctx.restore();
 }
+function drawInjuryPool(n){
+ const hurt=!n.alive||n.bleeding>0||n.health<55||n.unconscious>0&&n.health<85;
+ if(!hurt)return;
+ const p=project(n.rx,n.ry),z=zoom,critical=!n.alive;
+ ctx.save();ctx.fillStyle=critical?'#721e28b8':'#9b293677';
+ ctx.beginPath();ctx.ellipse(p.x+3*z,p.y+1*z,(critical?13:7)*z,(critical?5:3)*z,-.16,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#b43a4666';ctx.beginPath();ctx.ellipse(p.x-2*z,p.y+2*z,(critical?6:3)*z,2*z,.2,0,Math.PI*2);ctx.fill();ctx.restore();
+}
+function drawFallenDepartmentSign(d,progress){
+ const sign=departmentSigns.find(o=>'department-sign-'+o.name===d.signId);
+ const p=project(d.x,d.y),z=zoom;
+ const label=sign?.name||'STORE',accent=sign?.accent||'#b58a5b';
+ const width=Math.max(31,Math.min(76,18+label.length*5))*z;
+ ctx.save();ctx.translate(p.x,p.y-(1-progress)*29*z);
+ ctx.rotate((1-progress)*-.55);
+ ctx.fillStyle='#203b42';ctx.fillRect(-width/2-2*z,-10*z,width+4*z,21*z);
+ ctx.fillStyle='#e8e7d9';ctx.fillRect(-width/2,-9*z,width,17*z);
+ ctx.fillStyle=accent;ctx.fillRect(-width/2,-9*z,width,3*z);
+ ctx.fillStyle='#273f41';ctx.font='bold '+Math.max(7,9*z)+'px system-ui';
+ ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(label,0,1*z,width-4*z);
+ ctx.restore();
+}
 function render(t){
  resize();
  const viewport=view(),world=game?.world||scene;
@@ -350,6 +380,7 @@ function render(t){
   ...(world.drops||[]).map(o=>({kind:'item',depth:renderDepth('item',o,cameraAngle),fn:()=>artwork.drawDrop(o)})),
   ...(world.damage||[]).filter(o=>['fallenBox','fallenSign'].includes(o.kind)&&o.phase!=='repaired').map(o=>({kind:'item',depth:renderDepth('item',o,cameraAngle),fn:()=>{
    const progress=Number.isFinite(o.fallenAt)?Math.max(0,Math.min(1,(t-o.fallenAt)/.8)):1;
+   if(o.kind==='fallenSign'){drawFallenDepartmentSign(o,progress);return;}
    const p=project(o.x,o.y,(1-progress)*42),z=zoom;ctx.save();ctx.translate(p.x,p.y);ctx.rotate((1-progress)*-.65);ctx.fillStyle=o.kind==='fallenSign'?'#bd8353':'#ac8b67';ctx.fillRect(-10*z,-7*z,20*z,11*z);ctx.strokeStyle='#514539';ctx.lineWidth=1.5*z;ctx.strokeRect(-10*z,-7*z,20*z,11*z);
    if(o.phase==='clearing'){ctx.fillStyle='#d8e6d2';ctx.fillRect(-8*z,-10*z,16*z,2*z)}
    ctx.strokeStyle='#ffb35c';ctx.globalAlpha=.82;ctx.lineWidth=2*z;
@@ -367,6 +398,7 @@ function render(t){
   }),
   ...world.hazards.filter(h=>h.kind==='spill'&&h.beingCleaned&&h.life>0).map(h=>({kind:'sign',depth:renderDepth('sign',h)+.2,fn:()=>artwork.drawWetFloorSign(h.x,h.y)})),
   ...(game?game.npcs.filter(o=>!(o.medicalUntil>game.elapsed)).map(o=>({kind:'npc',depth:renderDepth('npc',o,cameraAngle),fn:()=>{
+   drawInjuryPool(o);
    stick(o,t);
    if(o.alive&&['paramedic','firefighter','police'].includes(o.role)&&/Responding|Freeing|Reinstalling|Removing/.test(o.activity||'')){
     const p=project(o.rx,o.ry,43),z=zoom;
