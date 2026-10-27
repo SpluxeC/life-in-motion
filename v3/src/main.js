@@ -24,7 +24,7 @@ const canvas=$('game'),ctx=canvas.getContext('2d');
 initMenuAnimation($('mainMenu'));
 
 let cameraAngle=45,panelOpen=false,renderFps=60;
-let game=null,scene=createHardwareStore(),zoom=.72,offset={x:0,y:0},last=performance.now(),acc=0,lastHud=0,lastSave=0,lastViewport={w:0,h:0},drag=null,selected=null,resultShown=false,activeTab='world',selectedPowerId='whisper',feedback='';
+let game=null,scene=createHardwareStore(),zoom=.72,offset={x:0,y:0},last=performance.now(),acc=0,lastHud=0,lastSave=0,lastViewport={w:0,h:0},drag=null,selected=null,resultShown=false,activeTab='world',peopleFilter='all',selectedPowerId=null,feedback='';
 // Local QA-only scene injection; unavailable on the published game.
 if(location.hostname==='127.0.0.1'&&new URLSearchParams(location.search).get('qa')==='phase4'){
  window.__phase4QA=()=>{
@@ -59,6 +59,7 @@ $('saveV3').onclick=()=>{if(!game)return;let ok=saveGame(game);feedback=ok?'Game
 $('pause').onclick=()=>{if(game){game.paused=!game.paused;refreshHud()}};
 
 function activateTab(tab,open=true){
+ if(tab==='powers'&&open)selectedPowerId=null;
  activeTab=tab;panelOpen=open;
  $('worldLayout').classList.toggle('panelClosed',!panelOpen);
  document.querySelectorAll('[data-tab]').forEach(b=>{
@@ -529,7 +530,15 @@ function refreshHud(){
  $('headerStatus').textContent='Living '+alive+'/'+g.npcs.length+' · God Energy '+Math.floor(g.energy);
 
  $('settingsFeedback').textContent=feedback;
- $('worldEvents').innerHTML=g.log.slice(0,12).map(e=>'<p class="personFacts">'+escapeHTML(e.text)+'</p>').join('')||'<p>No events yet.</p>';
+ $('worldEvents').innerHTML='<h3>World Events · Latest '+Math.min(g.log.length,60)+' of '+g.log.length+'</h3>'+
+ g.log.slice(0,60).map((e,i)=>{
+  const when=formatGameTime({...g,elapsed:Math.max(0,Math.floor(e.time||0))});
+  const message=String(e.text||'Unknown event');
+  const person=g.npcs.find(n=>message.includes(n.name));
+  const extra=person?('Last known activity: '+(person.alive?person.activity:'Deceased')):'';
+  return '<p class="personFacts"><strong>'+escapeHTML(when)+' · Event '+(g.log.length-i)+'</strong><br>'+escapeHTML(message)+
+    (extra?'<br><small>'+escapeHTML(extra)+'</small>':'')+'</p>';
+ }).join('')||'<p>No events yet.</p>';
  const parent=$('gamePanel'),previousScroll=parent.scrollTop;
  const people=$('peopleContent');
  const n=g.npcs.find(o=>o.id===selected?.id);
@@ -557,14 +566,19 @@ function refreshHud(){
    contextPowers.show(n,Math.min(view().w*.55,view().w-210),Math.min(view().h*.25,view().h-150),b.dataset.npcPower);
   });
  }else{
-  const peopleListHTML='<h3>People · '+g.npcs.length+' in this round</h3>'+
-   g.npcs.map(p=>'<button class="personRow" data-person="'+escapeHTML(p.id)+'">'+
+  const filtered=g.npcs.filter(p=>peopleFilter==='all'||(peopleFilter==='employees'?p.role==='employee':peopleFilter==='customers'?p.role==='customer':['police','firefighter','paramedic'].includes(p.role)));
+  const tabs=[['all','All'],['employees','Employees'],['customers','Customers'],['responders','First Responders']];
+  const peopleListHTML='<h3>People · '+filtered.length+' of '+g.npcs.length+'</h3>'+
+   '<div class="peopleFilters" role="group" aria-label="Filter people">'+tabs.map(([id,label])=>
+    '<button type="button" data-people-filter="'+id+'" aria-pressed="'+(peopleFilter===id)+'" class="'+(peopleFilter===id?'active':'')+'">'+label+'</button>').join('')+'</div>'+
+   filtered.map(p=>'<button class="personRow" data-person="'+escapeHTML(p.id)+'">'+
     '<strong>'+escapeHTML(p.name)+'</strong><small>'+
     escapeHTML(p.role==='employee'?(p.primaryJob||'Sales Associate'):p.role)+' · '+escapeHTML(emotionState(p))+
     '<br><strong>Weakness:</strong> '+escapeHTML(npcWeakness(p))+
     '<br>'+escapeHTML(p.alive?p.activity:'Deceased')+'</small></button>').join('')+
    (feedback?'<p class="gameMessage">'+escapeHTML(feedback)+'</p>':'');
   patchPanelHTML(people,peopleListHTML);
+  people.querySelectorAll('[data-people-filter]').forEach(b=>b.onclick=()=>{peopleFilter=b.dataset.peopleFilter;refreshHud()});
   people.querySelectorAll('[data-person]').forEach(b=>b.onclick=()=>{
    const person=g.npcs.find(p=>p.id===b.dataset.person);if(person)selectTarget(person);
   });
