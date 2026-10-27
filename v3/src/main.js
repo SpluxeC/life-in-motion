@@ -2,7 +2,7 @@ import {createHardwareStore,doorAt,fixtureAt,nearestOpen,walkable,key} from './w
 import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v=staff-jobs-20261027-2';
 import {createContextPowers} from './context-powers.js?v=seven-phase-release-20261026-1';
 import {initMenuAnimation} from './menu-animation.js?v=seven-phase-release-20261026-1';
-import {createSceneLighting} from './scene-lighting.js?v=parking-road-shadow-20261027-1';
+import {createSceneLighting} from './scene-lighting.js?v=garden-roof-shadow-fix-20261027-1';
 import {createPowerEffects} from './power-effects.js?v=seven-phase-release-20261026-1';
 import {patchPanelHTML} from './panel-patch.js?v=seven-phase-release-20261026-1';
 import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js?v=staff-jobs-20261027-2';
