@@ -13,12 +13,13 @@ export function assignPrimaryJobs(employees){
  return employees;
 }
 export function assignCoverage(employees){
- const active=employees.filter(n=>n.alive&&!n.arrested&&n.unconscious<=0);
+ const active=employees.filter(n=>n.alive&&!n.arrested&&n.unconscious<=0&&(n.panic||0)<=0);
  for(const n of employees)n.coveringJob=null;
  for(const [job,duty] of [['Cashier','cashier'],['Service Associate','service']]){
   if(active.some(n=>n.primaryJob===job||n.coveringJob===job))continue;
-  const substitute=active.filter(n=>!n.coveringJob&&n.primaryJob!=='Store Manager')
-    .sort((a,b)=>(a.primaryJob==='Sales Associate'?0:1)-(b.primaryJob==='Sales Associate'?0:1))[0];
+  const substitute=active.filter(n=>!n.coveringJob&&!['Cashier','Service Associate'].includes(n.primaryJob))
+    .sort((a,b)=>(a.primaryJob==='Sales Associate'?0:a.primaryJob==='Store Manager'?2:1)-
+      (b.primaryJob==='Sales Associate'?0:b.primaryJob==='Store Manager'?2:1))[0];
   if(substitute)substitute.coveringJob=job;
  }
  return active;
