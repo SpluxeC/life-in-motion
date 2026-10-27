@@ -2,7 +2,8 @@
 // Facing is determined from actual world travel; parked vehicles retain their heading.
 const cache=new Map();
 export function vehicleFacing(v,cameraAngle=45){
- const dx=(v.targetX??v.x)-v.x,dy=(v.targetY??v.y)-v.y;
+ const next=v.route?.[0];
+ const dx=(next?.x??v.targetX??v.x)-v.x,dy=(next?.y??v.targetY??v.y)-v.y;
  const motion=Math.hypot(dx,dy)>.08;
  const h=motion?Math.atan2(dy,dx):(Number.isFinite(v.heading)?v.heading:Math.PI/2);
  // Project world movement through the same isometric horizontal orientation as
