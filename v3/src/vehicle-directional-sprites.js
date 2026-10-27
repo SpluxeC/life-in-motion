@@ -18,7 +18,7 @@ export function vehicleSpriteKind(v){
   if(v.color==='#668ba9')return 'police';
   return 'ambulance';
  }
- return ['sedan','suv','pickup','van'][Math.abs(Math.floor(v.x||0))%4];
+ return v.vehicleModel||['sedan','sedan-sports','hatchback-sports','suv','suv-luxury','pickup','van','delivery','delivery-flat','truck'][Math.abs(Math.floor(v.x||0))%10];
 }
 // Rasterize a small four-direction sprite only once for every color/model/facing.
 function buildSprite(kind,color,facing){
@@ -75,7 +75,7 @@ export function drawDirectionalVehicle(ctx,project,zoom,v,cameraAngle=45){
  let sprite=cache.get(key);if(!sprite){sprite=buildSprite(kind,v.color,facing);cache.set(key,sprite)}
  const w=v.w||2,h=v.h||3;
  const base=project(v.x+(w-1)/2,v.y+(h-1)/2,0);
- const scale=zoom*Math.max(.8,Math.min(1.3,(w+h)/5));
+ const scale=2*zoom*Math.max(.8,Math.min(1.3,(w+h)/5));
  const sw=144*scale,sh=102*scale;
  const imported=kenneyVehicleImage(kind,facing);
  ctx.drawImage(imported||sprite,base.x-sw/2,base.y-sh*.79,sw,sh);
