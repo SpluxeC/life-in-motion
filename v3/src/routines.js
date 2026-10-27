@@ -97,10 +97,10 @@ function staffDuty(g,n){
  // The primary job stays fixed; temporary department coverage is a hidden
  // task assignment and never changes the role shown to the player.
  if(!n.coveringJob){
-  if(job==='Store Manager')return schedule(g,n,'patrol',{x:41,y:13},12,{label:'Managing store operations'});
-  if(job==='Lumber Associate')return schedule(g,n,'patrol',{x:7,y:35},9,{label:'Assisting with lumber cuts'});
-  if(job==='Receiving Associate')return schedule(g,n,'patrol',{x:29,y:36},10,{label:'Handling deliveries in receiving'});
-  if(job==='Maintenance')return schedule(g,n,'patrol',ROUTINE_STOPS[(n.workIndex++||0)%ROUTINE_STOPS.length],6,{label:'Inspecting store for repairs and spills'});
+  if(job==='Store Manager')return schedule(g,n,'manager',{x:41,y:13},12,{label:'Reviewing store operations'});
+  if(job==='Lumber Associate')return schedule(g,n,'lumber',{x:7,y:35},9,{label:'Measuring and cutting lumber'});
+  if(job==='Receiving Associate')return schedule(g,n,'receiving',{x:29,y:36},10,{label:'Sorting incoming deliveries'});
+  if(job==='Maintenance')return schedule(g,n,'maintenance',ROUTINE_STOPS[(n.workIndex++||0)%ROUTINE_STOPS.length],6,{label:'Inspecting store for repairs and spills'});
  }
  if(job==='Sales Associate'&&!n.coveringJob){
   const locations=ROUTINE_STOPS.filter(p=>!['parking lot','employee break room'].includes(p.label));
@@ -108,7 +108,7 @@ function staffDuty(g,n){
   n.coveringDepartment=chosen.label;
   const c=canHelp(g,n);if(c&&assignHelp(g,n,c))return true;
   n.workIndex=(n.workIndex||0)+1;
-  return schedule(g,n,'patrol',chosen,7,{label:'Covering '+chosen.label});
+  return schedule(g,n,'sales',chosen,7,{label:'Covering '+chosen.label});
  }
  const c=canHelp(g,n);if(c&&assignHelp(g,n,c))return true;
  // A floor associate also restocks merchandise depleted by shoppers.
@@ -171,7 +171,7 @@ export function updateRoutine(g,n,dt){
  if(!isAvailable(n)||!n.task)return;
  const task=n.task;
  const animate={
-  cashier:'scan',service:'type',patrol:'inspect',help:'offerHelp',helped:'talk',
+  cashier:'scan',service:'type',manager:'review',lumber:'measure',receiving:'lift',maintenance:'inspect',sales:'offerHelp',patrol:'inspect',help:'offerHelp',helped:'talk',
   break:'drink',restock:'stock',enter:'look',browse:'inspect',garden:'inspect',checkout:'wait',
   leave:'walk',parking:'look'
  };
