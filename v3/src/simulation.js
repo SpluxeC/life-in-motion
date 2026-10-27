@@ -1,5 +1,5 @@
 import {tickDamageRecovery,debrisBlocksMovement} from './damage-recovery.js';
-import {nearestOpen,pathTo,doorAt,fixtureAt,walkable,key} from './world.js?v=parking-road-shadow-20261027-1';
+import {nearestOpen,pathTo,doorAt,fixtureAt,walkable,key} from './world.js?v=landscape-sidewalk-road-20261027-1';
 import {initializeRoutine,chooseRoutine,updateRoutine} from './routines.js?v=seven-phase-release-20261026-1';
 import {POWER_LIST,godPowerApply,tickGodPowers,spreadSuspicion,autoSabotage} from './god-powers.js?v=seven-phase-release-20261026-1';
 import {updateElectricalZones} from './scene-lighting.js?v=seven-phase-release-20261026-1';
