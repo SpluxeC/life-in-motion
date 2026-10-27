@@ -1,4 +1,4 @@
-import {drawDirectionalVehicle} from './vehicle-directional-sprites.js?v=vehicle-facings-20261027-1';
+import {drawDirectionalVehicle} from './vehicle-directional-sprites.js?v=vehicle-facings-20261027-2';
 import {createHardwareStore,doorAt,fixtureAt,nearestOpen,walkable,key} from './world.js?v=receiving-expansion-20261027-1';
 import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v=animation-sign-blood-hand-20261027-1';
 import {createContextPowers} from './context-powers.js?v=seven-phase-release-20261026-1';
