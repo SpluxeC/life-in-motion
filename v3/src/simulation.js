@@ -1,3 +1,4 @@
+import {assignPrimaryJobs,assignCoverage,effectiveDuty} from './employee-jobs.js?v=jobs-20261027-1';
 import {tickDamageRecovery,debrisBlocksMovement} from './damage-recovery.js';
 import {nearestOpen,pathTo,doorAt,fixtureAt,walkable,key} from './world.js?v=landscape-sidewalk-road-20261027-1';
 import {initializeRoutine,chooseRoutine,updateRoutine} from './routines.js?v=seven-phase-release-20261026-1';
@@ -19,6 +20,8 @@ export function makeGame(world,options={}){
  const game={world,seed,random,elapsed:0,clockStartMinutes:Number.isFinite(+options.clockStartMinutes)?+options.clockStartMinutes:480,minutesPerSecond:1,speed:1,paused:false,energy:35,energyEarned:0,npcs:[],respondersRemaining:{police:3,fire:3,medic:3},pending:[],dispatchCooldown:0,log:[],stats:{deaths:0,injuries:0,incidents:0,powers:0,chains:0},winner:false,freeplay:false,completed:false,nextId:0,cooldowns:{},selected:null};
  const countStaff=clamp(+(options.staff??8),1,16),countCustomers=clamp(+(options.customers??12),1,20);
  for(let i=0;i<countStaff+countCustomers;i++)spawnNPC(game,i<countStaff?'employee':'customer');
+ assignPrimaryJobs(game.npcs.filter(n=>n.role==='employee'));
+ for(const n of game.npcs.filter(n=>n.role==='employee'))n.duty=effectiveDuty(n);
  for(let n of game.npcs){n.relationships={};for(let o of game.npcs)if(o!==n)n.relationships[o.id]=Math.round(random()*120-40)}
  log(game,'Hardware Store opened. '+game.npcs.length+' NPCs are active.');
  return game;
@@ -228,6 +231,7 @@ export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
    }
   }else{n.cleaning=false}
  }
+ if(n.role==='employee'&&n.primaryJob){n.duty=effectiveDuty(n)}
  if(!n.command)updateRoutine(g,n,dt);
  if(n.panic>0)n.panic=Math.max(0,n.panic-dt);
  if(n.role==='firefighter'){for(const fire of g.world.hazards.filter(h=>h.kind==='fire'&&h.life>0&&Math.hypot(n.x-h.x,n.y-h.y)<3)){fire.life-=dt*24;if(fire.life<=0)log(g,n.name+' extinguished a fire.')}}
