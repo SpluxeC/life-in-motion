@@ -22,3 +22,22 @@ export function compareRenderDepth(a,b){
  const priority={npc:0,item:1,hazard:1,sign:2,door:3,wall:3,fixture:4,vehicle:4};
  return (priority[a.kind]??2)-(priority[b.kind]??2);
 }
+
+/**
+ * Wall-side display fixtures must sit ahead of their own backing wall,
+ * without jumping ahead of nearer NPCs or unrelated props.
+ */
+export function fixtureDepthWithBackingWall(fixture,walls,cameraAngle=45){
+ const ordinary=renderDepth('fixture',fixture,cameraAngle);
+ const wallSide=fixture.type==='gardenToolsRack'||fixture.type==='lockers'||
+   fixture.type==='departmentWallShelf'&&fixture.x===35;
+ if(!wallSide)return ordinary;
+ const nearby=walls.filter(w=>w.section!=='gardenFence'&&
+   w.x>=fixture.x-1&&w.x<=fixture.x+(fixture.w||1)+1&&
+   w.y>=fixture.y-1&&w.y<=fixture.y+(fixture.h||1)+1);
+ if(!nearby.length)return ordinary;
+ // Paint after the nearest local wall, but continue to participate normally
+ // in the depth queue (including NPCs and vehicles).
+ const nearestWall=Math.min(...nearby.map(w=>renderDepth('wall',w,cameraAngle)));
+ return Math.min(ordinary,nearestWall-.025);
+}
