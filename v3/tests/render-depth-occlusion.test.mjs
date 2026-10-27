@@ -15,7 +15,7 @@ test('closer actors draw after farther solid objects',()=>{
 test('solid shelves, cars and walls occlude actors at same floor depth',()=>{
  for(const kind of ['fixture','wall','vehicle']){
   const items=[{kind,depth:20},{kind:'npc',depth:20}].sort(compareRenderDepth);
-  assert.deepEqual(items.map(x=>x.kind),kind==='wall'?['wall','npc']:['npc',kind]);
+  assert.deepEqual(items.map(x=>x.kind),['npc',kind]);
  }
 });
 
