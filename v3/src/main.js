@@ -8,6 +8,7 @@ import {patchPanelHTML} from './panel-patch.js?v=seven-phase-release-20261026-1'
 import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js?v=seven-phase-release-20261026-1';
 import {createArtwork} from './artwork.js?v=seven-phase-release-20261026-1';
 import {renderDepth,compareRenderDepth} from './render-depth.js?v=camera-depth-20261027-1';
+import {obstructionOpacity} from './selective-occlusion.js?v=selective-fade-20261027-1';
 import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness} from './hud.js?v=seven-phase-release-20261026-1';
 import {hitProjectedFixture,isGroundTileTap,selectionLabel,doorSelectionTarget} from './selection.js?v=seven-phase-release-20261026-1';
 import {signOpacity} from './sign-visibility.js?v=seven-phase-release-20261026-1';
@@ -336,16 +337,16 @@ function render(t){
  sceneLighting.drawFloorLightPools(world,viewport,t);
  sceneLighting.drawCastShadows(world,game?.npcs||[],viewport,t);
  const items=[
-  ...world.fixtures.map(o=>({kind:'fixture',depth:renderDepth('fixture',o,cameraAngle),fn:()=>{
+  ...world.fixtures.map(o=>({kind:'fixture',occluder:o,depth:renderDepth('fixture',o,cameraAngle),fn:()=>{
    if(o.destroyed){const p=project(o.x+(o.w||1)*.5-.5,o.y+(o.h||1)*.5-.5);ctx.save();ctx.fillStyle='#554e4a';ctx.fillRect(p.x-12*zoom,p.y-6*zoom,24*zoom,8*zoom);ctx.fillStyle='#b78365';ctx.fillRect(p.x-6*zoom,p.y-9*zoom,12*zoom,5*zoom);ctx.restore()}else artwork.drawFixture(o);
    if(o.damaged||o.powerOutUntil>(game?.elapsed||0)){
     const p=project(o.x+(o.w||1)*.5-.5,o.y+(o.h||1)*.5-.5,28);
     ctx.save();ctx.fillStyle=o.damaged?'#ec8756':'#ffe089';ctx.globalAlpha=.8;ctx.beginPath();ctx.arc(p.x,p.y,4.5*zoom,0,Math.PI*2);ctx.fill();ctx.restore();
    }
   }})),
-  ...world.doors.map(o=>({kind:'door',depth:renderDepth('door',o,cameraAngle),fn:()=>artwork.drawDoor(o,t)})),
-  ...[...world.walls.values()].map(o=>({kind:'wall',depth:renderDepth('wall',o,cameraAngle),fn:()=>artwork.drawWall(o,world)})),
-  ...world.props.map(o=>({kind:'vehicle',depth:renderDepth('vehicle',o,cameraAngle),fn:()=>{if(o.type==='wetFloorSign'){artwork.drawWetFloorSign(o.x,o.y);return}artwork.drawVehicle(o,t);const lights=emergencyVehicleVisual(o,t);if(lights){const p=project(o.x+(o.w||2)/2,o.y+(o.h||3)/2,34),z=zoom;ctx.save();ctx.fillStyle=lights.left;ctx.beginPath();ctx.arc(p.x-5*z,p.y,3*z,0,Math.PI*2);ctx.fill();ctx.fillStyle=lights.right;ctx.beginPath();ctx.arc(p.x+5*z,p.y,3*z,0,Math.PI*2);ctx.fill();ctx.restore()}}})),
+  ...world.doors.map(o=>({kind:'door',occluder:o,depth:renderDepth('door',o,cameraAngle),fn:()=>artwork.drawDoor(o,t)})),
+  ...[...world.walls.values()].map(o=>({kind:'wall',occluder:o,depth:renderDepth('wall',o,cameraAngle),fn:()=>artwork.drawWall(o,world)})),
+  ...world.props.map(o=>({kind:'vehicle',occluder:o,depth:renderDepth('vehicle',o,cameraAngle),fn:()=>{if(o.type==='wetFloorSign'){artwork.drawWetFloorSign(o.x,o.y);return}artwork.drawVehicle(o,t);const lights=emergencyVehicleVisual(o,t);if(lights){const p=project(o.x+(o.w||2)/2,o.y+(o.h||3)/2,34),z=zoom;ctx.save();ctx.fillStyle=lights.left;ctx.beginPath();ctx.arc(p.x-5*z,p.y,3*z,0,Math.PI*2);ctx.fill();ctx.fillStyle=lights.right;ctx.beginPath();ctx.arc(p.x+5*z,p.y,3*z,0,Math.PI*2);ctx.fill();ctx.restore()}}})),
   ...(world.drops||[]).map(o=>({kind:'item',depth:renderDepth('item',o,cameraAngle),fn:()=>artwork.drawDrop(o)})),
   ...(world.damage||[]).filter(o=>['fallenBox','fallenSign'].includes(o.kind)&&o.phase!=='repaired').map(o=>({kind:'item',depth:renderDepth('item',o,cameraAngle),fn:()=>{
    const progress=Number.isFinite(o.fallenAt)?Math.max(0,Math.min(1,(t-o.fallenAt)/.8)):1;
@@ -379,7 +380,13 @@ function render(t){
   }})):[]),
   ...world.hazards.map(o=>({kind:'hazard',depth:renderDepth('hazard',o,cameraAngle),fn:()=>drawHazard(o,t)}))
  ];
- items.sort(compareRenderDepth);for(const item of items)item.fn();
+ items.sort(compareRenderDepth);
+ const focus=game?.npcs?.find(n=>n.id===selected?.id&&n.alive);
+ const depthOf=(kind,obj)=>renderDepth(kind,obj,cameraAngle);
+ for(const item of items){
+  const opacity=focus&&item.occluder?obstructionOpacity(item.kind,item.occluder,focus,project,depthOf):1;
+  ctx.save();ctx.globalAlpha*=opacity;item.fn();ctx.restore();
+ }
  // The same overhead light field shades floors, objects and NPCs together.
  // Electrical flicker remains localized to the falling wire's coverage zone.
  sceneLighting.drawSceneLighting(world,viewport,t);
