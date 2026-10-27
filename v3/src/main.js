@@ -1,3 +1,4 @@
+import {drawDirectionalVehicle} from './vehicle-directional-sprites.js?v=vehicle-facings-20261027-1';
 import {createHardwareStore,doorAt,fixtureAt,nearestOpen,walkable,key} from './world.js?v=receiving-expansion-20261027-1';
 import {makeGame,updateGame,applyPower,POWER_LIST,ITEMS} from './simulation.js?v=animation-sign-blood-hand-20261027-1';
 import {createContextPowers} from './context-powers.js?v=seven-phase-release-20261026-1';
@@ -381,7 +382,7 @@ function render(t){
   }})),
   ...world.doors.map(o=>({kind:'door',occluder:o,depth:renderDepth('door',o,cameraAngle),fn:()=>artwork.drawDoor(o,t)})),
   ...[...world.walls.values()].map(o=>({kind:'wall',occluder:o,depth:renderDepth('wall',o,cameraAngle),fn:()=>artwork.drawWall(o,world)})),
-  ...world.props.map(o=>({kind:'vehicle',occluder:o,depth:renderDepth('vehicle',o,cameraAngle),fn:()=>{if(o.type==='wetFloorSign'){artwork.drawWetFloorSign(o.x,o.y);return}artwork.drawVehicle(o,t);const lights=emergencyVehicleVisual(o,t);if(lights){const p=project(o.x+(o.w||2)/2,o.y+(o.h||3)/2,34),z=zoom;ctx.save();ctx.fillStyle=lights.left;ctx.beginPath();ctx.arc(p.x-5*z,p.y,3*z,0,Math.PI*2);ctx.fill();ctx.fillStyle=lights.right;ctx.beginPath();ctx.arc(p.x+5*z,p.y,3*z,0,Math.PI*2);ctx.fill();ctx.restore()}}})),
+  ...world.props.map(o=>({kind:'vehicle',occluder:o,depth:renderDepth('vehicle',o,cameraAngle),fn:()=>{if(o.type==='wetFloorSign'){artwork.drawWetFloorSign(o.x,o.y);return}if(!((o.type==='car'||o.emergency)&&drawDirectionalVehicle(ctx,project,zoom,o,cameraAngle)))artwork.drawVehicle(o,t);const lights=emergencyVehicleVisual(o,t);if(lights){const p=project(o.x+(o.w||2)/2,o.y+(o.h||3)/2,34),z=zoom;ctx.save();ctx.fillStyle=lights.left;ctx.beginPath();ctx.arc(p.x-5*z,p.y,3*z,0,Math.PI*2);ctx.fill();ctx.fillStyle=lights.right;ctx.beginPath();ctx.arc(p.x+5*z,p.y,3*z,0,Math.PI*2);ctx.fill();ctx.restore()}}})),
   ...(world.drops||[]).map(o=>({kind:'item',depth:renderDepth('item',o,cameraAngle),fn:()=>artwork.drawDrop(o)})),
   ...(world.damage||[]).filter(o=>['fallenBox','fallenSign'].includes(o.kind)&&o.phase!=='repaired').map(o=>({kind:'item',depth:renderDepth('item',o,cameraAngle),fn:()=>{
    const progress=Number.isFinite(o.fallenAt)?Math.max(0,Math.min(1,(t-o.fallenAt)/.8)):1;
