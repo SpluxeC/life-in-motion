@@ -3,12 +3,15 @@ import assert from 'node:assert/strict';
 import {advanceTraffic,addPassingTraffic} from '../src/traffic-ai.js';
 import {createHardwareStore} from '../src/world.js';
 
-test('traffic uses separated opposing road lanes',()=>{
- const w=createHardwareStore();w.props=[];
+test('passing traffic uses separate opposing road lanes',()=>{
+ const w=createHardwareStore();w.props=[];w._trafficClock=0;
  addPassingTraffic(w,24);
- assert.equal(w.props[0].x,72);
- addPassingTraffic(w,48);
- assert.equal(w.props[1].x,67);
+ const first=w.props.find(p=>p.trafficState==='passing');
+ assert.equal(first.x,72);
+ w._trafficClock=0;
+ addPassingTraffic(w,44);
+ const second=w.props.find(p=>p.id==='passing-car-44');
+ assert.equal(second.x,67);
 });
 test('vehicle motion respects spacing to car ahead',()=>{
  const lead={type:'car',x:8,y:2,targetX:14,targetY:2,route:[{x:14,y:2}]};
