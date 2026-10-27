@@ -44,7 +44,7 @@ export function loadGame(){try{let data=JSON.parse(localStorage.getItem(SAVE)||'
   world.props=world.props.map(o=>{
    const previous=originalProps.get(o.id);
    return previous?{...o,x:previous.x,y:previous.y,targetX:previous.targetX,targetY:previous.targetY}:o;
-  }).concat((data.world.props||[]).filter(o=>!basePropIds.has(o.id)));
+  }).concat((data.world.props||[]).filter(o=>!basePropIds.has(o.id)&&!(o.type==='shrub'&&o.y<10)));
   world.damage=data.world.damage||[];
   world.drops=data.world.drops||[];
   world.hazards=data.world.hazards||[];
