@@ -142,7 +142,14 @@ export function createHardwareStore(){
  fixture('gardenBench',39,34,1,2,{facing:'east'});
  fixture('birdbath',43,37,1,1);fixture('wateringStation',46,37,1,1);
  fixture('planter',40,29,1,1);fixture('planter',47,32,1,1);
- for(let x of [7,15,23,31,40,48,56]){props.push({type:'car',id:'car-'+x,x,y:4,w:2,h:3,color:['#9aaeb6','#c9ba9b','#5c727d','#c5c8c3','#778c79','#b18a80','#4d6c87'][[7,15,23,31,40,48,56].indexOf(x)],vehicleModel:['sedan','suv-luxury','hatchback-sports','delivery','sedan-sports','truck','suv'][[7,15,23,31,40,48,56].indexOf(x)],heading:0});for(let xx=x;xx<x+2;xx++)for(let yy=4;yy<7;yy++)blocked.add(key(xx,yy))}
+ // One continuous row of tightly spaced stalls, with an open driving aisle y=1..3.
+ const parkedModels=['sedan','suv-luxury','hatchback-sports','delivery','sedan-sports','truck','suv','van','sedan','delivery-flat','suv-luxury','hatchback-sports','truck'];
+ const parkedColors=['#9aaeb6','#c9ba9b','#5c727d','#c5c8c3','#778c79','#b18a80','#4d6c87','#d2d5ce','#948d83','#899b9b','#737784','#c6a887','#7c9299'];
+ for(let i=0;i<parkedModels.length;i++){
+  const x=5+i*4;
+  props.push({type:'car',id:'car-'+x,x,y:4,w:2,h:3,color:parkedColors[i],vehicleModel:parkedModels[i],heading:0});
+  for(let xx=x;xx<x+2;xx++)for(let yy=4;yy<7;yy++)blocked.add(key(xx,yy));
+ }
  // Road access stays unobstructed between the main lot and the east service road.
  // Keep the parking lot and driving lanes free of decorative shrubs.
  // Landscaped beds only: each tree or shrub is placed on a landscape tile.
@@ -152,7 +159,7 @@ export function createHardwareStore(){
  for(const [x,y] of [[49,12],[54,13],[57,17],[62,20],[50,22],[58,25],
    [53,28],[62,32],[49,34],[56,37],[62,39],[51,42],[58,14],[55,33]])
   props.push({id:'landscape-shrub-'+x+'-'+y,type:'shrub',x,y});
- return {id:'hardware-store',title:'Hardware Store',layoutVersion:35,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],sabotages:[],electricalZones:[],blocking:blocked};
+ return {id:'hardware-store',title:'Hardware Store',layoutVersion:36,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],sabotages:[],electricalZones:[],blocking:blocked};
 }
 export const inside=(x,y)=>x>=0&&y>=0&&x<WIDTH&&y<HEIGHT;
 export function fixtureAt(world,x,y){return world.fixtures.find(o=>x>=o.x&&x<o.x+o.w&&y>=o.y&&y<o.y+o.h)}
