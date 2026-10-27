@@ -10,7 +10,7 @@ export function vehicleFacing(v,cameraAngle=45){
  const yaw=cameraAngle*Math.PI/180;
  const sx=Math.cos(yaw)*Math.cos(h)-Math.sin(yaw)*Math.sin(h);
  const sy=-Math.sin(yaw)*Math.cos(h)-Math.cos(yaw)*Math.sin(h);
- return Math.abs(sx)>Math.abs(sy)?(sx>0?'right':'left'):(sy>0?'down':'up');
+ return sx>=0?(sy<0?'right':'up'):(sy<0?'down':'left');
 }
 export function vehicleSpriteKind(v){
  if(v.emergency){
