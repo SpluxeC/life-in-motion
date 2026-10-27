@@ -8,6 +8,8 @@ on:
       - 'v3/src/routines.js'
       - 'v3/src/persistence.js'
       - 'v3/tests/employee-jobs.test.mjs'
+      - 'v3/tests/role-animations.test.mjs'
+      - 'v3/src/npc-pose.js'
       - '.github/workflows/jobs-regression.yml'
   workflow_dispatch:
 jobs:
@@ -19,4 +21,4 @@ jobs:
         with:
           node-version: '22'
       - name: Verify assignments, cover rules and existing saves
-        run: node --experimental-default-type=module --test v3/tests/employee-jobs.test.mjs v3/tests/milestone-save.test.mjs
+        run: node --experimental-default-type=module --test v3/tests/employee-jobs.test.mjs v3/tests/role-animations.test.mjs v3/tests/milestone-save.test.mjs
