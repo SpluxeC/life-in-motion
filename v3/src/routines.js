@@ -85,7 +85,7 @@ export function initializeRoutine(n,employeeIndex=0){
 }
 function staffDuty(g,n){
  if(!n.duty||n.duty==='shopper')initializeRoutine(n,g.npcs.filter(o=>o.role==='employee').indexOf(n));
- if(g.elapsed>=(n.breakAt||Infinity)){
+ if(g.elapsed>=(n.breakAt||Infinity)&&!['cashier','service'].includes(n.duty)){
   n.breakAt=g.elapsed+100;n.workIndex++;
   if(schedule(g,n,'break',{x:40,y:18},12,{label:'Taking an employee break'}))return true;
  }
@@ -93,9 +93,18 @@ function staffDuty(g,n){
   const place=station(g,n),what=n.duty==='cashier'?'Working checkout register':'Staffing customer service';
   return schedule(g,n,n.duty,place,22+g.random()*12,{label:what});
  }
+ const job=n.primaryJob||'Sales Associate';
+ // The primary job stays fixed; temporary department coverage is a hidden
+ // task assignment and never changes the role shown to the player.
+ if(!n.coveringJob){
+  if(job==='Store Manager')return schedule(g,n,'patrol',{x:41,y:13},12,{label:'Managing store operations'});
+  if(job==='Lumber Associate')return schedule(g,n,'patrol',{x:7,y:35},9,{label:'Assisting with lumber cuts'});
+  if(job==='Receiving Associate')return schedule(g,n,'patrol',{x:29,y:36},10,{label:'Handling deliveries in receiving'});
+  if(job==='Maintenance')return schedule(g,n,'patrol',ROUTINE_STOPS[(n.workIndex++||0)%ROUTINE_STOPS.length],6,{label:'Inspecting store for repairs and spills'});
+ }
  const c=canHelp(g,n);if(c&&assignHelp(g,n,c))return true;
  // A floor associate also restocks merchandise depleted by shoppers.
- const low=(n.stationIndex===0?[]:g.world.fixtures).filter(f=>f.type==='shelf'&&f.stock!==undefined&&f.stock<=4&&
+ const low=(job==='Sales Associate'?[]:g.world.fixtures).filter(f=>f.type==='shelf'&&f.stock!==undefined&&f.stock<=4&&
   (!f.restockingBy||!g.npcs.some(o=>o.id===f.restockingBy&&o.task?.kind==='restock'&&isAvailable(o))))
   .sort((a,b)=>Math.hypot(a.x-n.rx,a.y-n.ry)-Math.hypot(b.x-n.rx,b.y-n.ry))[0];
  if(low&&schedule(g,n,'restock',{x:low.x+2,y:low.y+2},7,{shelfId:low.id,label:'Restocking '+low.department?.toLowerCase()+' shelves'})){
@@ -133,6 +142,10 @@ function shopperDuty(g,n){
 }
 export function chooseRoutine(g,n){
  if(!isAvailable(n)||!['employee','customer'].includes(n.role)||n.panic>0)return false;
+ if(n.task){
+  if(n.role==='employee'&&['cashier','service'].includes(n.duty)&&n.task.kind!==n.duty){n.task=null;n.path=[];n.target=null;}
+  else if(n.role==='employee'&&n.task.kind=== 'cashier'&&n.duty!=='cashier'||n.role==='employee'&&n.task.kind==='service'&&n.duty!=='service'){n.task=null;n.path=[];n.target=null;}
+ }
  if(n.task){
   if(n.task.kind==='helped'&&!g.npcs.some(x=>x.id===n.helpedBy&&isAvailable(x))){
    n.helpedBy=null;n.task=null;
