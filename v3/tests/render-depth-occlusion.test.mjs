@@ -18,3 +18,14 @@ test('solid shelves, cars and walls occlude actors at same floor depth',()=>{
   assert.deepEqual(items.map(x=>x.kind),['npc',kind]);
  }
 });
+
+test('camera yaw changes world-space ordering without changing angle limits',()=>{
+ const a={x:12,y:7},b={x:7,y:12};
+ assert.ok(renderDepth('wall',a,25)<renderDepth('wall',b,25));
+ assert.ok(renderDepth('wall',a,65)>renderDepth('wall',b,65));
+});
+test('a shelf uses its camera-nearest occupied tile for occlusion',()=>{
+ const shelf={x:10,y:10,w:3,h:2};
+ const nearest={x:12,y:11};
+ assert.equal(renderDepth('fixture',shelf,45),renderDepth('npc',{rx:nearest.x,ry:nearest.y},45));
+});
