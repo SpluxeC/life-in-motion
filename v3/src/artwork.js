@@ -135,7 +135,8 @@ export function createArtwork(ctx,project,getZoom){
    const a=P(64.3,y-.7),b=P(65.7,y-.7),c=P(65.7,y+.5),d=P(64.3,y+.5);
    poly([a,b,c,d],'#dbdfd5cf')
   }
-  for(let y=13;y<42;y+=5)line(P(69,y),P(69,y+2.2),'#e4d1a0',2.1);
+  // Dashed centerline runs continuously along the entire length of the road.
+  for(let y=1;y<world.height;y+=5)line(P(69,y),P(69,Math.min(world.height-.5,y+2.2)),'#e4d1a0',2.1);
  }
  // All vertical panels are oriented in world space; wall-side cabinets face
  // accessible staff aisles instead of appearing like camera-facing billboards.
