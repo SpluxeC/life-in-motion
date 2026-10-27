@@ -18,7 +18,22 @@ test('vehicle motion respects spacing to car ahead',()=>{
 });
 test('all parked cars stay inside divided stalls',()=>{
  const w=createHardwareStore(),cars=w.props.filter(p=>p.id?.startsWith('car-'));
- assert.equal(cars.length,13);
- assert.ok(cars.every((v,i)=>v.x===5+i*4&&v.y===4));
+ assert.equal(cars.length,9);
+ assert.ok(cars.every(v=>v.x>=5&&v.x<=53&&v.y===4));
  assert.ok(cars.every(v=>v.vehicleModel!=='taxi'));
+});
+
+test('customer traffic reserves a free stall and begins approaching via entry lane',()=>{
+ const w=createHardwareStore();
+ w._trafficClock=0;
+ addPassingTraffic(w,30);
+ const v=w.props.find(p=>p.trafficState==='arriving');
+ assert.ok(v);
+ assert.ok([13,25,37,49].includes(v.parkingSpot));
+ assert.deepEqual(v.route[0],{x:72,y:2});
+});
+test('cars stop for pedestrians in their projected path',()=>{
+ const car={type:'car',x:30,y:2,targetX:40,targetY:2,route:[{x:40,y:2}]};
+ advanceTraffic([car],.5,[{alive:true,x:31,y:2}]);
+ assert.equal(car.x,30);
 });
