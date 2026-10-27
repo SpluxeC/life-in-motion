@@ -175,8 +175,9 @@ function drawHair(n,z,h){
   stroke([[-6,-4],[7,-4]],'#8a9ca2',1.1);
   shape([[-1,-10],[1,-10],[1,-7],[4,-7],[4,-5],[1,-5],[1,-3],[-1,-3],[-1,-5],[-4,-5],[-4,-7],[-1,-7]],'#c93d49');
  }else{
-  oval(0,-4.4,7.2,5.7,color);
-  if(style==='buzz'){oval(0,-3.8,7.1,3.4,color)}
+  // The crown is raised above the eye line, rather than filling the face.
+  oval(0,-6.2,7.1,3.9,color);
+  if(style==='buzz'){oval(0,-5.8,6.8,2.8,color)}
   else if(style==='sidePart'){
    // Combed fringe points toward the face (positive local X); rear is short.
    shape([[-7,-5],[-5,-9],[2,-11],[8,-7],[8,-1],[4,-2],[2,-5],[-3,-3]],color);
@@ -187,7 +188,7 @@ function drawHair(n,z,h){
   }else if(style==='wavy'){
    for(const [x,y] of [[-7,-3],[-9,1],[8,-2],[8,3]])oval(x,y,3.3,4,color);
   }else if(style==='bob'){
-   shape([[-7,-7],[7,-7],[9,5],[6,7],[-7,7],[-9,4]],color);
+   shape([[-7,-7],[-4,-11],[3,-11],[7,-7],[9,6],[6,7],[5,-1],[-5,-1],[-6,7],[-9,5]],color);
   }else if(style==='ponytail'){
    // The tied hair must sit on the REAR (-X), opposite the face/brim.
    oval(-8,-2,3.6,4,color);
@@ -196,13 +197,15 @@ function drawHair(n,z,h){
   }else if(style==='bun'){
    oval(0,-12,4.6,4,color);oval(0,-7,7,4,color);
   }else if(style==='long'){
-   shape([[-8,-7],[-9,10],[-5,11],[-5,-1],[7,-2],[8,12],[11,11],[9,-7]],color);
+   shape([[-8,-7],[-6,-12],[2,-13],[8,-8],[10,11],[6,12],[5,-2],[2,-4],[-3,-4],[-5,-2],[-6,12],[-10,11]],color);
   }else if(style==='messy'){
    shape([[-8,-4],[-8,-12],[-4,-8],[-1,-14],[2,-9],[7,-13],[9,-4],[5,-3]],color);
   }else{
    shape([[-7,-7],[-3,-11],[5,-10],[8,-4],[3,-3],[-2,-2]],color);
   }
-  if(style!=='buzz'&&style!=='bun')oval(5,-2.5,2.5,2,color);
+  // A small temple tuft adds depth without filling the face center.
+  if(style!=='buzz'&&style!=='bun')oval(6.4,-3.4,1.2,2.1,color);
+  stroke([[-4,-8],[-1,-10],[3,-9]],'#ffffff25',.7);
  }
  ctx.restore();
 }
@@ -276,9 +279,9 @@ function stick(n,t){let p=project(n.rx,n.ry),z=zoom*(n.role==='customer'||n.role
   ctx.fillStyle='#ddd1b3';ctx.fillRect(-5*z,-h*z*.70,5*z,6*z);
   ctx.fillStyle='#b0dce1';ctx.fillRect(-5*z,-h*z*.70,5*z,2*z);
  }
- drawHair(n,z,h);
- // Keep expressions above hair and hat brims so eyes and mouths stay readable.
+ // Hair and headwear sit above the face but keep the central eyes/mouth clear.
  drawNpcExpression(n,z,h,detail);
+ drawHair(n,z,h);
  ctx.restore();
  if(n.alive&&n.unconscious<=0&&n.action==='offerHelp'&&n.task?.kind==='help'){
   ctx.save();ctx.font=`bold ${Math.max(8,9*z)}px system-ui`;ctx.textAlign='center';ctx.textBaseline='middle';
@@ -458,10 +461,12 @@ function portraitHTML(n){
   '<path d="M22 123l8-30 20-7 20 7 8 30" fill="#202b32" stroke="#0a1114" stroke-width="4"/>'+vest+
   '<ellipse cx="50" cy="48" rx="31" ry="37" fill="#f7f4eb" stroke="#293436" stroke-width="3"/>'+
   
-  '<g transform="'+(n.facing==='left'?'translate(100 0) scale(-1 1)':'')+'"><g fill="'+color+'" stroke="'+color+'" stroke-width="2">'+hairShape+'</g>'+helmet+'</g>'+ 
+   
   // Facial features are drawn LAST, above long hair and uniform hat brims.
   '<g fill="#18252a">'+eyes+'</g><path d="'+brow+'" stroke="#283032" stroke-width="3.5" fill="none"/>'+ 
   '<path d="'+mouth+'" stroke="#4b292c" stroke-width="3.2" fill="none"/>'+extra+
+  // Hair and hats are the upper visual layer; their shapes leave the face open.
+  '<g transform="'+(n.facing==='left'?'translate(100 0) scale(-1 1)':'')+'"><g fill="'+color+'" stroke="'+color+'" stroke-width="2">'+hairShape+'</g>'+helmet+'</g>'+
   '</svg><div><strong>'+escapeHTML(n.name)+'</strong><span>'+escapeHTML(n.role)+' · '+escapeHTML(mood)+'</span></div></div>';
 }
 function powerUsable(p,n=null){
