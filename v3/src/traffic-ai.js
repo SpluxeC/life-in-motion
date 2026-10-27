@@ -1,7 +1,7 @@
 // Two-way right-hand traffic on the east road, controlled parking access,
 // pedestrian priority and stall reservations. Coordinates are world tiles.
 export const STALL_X=Array.from({length:13},(_,i)=>5+i*4);
-const DISTANCE=2.65;
+const DISTANCE=1.8; // Compact stalls need a narrower lateral buffer than open-road following.
 const car=v=>v.type==='car'||v.emergency;
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const point=(x,y)=>({x,y});
@@ -75,7 +75,7 @@ export function advanceTraffic(props,dt,pedestrians=[],elapsed=0){
    const speed=v.emergency?2.6:1.85,travel=Math.min(d,speed*stepTime);
    const nx=v.x+dx/d*travel,ny=v.y+dy/d*travel;
    // Predict next position, including a buffer around people and parked cars.
-   if(vehicles.some(o=>o!==v&&Math.hypot(nx-o.x,ny-o.y)<DISTANCE))continue;
+   if(vehicles.some(o=>o!==v&&Math.hypot(nx-o.x,ny-o.y)<(Math.abs(nx-o.x)<1.1?2.65:DISTANCE)))continue;
    if(pedestrians.some(n=>n.alive!==false&&Math.hypot(nx-(n.rx??n.x),ny-(n.ry??n.y))<1.65))continue;
    v.x=nx;v.y=ny;v.heading=Math.atan2(dy,dx);
   }
