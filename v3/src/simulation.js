@@ -136,6 +136,12 @@ export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
  g.elapsed+=dt;g.dispatchCooldown=Math.max(0,g.dispatchCooldown-dt);
  tickGodPowers(g,dt,godContext);
  tickDamageRecovery(g,dt);
+ if(Math.floor(g.elapsed*2)!==Math.floor((g.elapsed-dt)*2)){
+  const staff=g.npcs.filter(n=>n.role==='employee');
+  if(staff.some(n=>!n.primaryJob))assignPrimaryJobs(staff);
+  assignCoverage(staff);
+  for(const n of staff)n.duty=effectiveDuty(n);
+ }
  for(let k of Object.keys(g.cooldowns))if(g.cooldowns[k]<g.elapsed)delete g.cooldowns[k];
  for(let d of g.world.doors){
   // A door begins opening as the character approaches its planned doorway,
