@@ -1,4 +1,4 @@
-import {assignPrimaryJobs,assignCoverage,effectiveDuty} from './employee-jobs.js?v=jobs-20261027-1';
+import {assignPrimaryJobs,assignCoverage,effectiveDuty} from './employee-jobs.js?v=staff-jobs-20261027-2';
 import {createHardwareStore,nearestOpen,walkable} from './world.js?v=landscape-sidewalk-road-20261027-2';
 import {rngFor} from './simulation.js?v=staff-jobs-20261027-1';
 const SAVE='life-in-motion-v3-round-v1',PROGRESS='life-in-motion-v3-progression-v1';
