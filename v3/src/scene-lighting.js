@@ -10,8 +10,7 @@ export const CEILING_LIGHTS=[
 ];
 const ROOMS=[
  {x1:2,y1:10,x2:37.5,y2:39.5,shade:.39},
- {x1:37.5,y1:10,x2:47.5,y2:27.5,shade:.38},
- {x1:37.5,y1:27.5,x2:48.5,y2:40.5,shade:.26}
+ {x1:37.5,y1:10,x2:47.5,y2:27.5,shade:.38}
 ];
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const POWERED_FIXTURES=new Set([
@@ -119,7 +118,8 @@ export function createSceneLighting(ctx,project,getZoom){
   }
  }
  function shadowVector(world,x,y,height,t){
-  const indoor=x>=2&&x<48&&y>=10&&y<41;
+  // The garden is open-air: no invisible ceiling or indoor shadow cast.
+  const indoor=(x>=2&&x<37&&y>=10&&y<40)||(x>=38&&x<48&&y>=10&&y<28);
   let lamp=null,best=Infinity;
   if(indoor)for(const l of CEILING_LIGHTS){
    const d=(l.x-x)**2+(l.y-y)**2;
@@ -130,7 +130,7 @@ export function createSceneLighting(ctx,project,getZoom){
   const length=Math.max(.001,Math.hypot(dx,dy));
   const spread=height*(lamp? .035:.041);
   return {dx:dx/length*spread,dy:dy/length*spread,
-   strength:indoor?.17*light:.22};
+   strength:indoor?.15*light:.18};
  }
  function castObjectShadow(world,viewport,o,t,height){
   const center={x:o.x+((o.w||1)-1)*.5,y:o.y+((o.h||1)-1)*.5};
