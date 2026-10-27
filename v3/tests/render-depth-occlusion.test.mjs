@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {renderDepth,compareRenderDepth} from '../src/render-depth.js';
+import {renderDepth,compareRenderDepth,fixtureDepthWithBackingWall} from '../src/render-depth.js';
 test('NPC feet determine draw depth regardless of sprite height',()=>{
  assert.equal(renderDepth('npc',{rx:10,ry:11,x:3,y:4}),21);
  assert.equal(renderDepth('npc',{rx:10,ry:11,h:90}),21);
@@ -53,4 +53,22 @@ test('wall and rack sorting actually paints mounted fixture after wall',()=>{
   ].sort(compareRenderDepth);
   assert.deepEqual(items.map(i=>i.kind),['wall','fixture']);
  }
+});
+
+test('wall-mounted fixtures stay behind NPCs closer to the camera',()=>{
+ for(const angle of [25,45,65]){
+  const rack={type:'gardenToolsRack',x:35,y:26,w:1,h:2};
+  const wall={x:36,y:26,section:'exterior'};
+  const depth=fixtureDepthWithBackingWall(rack,[wall],angle);
+  const items=[
+   {kind:'wall',depth:renderDepth('wall',wall,angle)},
+   {kind:'fixture',depth},
+   {kind:'npc',depth:renderDepth('npc',{rx:35,ry:24},angle)}
+  ].sort(compareRenderDepth);
+  assert.deepEqual(items.map(i=>i.kind),['wall','fixture','npc']);
+ }
+});
+test('unrelated fixtures retain regular camera depth and are not always on top',()=>{
+ const f={type:'shelf',x:20,y:20,w:1,h:3};
+ assert.equal(fixtureDepthWithBackingWall(f,[{x:20,y:21}],45),renderDepth('fixture',f,45));
 });
