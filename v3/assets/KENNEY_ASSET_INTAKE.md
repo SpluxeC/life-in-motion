@@ -13,9 +13,9 @@ Original ZIP files are **not yet present in this repository**. They were uploade
 ## Recommended implementation order
 
 1. Furniture, especially cardboard boxes, bookcases, desks, chairs, computers, coffee station and microwaves, using four directional PNGs.
-2. Convert vehicle GLB models to consistent camera-view sprite renders (ambulance, police car, delivery van, sedan, SUV, firetruck) before replacing current drawn vehicles.
+2. Preserve and integrate full vehicle GLB models (ambulance, police car, delivery van, sedan, SUV, firetruck). Use a WebGL vehicle layer coordinated with the canvas camera, maintaining continuous heading and wheel rotation as vehicles move. Do not replace these with fixed-angle sprites.
 3. Building GLB walls and tiles only after verifying collision, tile edges, transparency and visibility around the rotating camera.
 
 Preserve the existing map, NPC paths, object IDs, interactions, and four camera rotation/view assumptions; adapt image anchor coordinates and scale independently. Keep CC0 licenses alongside the assets.
 
-A curated review ZIP was created in the original conversation for the user to download and upload as an archive before bulk integration.
+The source car archive includes separate wheel GLBs for wheel-spin/steering assemblies. These are models, not automatically drivable vehicles: driving/pathfinding, transforms, wheel pivots, synchronization with NPCs, collision and save migration still require implementation. Preserve originals and license. Upload binaries before activating GLB references in runtime.
