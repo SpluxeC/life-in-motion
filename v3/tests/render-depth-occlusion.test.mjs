@@ -44,3 +44,13 @@ test('forklift and riding mower depth use occupied footprint when camera rotates
   assert.ok(Number.isFinite(forklift)&&Number.isFinite(mower));
  }
 });
+
+test('wall and rack sorting actually paints mounted fixture after wall',()=>{
+ for(const angle of [25,45,65]){
+  const items=[
+   {kind:'fixture',depth:renderDepth('fixture',{x:35,y:26,w:1,h:2},angle)},
+   {kind:'wall',depth:renderDepth('wall',{x:36,y:26},angle)}
+  ].sort(compareRenderDepth);
+  assert.deepEqual(items.map(i=>i.kind),['wall','fixture']);
+ }
+});
