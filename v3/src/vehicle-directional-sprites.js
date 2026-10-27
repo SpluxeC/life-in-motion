@@ -51,6 +51,23 @@ function buildSprite(kind,color,facing){
  }
  return c;
 }
+// When Kenney PNGs are installed, replace the temporary procedural sprite.
+const kenneyImages=new Map();
+function kenneyVehicleImage(kind,facing){
+ const asset=({sedan:'sedan',suv:'suv',pickup:'truck',van:'van',
+  fire:'firetruck',police:'police',ambulance:'ambulance'})[kind]||'sedan';
+ const key=asset+'-'+facing;
+ if(!kenneyImages.has(key)){
+  const image=new Image();
+  const entry={image,loaded:false,failed:false};
+  image.onload=()=>{entry.loaded=true};
+  image.onerror=()=>{entry.failed=true};
+  image.src='./assets/kenney-vehicles/'+key+'.png';
+  kenneyImages.set(key,entry);
+ }
+ const entry=kenneyImages.get(key);
+ return entry.loaded?entry.image:null;
+}
 export function drawDirectionalVehicle(ctx,project,zoom,v,cameraAngle=45){
  if(!v||v.type==='tree'||v.type==='shrub'||v.type==='wetFloorSign')return false;
  const facing=vehicleFacing(v,cameraAngle),kind=vehicleSpriteKind(v);
@@ -60,6 +77,7 @@ export function drawDirectionalVehicle(ctx,project,zoom,v,cameraAngle=45){
  const base=project(v.x+(w-1)/2,v.y+(h-1)/2,0);
  const scale=zoom*Math.max(.8,Math.min(1.3,(w+h)/5));
  const sw=144*scale,sh=102*scale;
- ctx.drawImage(sprite,base.x-sw/2,base.y-sh*.79,sw,sh);
+ const imported=kenneyVehicleImage(kind,facing);
+ ctx.drawImage(imported||sprite,base.x-sw/2,base.y-sh*.79,sw,sh);
  return true;
 }
