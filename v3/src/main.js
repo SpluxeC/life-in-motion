@@ -299,7 +299,10 @@ function stick(n,t){let p=project(n.rx,n.ry),z=zoom*(n.role==='customer'||n.role
   const hands=npcLimbPose(n,t,animationRenderOptions(animationDetail({zoom,fps:renderFps,selected:selected?.id===n.id}))).arms;
   const wrist=hands.find(a=>a.side===1)?.wrist||{x:8,y:-9};
   const handX=p.x+wrist.x*z,handY=p.y+wrist.y*z;
-  const handWorld=unproject(handX,handY+8*z);
+  const {a,b,c,d}=basis(),det=a*d+b*c;
+  const px=(handX-view().w*.5)/zoom+offset.x;
+  const py=(handY+8*zoom-view().h*.56)/zoom+offset.y;
+  const handWorld={x:(d*px-b*py)/det,y:(-c*px-a*py)/det};
   artwork.drawItem(n.inventory[0],handWorld.x,handWorld.y,8,.48);
  }
 
