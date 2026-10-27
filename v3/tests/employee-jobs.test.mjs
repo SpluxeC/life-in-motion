@@ -43,3 +43,21 @@ test('real starting worlds retain original employee/customer simulator roles',()
  assert.equal(employees.find(n=>n.primaryJob==='Service Associate').duty,'service');
  assert.equal(g.npcs.filter(n=>n.role==='customer').length,2);
 });
+
+test('an old save with duplicate roles fills missing jobs before doubling up',()=>{
+ const employees=Array.from({length:8},employee);
+ employees[0].primaryJob='Cashier';
+ employees[1].primaryJob='Cashier';
+ assignPrimaryJobs(employees);
+ assert.deepEqual([...new Set(employees.map(n=>n.primaryJob))].sort(),[...JOBS].sort());
+ assert.equal(employees.filter(n=>n.primaryJob==='Store Manager').length,1);
+});
+test('the manager can cover a missing desk when no other substitute is active',()=>{
+ const employees=Array.from({length:8},employee);
+ assignPrimaryJobs(employees);
+ for(const n of employees)if(!['Cashier','Store Manager'].includes(n.primaryJob))n.unconscious=30;
+ assignCoverage(employees);
+ assert.equal(employees[0].coveringJob,null);
+ assert.equal(employees[7].coveringJob,'Service Associate');
+ assert.equal(employees[7].primaryJob,'Store Manager');
+});
