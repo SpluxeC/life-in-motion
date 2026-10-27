@@ -7,7 +7,7 @@ import {createPowerEffects} from './power-effects.js?v=seven-phase-release-20261
 import {patchPanelHTML} from './panel-patch.js?v=seven-phase-release-20261026-1';
 import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js?v=seven-phase-release-20261026-1';
 import {createArtwork} from './artwork.js?v=seven-phase-release-20261026-1';
-import {renderDepth,compareRenderDepth} from './render-depth.js?v=hair-depth-20261026-3';
+import {renderDepth,compareRenderDepth} from './render-depth.js?v=camera-depth-20261027-1';
 import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness} from './hud.js?v=seven-phase-release-20261026-1';
 import {hitProjectedFixture,isGroundTileTap,selectionLabel,doorSelectionTarget} from './selection.js?v=seven-phase-release-20261026-1';
 import {signOpacity} from './sign-visibility.js?v=seven-phase-release-20261026-1';
@@ -336,18 +336,18 @@ function render(t){
  sceneLighting.drawFloorLightPools(world,viewport,t);
  sceneLighting.drawCastShadows(world,game?.npcs||[],viewport,t);
  const items=[
-  ...world.fixtures.map(o=>({kind:'fixture',depth:renderDepth('fixture',o),fn:()=>{
+  ...world.fixtures.map(o=>({kind:'fixture',depth:renderDepth('fixture',o,cameraAngle),fn:()=>{
    if(o.destroyed){const p=project(o.x+(o.w||1)*.5-.5,o.y+(o.h||1)*.5-.5);ctx.save();ctx.fillStyle='#554e4a';ctx.fillRect(p.x-12*zoom,p.y-6*zoom,24*zoom,8*zoom);ctx.fillStyle='#b78365';ctx.fillRect(p.x-6*zoom,p.y-9*zoom,12*zoom,5*zoom);ctx.restore()}else artwork.drawFixture(o);
    if(o.damaged||o.powerOutUntil>(game?.elapsed||0)){
     const p=project(o.x+(o.w||1)*.5-.5,o.y+(o.h||1)*.5-.5,28);
     ctx.save();ctx.fillStyle=o.damaged?'#ec8756':'#ffe089';ctx.globalAlpha=.8;ctx.beginPath();ctx.arc(p.x,p.y,4.5*zoom,0,Math.PI*2);ctx.fill();ctx.restore();
    }
   }})),
-  ...world.doors.map(o=>({kind:'door',depth:renderDepth('door',o),fn:()=>artwork.drawDoor(o,t)})),
-  ...[...world.walls.values()].map(o=>({kind:'wall',depth:renderDepth('wall',o),fn:()=>artwork.drawWall(o,world)})),
-  ...world.props.map(o=>({kind:'vehicle',depth:renderDepth('vehicle',o),fn:()=>{if(o.type==='wetFloorSign'){artwork.drawWetFloorSign(o.x,o.y);return}artwork.drawVehicle(o,t);const lights=emergencyVehicleVisual(o,t);if(lights){const p=project(o.x+(o.w||2)/2,o.y+(o.h||3)/2,34),z=zoom;ctx.save();ctx.fillStyle=lights.left;ctx.beginPath();ctx.arc(p.x-5*z,p.y,3*z,0,Math.PI*2);ctx.fill();ctx.fillStyle=lights.right;ctx.beginPath();ctx.arc(p.x+5*z,p.y,3*z,0,Math.PI*2);ctx.fill();ctx.restore()}}})),
-  ...(world.drops||[]).map(o=>({kind:'item',depth:renderDepth('item',o),fn:()=>artwork.drawDrop(o)})),
-  ...(world.damage||[]).filter(o=>['fallenBox','fallenSign'].includes(o.kind)&&o.phase!=='repaired').map(o=>({kind:'item',depth:renderDepth('item',o),fn:()=>{
+  ...world.doors.map(o=>({kind:'door',depth:renderDepth('door',o,cameraAngle),fn:()=>artwork.drawDoor(o,t)})),
+  ...[...world.walls.values()].map(o=>({kind:'wall',depth:renderDepth('wall',o,cameraAngle),fn:()=>artwork.drawWall(o,world)})),
+  ...world.props.map(o=>({kind:'vehicle',depth:renderDepth('vehicle',o,cameraAngle),fn:()=>{if(o.type==='wetFloorSign'){artwork.drawWetFloorSign(o.x,o.y);return}artwork.drawVehicle(o,t);const lights=emergencyVehicleVisual(o,t);if(lights){const p=project(o.x+(o.w||2)/2,o.y+(o.h||3)/2,34),z=zoom;ctx.save();ctx.fillStyle=lights.left;ctx.beginPath();ctx.arc(p.x-5*z,p.y,3*z,0,Math.PI*2);ctx.fill();ctx.fillStyle=lights.right;ctx.beginPath();ctx.arc(p.x+5*z,p.y,3*z,0,Math.PI*2);ctx.fill();ctx.restore()}}})),
+  ...(world.drops||[]).map(o=>({kind:'item',depth:renderDepth('item',o,cameraAngle),fn:()=>artwork.drawDrop(o)})),
+  ...(world.damage||[]).filter(o=>['fallenBox','fallenSign'].includes(o.kind)&&o.phase!=='repaired').map(o=>({kind:'item',depth:renderDepth('item',o,cameraAngle),fn:()=>{
    const progress=Number.isFinite(o.fallenAt)?Math.max(0,Math.min(1,(t-o.fallenAt)/.8)):1;
    const p=project(o.x,o.y,(1-progress)*42),z=zoom;ctx.save();ctx.translate(p.x,p.y);ctx.rotate((1-progress)*-.65);ctx.fillStyle=o.kind==='fallenSign'?'#bd8353':'#ac8b67';ctx.fillRect(-10*z,-7*z,20*z,11*z);ctx.strokeStyle='#514539';ctx.lineWidth=1.5*z;ctx.strokeRect(-10*z,-7*z,20*z,11*z);
    if(o.phase==='clearing'){ctx.fillStyle='#d8e6d2';ctx.fillRect(-8*z,-10*z,16*z,2*z)}
@@ -356,16 +356,16 @@ function render(t){
    ctx.restore();
   }})),
   ...departmentSigns.filter(o=>!(world.damage||[]).some(d=>d.kind==='fallenSign'&&d.signId==='department-sign-'+o.name&&d.phase!=='repaired')).map(o=>{
-    const depth=o.name==='RECEIVING'?-1000:renderDepth('sign',o)+.1;
+    const depth=o.name==='RECEIVING'?-1000:renderDepth('sign',o,cameraAngle)+.1;
     return {kind:'sign',depth,fn:()=>{
-      const opacity=signOpacity(o,game?.npcs||[],project,zoom,depth,n=>renderDepth('npc',n));
+      const opacity=signOpacity(o,game?.npcs||[],project,zoom,depth,n=>renderDepth('npc',n,cameraAngle));
       ctx.save();ctx.globalAlpha=opacity;
       artwork.drawDepartmentSign(o.x,o.y,o.name,o.accent,o.axis||'x');
       ctx.restore();
     }};
   }),
   ...world.hazards.filter(h=>h.kind==='spill'&&h.beingCleaned&&h.life>0).map(h=>({kind:'sign',depth:renderDepth('sign',h)+.2,fn:()=>artwork.drawWetFloorSign(h.x,h.y)})),
-  ...(game?game.npcs.filter(o=>!(o.medicalUntil>game.elapsed)).map(o=>({kind:'npc',depth:renderDepth('npc',o),fn:()=>{
+  ...(game?game.npcs.filter(o=>!(o.medicalUntil>game.elapsed)).map(o=>({kind:'npc',depth:renderDepth('npc',o,cameraAngle),fn:()=>{
    stick(o,t);
    if(o.alive&&['paramedic','firefighter','police'].includes(o.role)&&/Responding|Freeing|Reinstalling|Removing/.test(o.activity||'')){
     const p=project(o.rx,o.ry,43),z=zoom;
@@ -377,7 +377,7 @@ function render(t){
    }
    if(o.command&&o.alive){const p=project(o.rx,o.ry,43);ctx.save();ctx.font='bold '+Math.max(10,13*zoom)+'px system-ui';ctx.textAlign='center';ctx.fillStyle='#ffe296';ctx.strokeStyle='#24343d';ctx.lineWidth=2.5;ctx.strokeText('✦',p.x,p.y);ctx.fillText('✦',p.x,p.y);ctx.restore()}
   }})):[]),
-  ...world.hazards.map(o=>({kind:'hazard',depth:renderDepth('hazard',o),fn:()=>drawHazard(o,t)}))
+  ...world.hazards.map(o=>({kind:'hazard',depth:renderDepth('hazard',o,cameraAngle),fn:()=>drawHazard(o,t)}))
  ];
  items.sort(compareRenderDepth);for(const item of items)item.fn();
  // The same overhead light field shades floors, objects and NPCs together.
