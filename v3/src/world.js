@@ -19,7 +19,7 @@ export function createHardwareStore(){
  const door=(x,y,type='hinged',label='Door',axis='x',span=1,slideTo='start',pairId=null)=>doors.push({id:'door-'+x+'-'+y,x,y,w:axis==='x'?span:1,h:axis==='y'?span:1,type,label,axis,open:0,target:0,auto:type==='sliding',locked:false,forceUntil:0,...(type==='sliding'?{slideTo}:{}),...(pairId?{pairId}:{})});
  const fixture=(type,x,y,w=1,h=1,extra={})=>fixtures.push({id:type+'-'+x+'-'+y,type,x,y,w,h,...extra});
  for(let y=0;y<HEIGHT;y++)for(let x=0;x<WIDTH;x++){
-  let area=x>=65?'road':y>=8&&y<10&&x>=2&&x<=36?'sidewalk':y<10&&x<65?'parking':x===37&&y>=10&&y<=27?'store':x===37&&y>=28&&y<=39?'sidewalk':x>=25&&x<=34&&y>=40&&y<=43?'loading':x>=38&&x<=46&&y>=10&&y<28?'employee':x>=38&&x<=48&&y>=28&&y<=39?'garden':y>=10&&y<=39&&x>=2&&x<=36?'store':x>=49&&x<=63&&y>=10&&y<44?'landscape':'grass';
+  let area=x>=65?'road':y>=8&&y<10&&x>=2&&x<=36?'sidewalk':y<10&&x<65?'parking':x===37&&y>=10&&y<=27?'store':x===37&&y>=28&&y<=39?'sidewalk':x>=19&&x<=37&&y>=40&&y<=48?'loading':x>=38&&x<=46&&y>=10&&y<28?'employee':x>=38&&x<=48&&y>=28&&y<=39?'garden':y>=10&&y<=39&&x>=2&&x<=36?'store':x>=49&&x<=63&&y>=10&&y<44?'landscape':'grass';
   ground.push({x,y,area});
  }
  for(let x=2;x<=36;x++){wall(x,10);wall(x,39)}
@@ -116,6 +116,17 @@ export function createHardwareStore(){
  fixture('lumberBundle',5,37,2,1,{bundleSize:'short',department:'LUMBER'});
  fixture('lumberBundle',10,37,3,1,{bundleSize:'medium',department:'LUMBER'});
  fixture('lumberBundle',15,37,4,1,{bundleSize:'long',department:'LUMBER'});
+ // Expanded rear loading yard: industrial staging around the perimeter.
+ // Keep central circulation (x 27..32) open for roll-up access and forklifts.
+ fixture('palletStack',20,45,2,1);
+ fixture('boxStack',23,45,2,1);
+ fixture('storageShelves',20,47,2,1,{facing:'south',department:'RECEIVING'});
+ fixture('palletStack',24,47,2,1);
+ fixture('boxStack',33,46,2,1);
+ fixture('palletStack',35,44,2,1);
+ fixture('storageShelves',35,47,2,1,{facing:'north',department:'RECEIVING'});
+ fixture('utilityCart',22,43,1,1,{stock:4,facing:'south'});
+ fixture('pallet',34,48,2,1);
  // Hand trucks temporarily removed from Receiving.
  // Employee rooms: fixtures face the approachable side, not the wall behind them.
  fixture('filingCabinet',44,14,1,1,{facing:'west'});
@@ -141,7 +152,7 @@ export function createHardwareStore(){
  for(const [x,y] of [[49,12],[54,13],[57,17],[62,20],[50,22],[58,25],
    [53,28],[62,32],[49,34],[56,37],[62,39],[51,42],[58,14],[55,33]])
   props.push({id:'landscape-shrub-'+x+'-'+y,type:'shrub',x,y});
- return {id:'hardware-store',title:'Hardware Store',layoutVersion:33,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],sabotages:[],electricalZones:[],blocking:blocked};
+ return {id:'hardware-store',title:'Hardware Store',layoutVersion:34,width:WIDTH,height:HEIGHT,ground,walls,doors,fixtures,props,damage:[],drops:[],hazards:[],sabotages:[],electricalZones:[],blocking:blocked};
 }
 export const inside=(x,y)=>x>=0&&y>=0&&x<WIDTH&&y<HEIGHT;
 export function fixtureAt(world,x,y){return world.fixtures.find(o=>x>=o.x&&x<o.x+o.w&&y>=o.y&&y<o.y+o.h)}
