@@ -1,4 +1,4 @@
-import {createHardwareStore,nearestOpen,walkable} from './world.js?v=hardware-lighting-v49-20261025';
+import {createHardwareStore,nearestOpen,walkable} from './world.js?v=landscape-sidewalk-road-20261027-2';
 import {rngFor} from './simulation.js?v=hardware-lighting-v49-20261025';
 const SAVE='life-in-motion-v3-round-v1',PROGRESS='life-in-motion-v3-progression-v1';
 export const hasSave=()=>{try{return !!localStorage.getItem(SAVE)}catch{return false}};
@@ -7,7 +7,7 @@ export function saveGame(g){const world=g.world;const payload={schema:1,game:{..
  try{localStorage.setItem(SAVE,JSON.stringify(payload));return true}catch{return false}}
 export function loadGame(){try{let data=JSON.parse(localStorage.getItem(SAVE)||'null');if(!data||data.schema!==1||data.world?.id!=='hardware-store'||!Array.isArray(data.game?.npcs)||data.game.npcs.length>1000)return null;
  let world=createHardwareStore();
- const legacyLayout=data.world.layoutVersion!==world.layoutVersion;
+ const legacyLayout=data.world.layoutVersion!==world.layoutVersion || !Array.isArray(data.world.ground) || !data.world.ground.some(t=>t.x===19&&t.y===8&&t.area==='sidewalk') || !data.world.ground.some(t=>t.x===69&&t.y===49&&t.area==='road');
  if(!legacyLayout){
   Object.assign(world,data.world);
   world.walls=new Map(data.world.walls);
