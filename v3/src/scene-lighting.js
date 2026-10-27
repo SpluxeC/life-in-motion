@@ -130,7 +130,7 @@ export function createSceneLighting(ctx,project,getZoom){
   const length=Math.max(.001,Math.hypot(dx,dy));
   const spread=height*(lamp? .035:.041);
   return {dx:dx/length*spread,dy:dy/length*spread,
-   strength:indoor?.14*light:.19};
+   strength:indoor?.17*light:.22};
  }
  function castObjectShadow(world,viewport,o,t,height){
   const center={x:o.x+((o.w||1)-1)*.5,y:o.y+((o.h||1)-1)*.5};
