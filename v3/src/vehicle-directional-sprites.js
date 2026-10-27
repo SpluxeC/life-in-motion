@@ -55,7 +55,7 @@ function buildSprite(kind,color,facing){
 const kenneyImages=new Map();
 function kenneyVehicleImage(kind,facing){
  const asset=({sedan:'sedan',suv:'suv',pickup:'truck',van:'van',
-  fire:'firetruck',police:'police',ambulance:'ambulance'})[kind]||'sedan';
+  fire:'firetruck',police:'police',ambulance:'ambulance'})[kind]||kind;
  const key=asset+'-'+facing;
  if(!kenneyImages.has(key)){
   const image=new Image();
