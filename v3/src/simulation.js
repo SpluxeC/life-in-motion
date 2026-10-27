@@ -18,7 +18,7 @@ export function rngFor(seed){let state=seed>>>0;const random=()=>{state=(state+0
 export function makeGame(world,options={}){
  const seed=options.seed||Math.floor(Math.random()*2147483647),random=rngFor(seed);
  const game={world,seed,random,elapsed:0,clockStartMinutes:Number.isFinite(+options.clockStartMinutes)?+options.clockStartMinutes:480,minutesPerSecond:1,speed:1,paused:false,energy:35,energyEarned:0,npcs:[],respondersRemaining:{police:3,fire:3,medic:3},pending:[],dispatchCooldown:0,log:[],stats:{deaths:0,injuries:0,incidents:0,powers:0,chains:0},winner:false,freeplay:false,completed:false,nextId:0,cooldowns:{},selected:null};
- const countStaff=clamp(+(options.staff??8),1,16),countCustomers=clamp(+(options.customers??12),1,20);
+ const countStaff=clamp(+(options.staff??8),2,16),countCustomers=clamp(+(options.customers??12),1,20);
  for(let i=0;i<countStaff+countCustomers;i++)spawnNPC(game,i<countStaff?'employee':'customer');
  assignPrimaryJobs(game.npcs.filter(n=>n.role==='employee'));
  for(const n of game.npcs.filter(n=>n.role==='employee'))n.duty=effectiveDuty(n);
@@ -64,7 +64,10 @@ function clearCleanup(g,n){
  n.cleaningTarget=null;n.cleaning=false;n.cleaningPhase=0;
 }
 function assignSpillCleanup(g,n){
- if(n.role!=='employee')return false;
+ if(n.role!=='employee'||['cashier','service'].includes(n.duty))return false;
+ // Maintenance answers spills first; other associates provide fallback when
+ // the designated worker cannot respond.
+ if(n.primaryJob!=='Maintenance'&&g.npcs.some(o=>o.role==='employee'&&o.primaryJob==='Maintenance'&&o.alive&&!o.arrested&&o.unconscious<=0))return false;
  const w=g.world;
  const existing=w.hazards.find(h=>h.id===n.cleaningTarget&&h.kind==='spill'&&h.life>0);
  if(existing){n.activity=n.cleaning?'Mopping spill':'Going to clean spill';return true}
