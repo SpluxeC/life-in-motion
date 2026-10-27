@@ -1,13 +1,16 @@
 // Eight distinct primary positions. Coverage never rewrites primaryJob.
 export const JOBS=['Cashier','Service Associate','Sales Associate','Stocker','Lumber Associate','Receiving Associate','Maintenance','Store Manager'];
 export function assignPrimaryJobs(employees){
- const counts=new Map(JOBS.map(j=>[j,0]));
+ const counts=new Map(JOBS.map(j=>[j,0])),pending=[];
+ // Preserve existing distinct positions after loading saves.
  for(const n of employees){
-  let job=n.primaryJob;
-  if(!JOBS.includes(job)||job==='Store Manager'&&counts.get(job)>0){
-   job=JOBS.filter(j=>j!=='Store Manager'||counts.get(j)===0)
-     .sort((a,b)=>counts.get(a)-counts.get(b)||JOBS.indexOf(a)-JOBS.indexOf(b))[0];
-  }
+  const j=n.primaryJob;
+  if(JOBS.includes(j)&&counts.get(j)===0)counts.set(j,1);
+  else pending.push(n);
+ }
+ for(const n of pending){
+  const available=JOBS.filter(j=>j!=='Store Manager'||counts.get(j)===0);
+  const job=available.sort((a,b)=>counts.get(a)-counts.get(b)||JOBS.indexOf(a)-JOBS.indexOf(b))[0];
   n.primaryJob=job;counts.set(job,counts.get(job)+1);
  }
  return employees;
