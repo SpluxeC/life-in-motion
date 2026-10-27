@@ -212,7 +212,8 @@ function drawHair(n,z,h){
  ctx.restore();
 }
 function drawNpcExpression(n,z,h,detail){
- if(detail.level==='low')return;
+ // Facial features remain essential at every quality level, including mobile.
+ // Adaptive graphics may simplify motion but must not erase expressions.
  const mood=npcReactionPose(n),face=mood.face;
  const sy=-h*z*.82,scale=z;
  ctx.save();
