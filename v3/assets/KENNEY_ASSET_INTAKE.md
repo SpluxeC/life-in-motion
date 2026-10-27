@@ -19,3 +19,7 @@ Original ZIP files are **not yet present in this repository**. They were uploade
 Preserve the existing map, NPC paths, object IDs, interactions, and four camera rotation/view assumptions; adapt image anchor coordinates and scale independently. Keep CC0 licenses alongside the assets.
 
 The source car archive includes separate wheel GLBs for wheel-spin/steering assemblies. These are models, not automatically drivable vehicles: driving/pathfinding, transforms, wheel pivots, synchronization with NPCs, collision and save migration still require implementation. Preserve originals and license. Upload binaries before activating GLB references in runtime.
+
+## Updated vehicle rendering decision (approved)
+
+The gameplay renderer now uses **four camera-aware 2D facings**, switching with vehicle travel direction and keeping the saved heading when stationary. This is implemented in `v3/src/vehicle-directional-sprites.js` with cached Canvas sprites and a fallback to the original artwork. A 3D runtime renderer is **not** required. The current built-in directional artwork is temporary: the uploaded Kenney GLB vehicles are **not yet converted** to the final four-angle sprite sheets or committed as game assets. Keep the original model archive available for offline sprite rendering. Vehicle movement logic remains separate from visual-facing selection.
