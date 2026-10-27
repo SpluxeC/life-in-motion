@@ -7,7 +7,7 @@ import {createPowerEffects} from './power-effects.js?v=seven-phase-release-20261
 import {patchPanelHTML} from './panel-patch.js?v=seven-phase-release-20261026-1';
 import {hasSave,loadGame,saveGame,unlockMap} from './persistence.js?v=staff-jobs-20261027-2';
 import {createArtwork} from './artwork.js?v=landscape-sidewalk-road-20261027-1';
-import {renderDepth,compareRenderDepth} from './render-depth.js?v=wall-vehicle-depth-20261027-2';
+import {renderDepth,compareRenderDepth,fixtureDepthWithBackingWall} from './render-depth.js?v=local-wall-fixture-depth-20261027-1';
 import {obstructionOpacity} from './selective-occlusion.js?v=selective-fade-20261027-1';
 import {formatGameTime,emotionState,POWER_HELP,hairAppearance,npcWeakness} from './hud.js?v=seven-phase-release-20261026-1';
 import {hitProjectedFixture,isGroundTileTap,selectionLabel,doorSelectionTarget} from './selection.js?v=seven-phase-release-20261026-1';
@@ -372,7 +372,7 @@ function render(t){
  sceneLighting.drawFloorLightPools(world,viewport,t);
  sceneLighting.drawCastShadows(world,game?.npcs||[],viewport,t);
  const items=[
-  ...world.fixtures.map(o=>({kind:'fixture',occluder:o,depth:((o.type==='gardenToolsRack'||o.type==='departmentWallShelf'&&o.x===35||o.type==='lockers')?-10000:renderDepth('fixture',o,cameraAngle)),fn:()=>{
+  ...world.fixtures.map(o=>({kind:'fixture',occluder:o,depth:fixtureDepthWithBackingWall(o,[...world.walls.values()],cameraAngle),fn:()=>{
    if(o.destroyed){const p=project(o.x+(o.w||1)*.5-.5,o.y+(o.h||1)*.5-.5);ctx.save();ctx.fillStyle='#554e4a';ctx.fillRect(p.x-12*zoom,p.y-6*zoom,24*zoom,8*zoom);ctx.fillStyle='#b78365';ctx.fillRect(p.x-6*zoom,p.y-9*zoom,12*zoom,5*zoom);ctx.restore()}else artwork.drawFixture(o);
    if(o.damaged||o.powerOutUntil>(game?.elapsed||0)){
     const p=project(o.x+(o.w||1)*.5-.5,o.y+(o.h||1)*.5-.5,28);
