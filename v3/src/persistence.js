@@ -1,3 +1,4 @@
+import {assignPrimaryJobs,assignCoverage,effectiveDuty} from './employee-jobs.js?v=jobs-20261027-1';
 import {createHardwareStore,nearestOpen,walkable} from './world.js?v=landscape-sidewalk-road-20261027-2';
 import {rngFor} from './simulation.js?v=hardware-lighting-v49-20261025';
 const SAVE='life-in-motion-v3-round-v1',PROGRESS='life-in-motion-v3-progression-v1';
@@ -53,6 +54,10 @@ export function loadGame(){try{let data=JSON.parse(localStorage.getItem(SAVE)||'
  }
  const random=rngFor(data.game.seed);random.restore(data.rngState);
  let g={...data.game,world,random,selected:null};
+ const employees=g.npcs.filter(n=>n.role==='employee');
+ assignPrimaryJobs(employees);
+ assignCoverage(employees);
+ for(const n of employees)n.duty=effectiveDuty(n);
  if(!Array.isArray(g.pending)||!Array.isArray(g.log)||!g.respondersRemaining)return null;
  if(legacyLayout){
   // Older pre-redesign paths may cross the newly enclosed hallway/fence.
