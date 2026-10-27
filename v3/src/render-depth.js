@@ -12,11 +12,11 @@ export function renderDepth(kind,o,cameraAngle=45){
  const w=Math.max(1,Number(o.w)||1),h=Math.max(1,Number(o.h)||1);
  const solid=['fixture','wall','vehicle','door'].includes(kind);
  const nearX=x+(cx>=0?w-1:0),nearY=y+(cy>=0?h-1:0);
- return solid?nearX*cx+nearY*cy:x*cx+y*cy;
+ // Wall surfaces are vertical panels at tile boundaries; they should not\n // cover equipment mounted immediately in front of the panel. Bias their\n // painter key toward the far side by one projected tile.\n if(kind==='wall')return x*cx+y*cy+Math.max(cx,cy)*1.05;\n return solid?nearX*cx+nearY*cy:x*cx+y*cy;
 }
 export function compareRenderDepth(a,b){
  const d=b.depth-a.depth;
  if(Math.abs(d)>1e-5)return d;
- const priority={npc:0,item:1,hazard:1,sign:2,door:3,fixture:4,vehicle:4,wall:5};
+ const priority={npc:0,item:1,hazard:1,sign:2,door:3,wall:3,fixture:4,vehicle:4};
  return (priority[a.kind]??2)-(priority[b.kind]??2);
 }
