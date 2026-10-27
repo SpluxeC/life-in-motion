@@ -125,9 +125,9 @@ export function createArtwork(ctx,project,getZoom){
    }
   }
   // Parking-bay rules and handicap-access aisle graphics belong to floor coordinates.
-  for(let x=5;x<64;x+=8){
-   const a=P(x,2.5),b=P(x,7.6),c=P(x+5,2.5),d=P(x+5,7.6);
-   line(a,b,'#e6e3cb',2.2);line(c,d,'#e6e3cb',2.2)
+  // Shared stall dividers: one line per boundary, no empty buffer stalls.
+  for(let x=4;x<=56;x+=4){
+   line(P(x,3.5),P(x,7.55),'#e6e3cb',2.2);
   }
   // Store sidewalk & pedestrian crossing from the lot to the entrance.
   for(let x=2;x<=36;x++){const p=P(x,9);ellipse(p.x,p.y,8,2,'#ced2c166')}
