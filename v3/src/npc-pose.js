@@ -41,6 +41,15 @@ export function npcLimbPose(n,t=0,quality={}){
    wrist=pt(side===-1?-12:11,-12+wave*1.5);
   }else if(activity==='stock'||activity==='inspect'){
    wrist=pt(side*10,-16+wave*2);
+  }else if(activity==='measure'){
+   // Lumber associate braces the board with one hand and measures with the other.
+   wrist=pt(side===-1?-11:12,side===-1?-15:-17+wave*.8);
+  }else if(activity==='lift'){
+   // Receiving: both hands hold a carton at waist height.
+   wrist=pt(side*9.5,-12.5+Math.abs(wave)*1.2);
+  }else if(activity==='review'){
+   // Manager checks a clipboard at chest height.
+   wrist=pt(side===-1?-5:10,side===-1?-18:-13+wave*.7);
   }else if(activity==='drink'&&side===-1){
    wrist=pt(-4,-24);
   }else if(activity==='talk'){
