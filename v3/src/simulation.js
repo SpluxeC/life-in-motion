@@ -1,3 +1,4 @@
+import {advanceTraffic,addPassingTraffic,removeDepartedTraffic} from './traffic-ai.js?v=traffic-lanes-20261027-1';
 import {assignPrimaryJobs,assignCoverage,effectiveDuty} from './employee-jobs.js?v=staff-jobs-20261027-2';
 import {tickDamageRecovery,debrisBlocksMovement} from './damage-recovery.js';
 import {nearestOpen,pathTo,doorAt,fixtureAt,walkable,key} from './world.js?v=receiving-expansion-20261027-1';
@@ -165,7 +166,9 @@ export function updateGame(g,dt){if(g.paused||g.completed&&!g.freeplay)return;
   d.open=clamp(d.open+(d.target-d.open)*Math.min(1,dt*(d.target?3.7:2.2)),0,1);
 }
  for(const f of g.world.fixtures)if(f.powerOutUntil&&f.powerOutUntil<=g.elapsed)f.powerOutUntil=0;
- for(let v of g.world.props){if(v.targetX!==undefined){let dx=v.targetX-v.x,dy=v.targetY-v.y,dist=Math.hypot(dx,dy);if(dist>.04){v.x+=dx/dist*Math.min(dist,dt*2);v.y+=dy/dist*Math.min(dist,dt*2)}}}
+ addPassingTraffic(g.world,g.elapsed);
+ advanceTraffic(g.world.props,dt);
+ removeDepartedTraffic(g.world);
  for(let p of [...g.pending]){p.time-=dt;if(p.time<=0){dispatch(g,p.service);g.pending.splice(g.pending.indexOf(p),1)}}
  // Fire crews target active fires and reduce their remaining duration in-place.
  // Work is deterministic and advances only on simulation ticks.
