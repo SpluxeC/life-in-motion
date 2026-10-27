@@ -11,7 +11,7 @@ test('unselected, unrelated, or non-solid objects never fade',()=>{
  assert.equal(obstructionOpacity('fixture',{x:100,y:100},npc,project,depth),1);
 });
 test('near solid shelf overlapping focused NPC may fade',()=>{
- const npc={rx:11,ry:11},shelf={x:11,y:11,w:2,h:2};
+ const npc={rx:11,ry:11},shelf={x:10,y:10,w:2,h:2};
  assert.equal(obstructionOpacity('fixture',shelf,npc,project,depth),.42);
 });
 test('farther objects remain opaque',()=>{
