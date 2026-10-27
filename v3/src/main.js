@@ -474,7 +474,7 @@ function portraitHTML(n){
   '<path d="'+mouth+'" stroke="#4b292c" stroke-width="3.2" fill="none"/>'+extra+
   // Hair and hats are the upper visual layer; their shapes leave the face open.
   '<g transform="'+(n.facing==='left'?'translate(100 0) scale(-1 1)':'')+'"><g fill="'+color+'" stroke="'+color+'" stroke-width="2">'+hairShape+'</g>'+helmet+'</g>'+
-  '</svg><div><strong>'+escapeHTML(n.name)+'</strong><span>'+escapeHTML(n.role)+' · '+escapeHTML(mood)+'</span></div></div>';
+  '</svg><div><strong>'+escapeHTML(n.name)+'</strong><span>'+escapeHTML(n.role==='employee'?(n.primaryJob||'Sales Associate'):n.role)+' · '+escapeHTML(mood)+'</span></div></div>';
 }
 function powerUsable(p,n=null){
  return !!game&&!game.paused&&game.energy>=p.cost&&!(game.cooldowns[p.id]>game.elapsed)&&(!n||(n.alive&&!n.arrested));
@@ -499,7 +499,7 @@ function refreshHud(){
  const people=$('peopleContent');
  const n=g.npcs.find(o=>o.id===selected?.id);
  if(n){
-  const job=n.duty==='cashier'?'Cashier':n.duty==='service'?'Customer service':n.duty==='floor'?'Floor associate':n.role==='customer'?'Customer':n.role;
+  const job=n.role==='employee'?(n.primaryJob||'Sales Associate'):n.role==='customer'?'Customer':n.role;
   let html='<div class="personHeader"><h3>Person Overview</h3><button id="backPeople">← All People</button></div>';
   html+=portraitHTML(n);
   html+='<div class="personFacts"><p><strong>Emotion:</strong> '+escapeHTML(emotionState(n))+
@@ -525,7 +525,7 @@ function refreshHud(){
   const peopleListHTML='<h3>People · '+g.npcs.length+' in this round</h3>'+
    g.npcs.map(p=>'<button class="personRow" data-person="'+escapeHTML(p.id)+'">'+
     '<strong>'+escapeHTML(p.name)+'</strong><small>'+
-    escapeHTML(p.role)+' · '+escapeHTML(emotionState(p))+
+    escapeHTML(p.role==='employee'?(p.primaryJob||'Sales Associate'):p.role)+' · '+escapeHTML(emotionState(p))+
     '<br><strong>Weakness:</strong> '+escapeHTML(npcWeakness(p))+
     '<br>'+escapeHTML(p.alive?p.activity:'Deceased')+'</small></button>').join('')+
    (feedback?'<p class="gameMessage">'+escapeHTML(feedback)+'</p>':'');
