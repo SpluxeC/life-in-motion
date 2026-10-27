@@ -337,7 +337,7 @@ function render(t){
  sceneLighting.drawFloorLightPools(world,viewport,t);
  sceneLighting.drawCastShadows(world,game?.npcs||[],viewport,t);
  const items=[
-  ...world.fixtures.map(o=>({kind:'fixture',occluder:o,depth:renderDepth('fixture',o,cameraAngle),fn:()=>{
+  ...world.fixtures.map(o=>({kind:'fixture',occluder:o,depth:((o.type==='gardenToolsRack'||o.type==='departmentWallShelf'&&o.x===35||o.type==='lockers')?-10000:renderDepth('fixture',o,cameraAngle)),fn:()=>{
    if(o.destroyed){const p=project(o.x+(o.w||1)*.5-.5,o.y+(o.h||1)*.5-.5);ctx.save();ctx.fillStyle='#554e4a';ctx.fillRect(p.x-12*zoom,p.y-6*zoom,24*zoom,8*zoom);ctx.fillStyle='#b78365';ctx.fillRect(p.x-6*zoom,p.y-9*zoom,12*zoom,5*zoom);ctx.restore()}else artwork.drawFixture(o);
    if(o.damaged||o.powerOutUntil>(game?.elapsed||0)){
     const p=project(o.x+(o.w||1)*.5-.5,o.y+(o.h||1)*.5-.5,28);
